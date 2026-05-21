@@ -1,46 +1,41 @@
-# cargo-metadata(1)
+﻿# cargo-metadata(1)
 
-## NAME
+## 名称
 
-cargo-metadata --- Machine-readable metadata about the current package
+cargo-metadata --- 当前 package 的机器可读元数据
 
-## SYNOPSIS
+## 概要
 
 `cargo metadata` [_options_]
 
-## DESCRIPTION
+## 描述
 
-Output JSON to stdout containing information about the workspace members and
-resolved dependencies of the current package.
+向 stdout 输出 JSON，包含当前 package 的 workspace 成员信息与已解析依赖。
 
-The output format is subject to change in future versions of Cargo. It
-is recommended to include the `--format-version` flag to future-proof your code
-and ensure the output is in the format you are expecting. For more on the
-expectations, see ["Compatibility"](#compatibility).
+输出格式在未来 Cargo 版本中可能变化。
+建议加上 `--format-version` 标志，以提升代码的前向兼容性，
+并确保输出格式符合你的预期。
+关于兼容性约定，见[“兼容性”](#兼容性)。
 
-See the [cargo_metadata crate](https://crates.io/crates/cargo_metadata)
-for a Rust API for reading the metadata.
+如需在 Rust 中读取这些元数据，可使用
+[cargo_metadata crate](https://crates.io/crates/cargo_metadata) 提供的 API。
 
-## OUTPUT FORMAT
+## 输出格式
 
-### Compatibility
+### 兼容性
 
-Within the same output format version, the compatibility is maintained, except
-some scenarios. The following is a non-exhaustive list of changes that are not
-considered as incompatible:
+在相同输出格式版本内，兼容性通常会保持。
+但以下变更不被视为不兼容（非完整列表）：
 
-* **Adding new fields** — New fields will be added when needed. Reserving this
-  helps Cargo evolve without bumping the format version too often.
-* **Adding new values for enum-like fields** — Same as adding new fields. It
-  keeps metadata evolving without stagnation.
-* **Changing opaque representations** — The inner representations of some
-  fields are implementation details. For example, fields related to
-  "Source ID" are treated as opaque identifiers to differentiate packages or
-  sources. Consumers shouldn't rely on those representations unless specified.
+* **新增字段** — 会按需新增字段。这有助于 Cargo 演进，而无需频繁提升格式版本。
+* **为枚举类字段新增取值** — 与新增字段类似，可避免元数据演进停滞。
+* **变更不透明表示形式** — 某些字段的内部表示属于实现细节。
+  例如与 “Source ID” 相关字段会被当作不透明标识符，用于区分 package 或来源。
+  除非文档明确保证，否则消费方不应依赖其内部格式。
 
-### JSON format
+### JSON 格式
 
-The JSON output has the following format:
+JSON 输出格式如下：
 
 ```javascript
 {
@@ -340,210 +335,189 @@ The JSON output has the following format:
 }
 ````
 
-Notes:
-- For `"id"` field syntax, see [Package ID Specifications] in the reference.
+说明：
+- 关于 `"id"` 字段语法，请见参考文档中的 [Package ID Specifications]。
 
-## OPTIONS
+## 选项
 
-### Output Options
+### 输出选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-metadata---no-deps"><a class="option-anchor" href="#option-cargo-metadata---no-deps"><code>--no-deps</code></a></dt>
-<dd class="option-desc"><p>Output information only about the workspace members and don’t fetch
-dependencies.</p>
+<dd class="option-desc"><p>只输出 workspace 成员信息，不拉取依赖。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---format-version"><a class="option-anchor" href="#option-cargo-metadata---format-version"><code>--format-version</code> <em>version</em></a></dt>
-<dd class="option-desc"><p>Specify the version of the output format to use. Currently <code>1</code> is the only
-possible value.</p>
+<dd class="option-desc"><p>指定输出格式版本。目前仅支持 <code>1</code>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---filter-platform"><a class="option-anchor" href="#option-cargo-metadata---filter-platform"><code>--filter-platform</code> <em>triple</em></a></dt>
-<dd class="option-desc"><p>This filters the <code>resolve</code> output to only include dependencies for the
-given <a href="../appendix/glossary.html#target">target triple</a>.
-A literal <code>"host-tuple"</code> can be used, which will internally be substituted by the host’s target.
-Without this flag, the resolve includes all targets.</p>
-<p>Note that the dependencies listed in the “packages” array still includes all
-dependencies. Each package definition is intended to be an unaltered
-reproduction of the information within <code>Cargo.toml</code>.</p>
+<dd class="option-desc"><p>过滤 <code>resolve</code> 输出，仅包含指定 <a href="../appendix/glossary.html#target">target triple</a> 的依赖。
+可使用字面值 <code>"host-tuple"</code>，其会在内部替换为主机 target。
+不加该参数时，resolve 会包含所有 targets。</p>
+<p>注意，<code>"packages"</code> 数组列出的依赖仍是全量依赖。
+每个 package 定义旨在原样复现 <code>Cargo.toml</code> 中的信息。</p>
 </dd>
 
 
 </dl>
 
-### Feature Selection
+### Feature 选择
 
-The feature flags allow you to control which features are enabled. When no
-feature options are given, the `default` feature is activated for every
-selected package.
+feature 标志用于控制启用哪些 feature。若未给出 feature 选项，
+每个选中 package 都会启用 `default` feature。
 
-See [the features documentation](../reference/features.html#command-line-feature-options)
-for more details.
+更多细节见[feature 文档](../reference/features.html#command-line-feature-options)。
 
 <dl>
 
 <dt class="option-term" id="option-cargo-metadata--F"><a class="option-anchor" href="#option-cargo-metadata--F"><code>-F</code> <em>features</em></a></dt>
 <dt class="option-term" id="option-cargo-metadata---features"><a class="option-anchor" href="#option-cargo-metadata---features"><code>--features</code> <em>features</em></a></dt>
-<dd class="option-desc"><p>Space or comma separated list of features to activate. Features of workspace
-members may be enabled with <code>package-name/feature-name</code> syntax. This flag may
-be specified multiple times, which enables all specified features.</p>
+<dd class="option-desc"><p>要启用的 feature 列表，以空格或逗号分隔。workspace 成员的 feature
+可用 <code>package-name/feature-name</code> 语法启用。此标志可多次指定，最终会启用
+所有指定 feature。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---all-features"><a class="option-anchor" href="#option-cargo-metadata---all-features"><code>--all-features</code></a></dt>
-<dd class="option-desc"><p>Activate all available features of all selected packages.</p>
+<dd class="option-desc"><p>启用所有已选 package 的全部可用 feature。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---no-default-features"><a class="option-anchor" href="#option-cargo-metadata---no-default-features"><code>--no-default-features</code></a></dt>
-<dd class="option-desc"><p>Do not activate the <code>default</code> feature of the selected packages.</p>
+<dd class="option-desc"><p>不启用已选 package 的 <code>default</code> feature。</p>
 </dd>
 
 
 </dl>
 
-### Display Options
+### 显示选项
 
 <dl>
 <dt class="option-term" id="option-cargo-metadata--v"><a class="option-anchor" href="#option-cargo-metadata--v"><code>-v</code></a></dt>
 <dt class="option-term" id="option-cargo-metadata---verbose"><a class="option-anchor" href="#option-cargo-metadata---verbose"><code>--verbose</code></a></dt>
-<dd class="option-desc"><p>Use verbose output. May be specified twice for “very verbose” output which
-includes extra output such as dependency warnings and build script output.
-May also be specified with the <code>term.verbose</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>启用详细输出。可指定两次得到“非常详细”输出，
+其中包含依赖警告、构建脚本输出等额外信息。
+也可通过 <code>term.verbose</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata--q"><a class="option-anchor" href="#option-cargo-metadata--q"><code>-q</code></a></dt>
 <dt class="option-term" id="option-cargo-metadata---quiet"><a class="option-anchor" href="#option-cargo-metadata---quiet"><code>--quiet</code></a></dt>
-<dd class="option-desc"><p>Do not print cargo log messages.
-May also be specified with the <code>term.quiet</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>不打印 cargo 日志消息。
+也可通过 <code>term.quiet</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---color"><a class="option-anchor" href="#option-cargo-metadata---color"><code>--color</code> <em>when</em></a></dt>
-<dd class="option-desc"><p>Control when colored output is used. Valid values:</p>
+<dd class="option-desc"><p>控制何时使用彩色输出。有效值：</p>
 <ul>
-<li><code>auto</code> (default): Automatically detect if color support is available on the
-terminal.</li>
-<li><code>always</code>: Always display colors.</li>
-<li><code>never</code>: Never display colors.</li>
+<li><code>auto</code>（默认）：自动检测终端是否支持颜色。</li>
+<li><code>always</code>：始终显示颜色。</li>
+<li><code>never</code>：从不显示颜色。</li>
 </ul>
-<p>May also be specified with the <code>term.color</code>
-<a href="../reference/config.html">config value</a>.</p>
+<p>也可通过 <code>term.color</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 </dl>
 
-### Manifest Options
+### Manifest 选项
 
 <dl>
 <dt class="option-term" id="option-cargo-metadata---manifest-path"><a class="option-anchor" href="#option-cargo-metadata---manifest-path"><code>--manifest-path</code> <em>path</em></a></dt>
-<dd class="option-desc"><p>Path to the <code>Cargo.toml</code> file. By default, Cargo searches for the
-<code>Cargo.toml</code> file in the current directory or any parent directory.</p>
+<dd class="option-desc"><p><code>Cargo.toml</code> 文件路径。默认情况下，Cargo 会在当前目录及其父目录中搜索
+<code>Cargo.toml</code>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---locked"><a class="option-anchor" href="#option-cargo-metadata---locked"><code>--locked</code></a></dt>
-<dd class="option-desc"><p>Asserts that the exact same dependencies and versions are used as when the
-existing <code>Cargo.lock</code> file was originally generated. Cargo will exit with an
-error when either of the following scenarios arises:</p>
+<dd class="option-desc"><p>断言必须使用与现有 <code>Cargo.lock</code> 初次生成时完全一致的依赖与版本。
+出现以下任一情况时 Cargo 会报错退出：</p>
 <ul>
-<li>The lock file is missing.</li>
-<li>Cargo attempted to change the lock file due to a different dependency resolution.</li>
+<li>锁文件缺失。</li>
+<li>因依赖解析不同，Cargo 尝试修改锁文件。</li>
 </ul>
-<p>It may be used in environments where deterministic builds are desired,
-such as in CI pipelines.</p>
+<p>可用于追求确定性构建的环境，例如 CI 流水线。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---offline"><a class="option-anchor" href="#option-cargo-metadata---offline"><code>--offline</code></a></dt>
-<dd class="option-desc"><p>Prevents Cargo from accessing the network for any reason. Without this
-flag, Cargo will stop with an error if it needs to access the network and
-the network is not available. With this flag, Cargo will attempt to
-proceed without the network if possible.</p>
-<p>Beware that this may result in different dependency resolution than online
-mode. Cargo will restrict itself to crates that are downloaded locally, even
-if there might be a newer version as indicated in the local copy of the index.
-See the <a href="cargo-fetch.html">cargo-fetch(1)</a> command to download dependencies before going
-offline.</p>
-<p>May also be specified with the <code>net.offline</code> <a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>阻止 Cargo 以任何理由访问网络。未设置该标志时，如果 Cargo 需要访问网络但网络
+不可用，会直接报错。设置后，Cargo 会在可能情况下尝试离线继续。</p>
+<p>注意，这可能导致与在线模式不同的依赖解析结果。Cargo 会限制为仅使用本地已下载
+crate，即便本地索引副本显示有更新版本。
+可先用 <a href="cargo-fetch.html">cargo-fetch(1)</a> 下载依赖，再转入离线。</p>
+<p>也可通过 <code>net.offline</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---frozen"><a class="option-anchor" href="#option-cargo-metadata---frozen"><code>--frozen</code></a></dt>
-<dd class="option-desc"><p>Equivalent to specifying both <code>--locked</code> and <code>--offline</code>.</p>
+<dd class="option-desc"><p>等价于同时指定 <code>--locked</code> 与 <code>--offline</code>。</p>
 </dd>
 
 
 </dl>
 
-### Common Options
+### 通用选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-metadata-+toolchain"><a class="option-anchor" href="#option-cargo-metadata-+toolchain"><code>+</code><em>toolchain</em></a></dt>
-<dd class="option-desc"><p>If Cargo has been installed with rustup, and the first argument to <code>cargo</code>
-begins with <code>+</code>, it will be interpreted as a rustup toolchain name (such
-as <code>+stable</code> or <code>+nightly</code>).
-See the <a href="https://rust-lang.github.io/rustup/overrides.html">rustup documentation</a>
-for more information about how toolchain overrides work.</p>
+<dd class="option-desc"><p>如果 Cargo 通过 rustup 安装，且 <code>cargo</code> 的第一个参数以 <code>+</code> 开头，
+则会被解释为 rustup 工具链名称（如 <code>+stable</code> 或 <code>+nightly</code>）。
+更多覆盖规则见 <a href="https://rust-lang.github.io/rustup/overrides.html">rustup 文档</a>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata---config"><a class="option-anchor" href="#option-cargo-metadata---config"><code>--config</code> <em>KEY=VALUE</em> or <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Overrides a Cargo configuration value. The argument should be in TOML syntax of <code>KEY=VALUE</code>,
-or provided as a path to an extra configuration file. This flag may be specified multiple times.
-See the <a href="../reference/config.html#command-line-overrides">command-line overrides section</a> for more information.</p>
+<dd class="option-desc"><p>覆盖 Cargo 配置值。参数应为 TOML 语法的 <code>KEY=VALUE</code>，
+或额外配置文件路径。此标志可多次指定。
+更多信息见<a href="../reference/config.html#command-line-overrides">命令行覆盖</a>章节。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata--C"><a class="option-anchor" href="#option-cargo-metadata--C"><code>-C</code> <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Changes the current working directory before executing any specified operations. This affects
-things like where cargo looks by default for the project manifest (<code>Cargo.toml</code>), as well as
-the directories searched for discovering <code>.cargo/config.toml</code>, for example. This option must
-appear before the command name, for example <code>cargo -C path/to/my-project build</code>.</p>
-<p>This option is only available on the <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly
-channel</a> and
-requires the <code>-Z unstable-options</code> flag to enable (see
-<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>).</p>
+<dd class="option-desc"><p>在执行任何指定操作前先切换当前工作目录。这会影响 cargo 默认查找项目
+manifest（<code>Cargo.toml</code>）的位置，以及发现 <code>.cargo/config.toml</code> 时搜索的目录等。
+该选项必须出现在命令名之前，例如 <code>cargo -C path/to/my-project metadata</code>。</p>
+<p>该选项仅在 <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly channel</a>
+可用，并需要 `-Z unstable-options` 启用（见
+<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>）。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata--h"><a class="option-anchor" href="#option-cargo-metadata--h"><code>-h</code></a></dt>
 <dt class="option-term" id="option-cargo-metadata---help"><a class="option-anchor" href="#option-cargo-metadata---help"><code>--help</code></a></dt>
-<dd class="option-desc"><p>Prints help information.</p>
+<dd class="option-desc"><p>打印帮助信息。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-metadata--Z"><a class="option-anchor" href="#option-cargo-metadata--Z"><code>-Z</code> <em>flag</em></a></dt>
-<dd class="option-desc"><p>Unstable (nightly-only) flags to Cargo. Run <code>cargo -Z help</code> for details.</p>
+<dd class="option-desc"><p>传递给 Cargo 的不稳定（仅 nightly）标志。运行 <code>cargo -Z help</code> 查看详情。</p>
 </dd>
 
 
 </dl>
 
-## ENVIRONMENT
+## 环境
 
-See [the reference](../reference/environment-variables.html) for
-details on environment variables that Cargo reads.
+Cargo 读取的环境变量详情见[参考文档](../reference/environment-variables.html)。
 
-## EXIT STATUS
+## 退出状态
 
-* `0`: Cargo succeeded.
-* `101`: Cargo failed to complete.
+* `0`：Cargo 执行成功。
+* `101`：Cargo 未能完成。
 
-## EXAMPLES
+## 示例
 
-1. Output JSON about the current package:
+1. 输出当前 package 的 JSON 元数据：
 
        cargo metadata --format-version=1
 
-## SEE ALSO
+## 另请参阅
 
 [cargo(1)](cargo.html), [cargo-pkgid(1)](cargo-pkgid.html), [Package ID Specifications], [JSON messages]
 

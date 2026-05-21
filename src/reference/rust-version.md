@@ -1,7 +1,6 @@
-# Rust Version
+﻿# Rust 版本
 
-The `rust-version` field is an optional key that tells cargo what version of the
-Rust toolchain you support for your package.
+`rust-version` 字段是一个可选键，用于告诉 Cargo 你的 package 支持哪个 Rust 工具链版本。
 
 ```toml
 [package]
@@ -9,157 +8,162 @@ Rust toolchain you support for your package.
 rust-version = "1.56"
 ```
 
-The Rust version must be a bare version number with at least one component; it
-cannot include semver operators or pre-release identifiers. Compiler pre-release
-identifiers such as -nightly will be ignored while checking the Rust version.
+Rust 版本必须是纯版本号，且至少包含一个组件；
+不能包含 semver 运算符或预发布标识。
+检查 Rust 版本时会忽略编译器预发布标识（如 `-nightly`）。
 
-> **MSRV:** Respected as of 1.56
+> **MSRV:** 自 1.56 起受支持
 
-## Uses
+## 用途
 
-**Diagnostics:**
+**诊断：**
 
-When your package is compiled on an unsupported toolchain, Cargo will report that as an error to the user. This makes the support expectations clear and avoids reporting a less direct diagnostic like invalid syntax or missing functionality
-in the standard library. This affects all [Cargo targets](cargo-targets.md) in the
-package, including binaries, examples, test suites, benchmarks, etc.
-A user can opt-in to an unsupported build of a package with the `--ignore-rust-version` flag.
+当你的 package 在不受支持的工具链上编译时，Cargo 会向用户报错。
+这能明确支持范围，避免只看到“语法无效”或“标准库缺功能”之类不够直接的报错。
+它影响 package 中所有 [Cargo targets](cargo-targets.md)，
+包括二进制、示例、测试套件、基准等。
+用户可通过 `--ignore-rust-version` 显式选择继续构建不受支持版本。
 
 
-**Development aid:**
+**开发辅助：**
 
-`cargo add` will auto-select the dependency's version requirement to be the latest version compatible with your `rust-version`.
-If that isn't the latest version, `cargo add` will inform users so they can make the choice on whether to keep it or update your `rust-version`.
+`cargo add` 会自动为依赖选择与当前 `rust-version` 兼容的最新版本要求。
+如果这不是最新版本，`cargo add` 会提示用户，
+让用户决定保留该选择还是升级你的 `rust-version`。
 
-The [resolver](resolver.md#rust-version) may take Rust version into account when picking dependencies.
+[resolver](resolver.md#rust-version) 在选择依赖时也可能考虑 Rust 版本。
 
-Other tools may also take advantage of it, like `cargo clippy`'s
-[`incompatible_msrv` lint](https://rust-lang.github.io/rust-clippy/stable/index.html#incompatible_msrv).
+其他工具也可能利用该字段，例如 `cargo clippy` 的
+[`incompatible_msrv` lint](https://rust-lang.github.io/rust-clippy/stable/index.html#incompatible_msrv)。
 
-> **Note:** The `rust-version` may be ignored using the `--ignore-rust-version` option.
+> **注意：** 可通过 `--ignore-rust-version` 忽略 `rust-version`。
 
-## Support Expectations
+## 支持预期
 
-These are general expectations; some packages may document when they do not follow these.
+以下是一般预期；部分 package 可能在文档中声明不遵循其中某些项。
 
-**Complete:**
+**完整性（Complete）：**
 
-All functionality, including binaries and API, are available on the supported Rust versions under every [feature](features.md).
+在所有受支持 Rust 版本下、所有 [feature](features.md) 组合中，
+包括二进制与 API 在内的全部功能都可用。
 
-**Verified:**
+**已验证（Verified）：**
 
-A package's functionality is verified on its supported Rust versions, including automated testing.
-See also our
-[Rust version CI guide](../guide/continuous-integration.md#verifying-rust-version).
+package 功能已在其声明支持的 Rust 版本上验证，包括自动化测试。
+另见
+[Rust 版本 CI 指南](../guide/continuous-integration.md#verifying-rust-version)。
 
-**Patchable:**
+**可打补丁（Patchable）：**
 
-When licenses allow it,
-users can [override their local dependency](overriding-dependencies.md) with a fork of your package.
-In this situation, Cargo may load the entire workspace for the patched dependency which should work on the supported Rust versions, even if other packages in the workspace have different supported Rust versions.
+在许可证允许时，
+用户应能通过 [覆盖本地依赖](overriding-dependencies.md)
+指向你的 package 的 fork。
+此时 Cargo 可能会加载该依赖的整个 workspace，
+即使同一 workspace 里其他 package 的支持 Rust 版本不同，
+也应保证在声明支持的 Rust 版本上可工作。
 
-**Dependency Support:**
+**依赖支持（Dependency Support）：**
 
-In support of the above,
-it is expected that each dependency's version-requirement supports at least one version compatible with your `rust-version`.
-However,
-it is **not** expected that the dependency specification excludes versions incompatible with your `rust-version`.
-In fact, supporting both allows you to balance the needs of users that support older Rust versions with those that don't.
+为满足上述目标，
+通常预期每个依赖的版本要求至少支持一个与你 `rust-version` 兼容的版本。
+但**不要求**依赖声明必须排除所有不兼容你 `rust-version` 的版本。
+实际上，同时兼容两类用户（支持旧 Rust 与不支持旧 Rust）往往更有价值。
 
-## Setting and Updating Rust Version
+## 设置与更新 Rust 版本
 
-What Rust versions to support is a trade off between
-- Costs for the maintainer in not using newer features of the Rust toolchain or their dependencies
-- Costs to users who would benefit from a package using newer features of a toolchain, e.g. reducing build times by migrating to a feature in the standard library from a polyfill
-- Availability of a package to users supporting older Rust versions
+支持哪些 Rust 版本是以下因素之间的权衡：
+- 维护者成本：无法使用更新工具链或依赖的新特性
+- 用户成本：若 package 不能利用新工具链特性，会失去收益（例如用标准库新特性替代 polyfill 以缩短构建时间）
+- 对仍使用旧 Rust 用户的可用性
 
-> **Note:** [Changing `rust-version`](semver.md#env-new-rust) is assumed to be a minor incompatibility
+> **注意：** [修改 `rust-version`](semver.md#env-new-rust) 被视为轻微不兼容
 
-> **Recommendation:** Choose a policy for what Rust versions to support and when that is changed so users can compare it with their own policy and,
-> if it isn't compatible,
-> decide whether the loss of general improvements or the risk of a blocking bug that won't be fixed is acceptable or not.
+> **建议：** 制定并公开你的 Rust 版本支持策略，以及何时调整。
+> 用户可据此与自己的策略比较，
+> 若不兼容，再决定是接受功能改进损失，还是接受潜在阻塞性 bug 无法修复的风险。
 >
-> The simplest policy to support is to always use the latest Rust version.
+> 最简单可维护的策略是始终使用最新 Rust 版本。
 >
-> Depending on your risk profile, the next simplest approach is to continue to support old major or minor versions of your package that support older Rust versions.
+> 根据风险偏好，更稳妥的次简策略是继续维护支持旧 Rust 的旧主/次版本分支。
 
-### Selecting supported Rust versions
+### 选择支持的 Rust 版本
 
-Users of your package are most likely to track their supported Rust versions to:
-- Their Rust toolchain vendor's support policy, e.g. The Rust Project or a Linux distribution
-  - Note: the Rust Project only offers bug fixes and security updates for the latest version.
-- A fixed schedule for users to re-verify their packages with the new toolchain, e.g. the first release of the year, every 5 releases.
+你的用户很可能按以下方式跟踪可支持的 Rust 版本：
+- 跟随其 Rust 工具链发行方的支持策略，例如 Rust 项目或 Linux 发行版
+  - 注意：Rust 项目只为最新版本提供 bug 修复和安全更新。
+- 按固定节奏重新验证包与新工具链兼容性，例如每年首个版本、每 5 个版本一次
 
-In addition, users are unlikely to be using the new Rust version immediately but need time to notice and re-verify or might not be aligned on the exact same schedule..
+此外，用户通常不会立即使用新 Rust 版本，
+他们需要时间发现并完成再验证，也可能与他人不在同一升级节奏。
 
-Example version policies:
-- "N-2", meaning "latest version with a 2 release grace window for updating"
-- Every even release with a 2 release grace window for updating
-- Every version from this calendar year with a one year grace window for updating
+示例策略：
+- “N-2”：即“跟随最新版本，并给 2 个发布版本的升级宽限”
+- 每个偶数版本，并给 2 个发布版本宽限
+- 支持本日历年内的所有版本，并给 1 年升级宽限
 
-> **Note:** To find the minimum `rust-version` compatible with your project as-is, you can use third-party tools like [`cargo-msrv`](https://crates.io/crates/cargo-msrv).
+> **注意：** 若要找出当前项目可兼容的最低 `rust-version`，
+> 可使用第三方工具如 [`cargo-msrv`](https://crates.io/crates/cargo-msrv)。
 
-### Update timeline
+### 更新时间线
 
-When your policy specifies you no longer need to support a Rust version, you can update `rust-version` immediately or when needed.
+当你的策略表明某 Rust 版本不再需要支持时，
+可立即更新 `rust-version`，也可按需更新。
 
-By allowing `rust-version` to drift from your policy,
-you offer users more of a grace window for upgrading.
-However, this is too unpredictable to be relied on for aligning with the Rust version users track.
+让 `rust-version` 相对策略滞后，可以给用户更多升级缓冲。
+但这种滞后不可预测，无法作为用户与自身版本策略对齐的可靠依据。
 
-The further `rust-version` drifts from your specified policy,
-the more likely users are to infer a policy you did not intend,
-leading to frustration at the unmet expectations.
+`rust-version` 与既定策略偏离越大，
+用户越可能推断出你本无意表达的策略，最终因预期不符而受挫。
 
-When drift is allowed,
-there is the question of what is "justifiable enough" to drop supported Versions.
-Each person can come to a reasonably different justification;
-working through that discussion can be frustrating for the involved parties.
-This will disempower those who would want to avoid that type of conflict,
-which is particularly the case for new or casual contributors who either
-feel that they are not in a position to raise the question or
-that the conflict may hurt the chance of their change being merged.
+若允许偏离，就会出现“什么理由足以放弃某支持版本”的问题。
+每个人都可能给出不同且合理的判断，
+围绕此讨论常常让相关参与者感到挫败。
+这会削弱那些希望避免此类冲突的人，
+尤其是新贡献者或偶发贡献者，他们可能觉得自己不适合提出该问题，
+或担心冲突影响其改动合并机会。
 
-### Multiple Policies in a Workspace
+### 一个 Workspace 中的多策略
 
-Cargo allows supporting multiple policies within one workspace.
+Cargo 允许在一个 workspace 内支持多种策略。
 
-Verifying specific packages under specific Rust versions can get complicated.
-Tools like [`cargo-hack`](https://crates.io/crates/cargo-hack) can help.
+在特定 Rust 版本下验证特定 package 可能较复杂。
+可借助 [`cargo-hack`](https://crates.io/crates/cargo-hack) 等工具。
 
-For any dependency shared across policies,
-the lowest common versions must be used as Cargo
-[unifies SemVer-compatible versions](resolver.md#semver-compatibility),
-potentially limiting access to features of the shared dependency for the workspace member with the higher `rust-version`.
+对跨策略共享的依赖，必须使用最低公共版本，因为 Cargo 会
+[统一 SemVer 兼容版本](resolver.md#semver-compatibility)，
+这可能限制高 `rust-version` 成员对共享依赖新特性的使用。
 
-To allow users to patch a dependency on one of your workspace members,
-every package in the workspace would need to be loadable in the oldest Rust version supported by the workspace.
+若要让用户 patch 某个 workspace 成员的依赖，
+workspace 中每个 package 都需要能在该 workspace 支持的最旧 Rust 版本上被加载。
 
-When using [`incompatible-rust-versions = "fallback"`](config.md#resolverincompatible-rust-versions),
-the Rust version of one package can affect dependency versions selected for another package with a different Rust version.
-See the [resolver](resolver.md#rust-version) chapter for more details.
+当使用 [`incompatible-rust-versions = "fallback"`](config.md#resolverincompatible-rust-versions) 时，
+某个 package 的 Rust 版本会影响另一个 Rust 版本不同的 package 的依赖选择。
+详见 [resolver](resolver.md#rust-version) 章节。
 
-### One or More Policies
+### 单一策略或多策略
 
-One way to mitigate the downsides of supporting older Rust versions is to apply your policy to older major or minor versions of your package that you continue to support.
-You likely still need a policy for what Rust versions the development branch support compared to the release branches for those major or minor versions.
+缓解支持旧 Rust 成本的一种方式是：
+将你的策略应用到仍在维护的旧主/次版本分支。
+你通常仍需要定义策略，说明开发分支相对于这些发布分支支持哪些 Rust 版本。
 
-Only updating the development branch when "needed"' can help reduce the number of supported release branches.
+仅在“需要时”更新开发分支，有助于减少需维护的发布分支数量。
 
-There is the question of what can be backported into these release branches.
-By backporting new functionality between minor versions,
-the next available version would be missing it which could be considered a breaking change, violating SemVer.
-Backporting changes also comes with the risk of introducing bugs.
+这还涉及“哪些改动可以回移（backport）到发布分支”的问题。
+若在次版本间回移新功能，下一个可用版本若缺少该功能，
+可能被视为破坏性变化，违反 SemVer。
+回移本身也存在引入 bug 的风险。
 
-Supporting older versions comes at a cost.
-This cost is dependent on the risk and impact of bugs within the package and what is acceptable for backporting.
-Creating the release branches on-demand and putting the backport burden on the community are ways to balance this cost.
+支持旧版本有成本。
+该成本取决于 package 中 bug 的风险与影响，以及可接受的回移范围。
+按需创建发布分支，并让社区承担一部分回移工作，
+是平衡成本的方式。
 
-There is not yet a way for dependency management tools to report that a non-latest version is still supported,
-shifting the responsibility to users to notice this in documentation.
+目前依赖管理工具还不能直接报告“非最新版本仍受支持”，
+因此用户仍需从文档中自行识别。
 
-For example, a Rust version support policy could look like:
-- The development branch tracks to the latest stable release from the Rust Project, updated when needed
-  - The minor version will be raised when changing `rust-version`
-- The project supports every version for this calendar year, with another year grace window
-  - The last minor version that supports a supported Rust version will receive community provided bug fixes
-  - Fixes must be backported to all supported minor releases between the development branch and the needed supported Rust version
+例如，一个 Rust 版本支持策略可以是：
+- 开发分支跟踪 Rust 项目最新稳定版，按需更新
+  - 每次提升 `rust-version` 时提升次版本号
+- 项目支持本日历年的所有 Rust 版本，并额外给 1 年宽限
+  - 仍支持某 Rust 版本的最后一个次版本，会接收社区提供的 bug 修复
+  - 修复必须回移到开发分支与所需受支持 Rust 版本之间的所有受支持次版本

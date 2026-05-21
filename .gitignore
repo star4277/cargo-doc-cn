@@ -1,2 +1,4 @@
 # Ignore built book
 book/
+.idea/
+.vscode/

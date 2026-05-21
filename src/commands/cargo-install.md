@@ -1,483 +1,457 @@
-# cargo-install(1)
-## NAME
+﻿# cargo-install(1)
+## 名称
 
-cargo-install --- Build and install a Rust binary
+cargo-install --- 构建并安装 Rust 二进制
 
-## SYNOPSIS
+## 概要
 
 `cargo install` [_options_] _crate_[@_version_]...\
 `cargo install` [_options_] `--path` _path_\
 `cargo install` [_options_] `--git` _url_ [_crate_...]\
 `cargo install` [_options_] `--list`
 
-## DESCRIPTION
+## 描述
 
-This command manages Cargo's local set of installed binary crates. Only
-packages which have executable `[[bin]]` or `[[example]]` targets can be
-installed, and all executables are installed into the installation root's
-`bin` folder. By default only binaries, not examples, are installed.
+该命令用于管理 Cargo 本地已安装的二进制 crate 集合。
+只有包含可执行 `[[bin]]` 或 `[[example]]` 目标的 package 才能安装，
+所有可执行文件会安装到安装根目录的 `bin` 文件夹。
+默认只安装 binaries，不安装 examples。
 
-The installation root is determined, in order of precedence:
+安装根目录优先级如下：
 
-- `--root` option
-- `CARGO_INSTALL_ROOT` environment variable
-- `install.root` Cargo [config value](../reference/config.html)
-- `CARGO_HOME` environment variable
+- `--root` 选项
+- `CARGO_INSTALL_ROOT` 环境变量
+- `install.root` Cargo [配置值](../reference/config.html)
+- `CARGO_HOME` 环境变量
 - `$HOME/.cargo`
 
-There are multiple sources from which a crate can be installed. The default
-source location is crates.io but the `--git`, `--path`, and `--registry` flags
-can change this source. If the source contains more than one package (such as
-crates.io or a git repository with multiple crates) the _crate_ argument is
-required to indicate which crate should be installed.
+crate 可从多个来源安装。
+默认来源是 crates.io，但可通过 `--git`、`--path`、`--registry` 改变来源。
+如果来源中包含多个 package（例如 crates.io 或含多个 crate 的 git 仓库），
+则必须通过 _crate_ 参数指定要安装的 crate。
 
-Crates from crates.io can optionally specify the version they wish to install
-via the `--version` flags, and similarly packages from git repositories can
-optionally specify the branch, tag, or revision that should be installed. If a
-crate has multiple binaries, the `--bin` argument can selectively install only
-one of them, and if you'd rather install examples the `--example` argument can
-be used as well.
+来自 crates.io 的 crate 可通过 `--version` 指定安装版本；
+来自 git 仓库的 package 可通过分支、tag 或 revision 指定。
+若 crate 含多个二进制，可用 `--bin` 选择其中一个；
+若想安装示例，可用 `--example`。
 
-If the package is already installed, Cargo will reinstall it if the installed
-version does not appear to be up-to-date. If any of the following values
-change, then Cargo will reinstall the package:
+若 package 已安装，且当前安装看起来不是最新状态，Cargo 会重新安装。
+当以下任一项变化时，Cargo 会重装：
 
-- The package version and source.
-- The set of binary names installed.
-- The chosen features.
-- The profile (`--profile`).
-- The target (`--target`).
+- package 版本与来源。
+- 已安装二进制名称集合。
+- 所选 features。
+- profile（`--profile`）。
+- target（`--target`）。
 
-Installing with `--path` will always build and install, unless there are
-conflicting binaries from another package. The `--force` flag may be used to
-force Cargo to always reinstall the package.
+使用 `--path` 安装时通常总会构建并安装，
+除非与其他 package 的二进制产生冲突。
+可用 `--force` 强制总是重装。
 
-If the source is crates.io or `--git` then by default the crate will be built
-in a temporary target directory. To avoid this, the target directory can be
-specified by setting the `CARGO_TARGET_DIR` environment variable to a
-path. In particular, this can be useful for caching build artifacts on
-continuous integration systems.
+若来源是 crates.io 或 `--git`，默认会在临时 target 目录构建。
+如需避免，可设置环境变量 `CARGO_TARGET_DIR` 指向指定路径。
+这在 CI 中缓存构建产物时尤其有用。
 
-### Dealing with the Lockfile
+### Lockfile 处理
 
-By default, the `Cargo.lock` file that is included with the package will be
-ignored. This means that Cargo will recompute which versions of dependencies
-to use, possibly using newer versions that have been released since the
-package was published. The `--locked` flag can be used to force Cargo to use
-the packaged `Cargo.lock` file if it is available. This may be useful for
-ensuring reproducible builds, to use the exact same set of dependencies that
-were available when the package was published. It may also be useful if a
-newer version of a dependency is published that no longer builds on your
-system, or has other problems. The downside to using `--locked` is that you
-will not receive any fixes or updates to any dependency. Note that Cargo did
-not start publishing `Cargo.lock` files until version 1.37, which means
-packages published with prior versions will not have a `Cargo.lock` file
-available.
+默认会忽略 package 内附带的 `Cargo.lock`。
+这意味着 Cargo 会重新计算依赖版本，可能使用发布后出现的较新版本。
+可使用 `--locked` 强制 Cargo 使用打包内 `Cargo.lock`（若存在）。
+这有助于可复现构建，使用发布时同一组依赖版本。
+若某依赖新版本在你的系统上无法构建或有其他问题，也有帮助。
+但缺点是你将收不到依赖的后续修复与更新。
+注意 Cargo 从 1.37 起才开始随发布包携带 `Cargo.lock`，
+更早版本发布的包可能没有该文件。
 
-### Configuration Discovery
+### 配置发现
 
-This command operates on system or user level, not project level.
-This means that the local [configuration discovery] is ignored.
-Instead, the configuration discovery begins at `$CARGO_HOME/config.toml`. 
-If the package is installed with `--path $PATH`, the local configuration 
-will be used, beginning discovery at `$PATH/.cargo/config.toml`.
+该命令在系统/用户层级工作，而非项目层级。
+这意味着会忽略本地的[配置发现]。
+配置发现会从 `$CARGO_HOME/config.toml` 开始。
+若使用 `--path $PATH` 安装 package，
+则会使用本地配置，从 `$PATH/.cargo/config.toml` 开始发现。
 
-[configuration discovery]: ../reference/config.html#hierarchical-structure
+[配置发现]: ../reference/config.html#hierarchical-structure
 
-## OPTIONS
+## 选项
 
-### Install Options
+### Install 选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-install---vers"><a class="option-anchor" href="#option-cargo-install---vers"><code>--vers</code> <em>version</em></a></dt>
 <dt class="option-term" id="option-cargo-install---version"><a class="option-anchor" href="#option-cargo-install---version"><code>--version</code> <em>version</em></a></dt>
-<dd class="option-desc"><p>Specify a version to install. This may be a <a href="../reference/specifying-dependencies.html">version
-requirement</a>, like <code>~1.2</code>, to have Cargo
-select the newest version from the given requirement. If the version does not
-have a requirement operator (such as <code>^</code> or <code>~</code>), then it must be in the form
-<em>MAJOR.MINOR.PATCH</em>, and will install exactly that version; it is <em>not</em>
-treated as a caret requirement like Cargo dependencies are.</p>
+<dd class="option-desc"><p>指定要安装的版本。
+可使用<a href="../reference/specifying-dependencies.html">版本要求</a>（如 <code>~1.2</code>），
+让 Cargo 选择满足条件的最新版本。
+若版本不含要求运算符（如 <code>^</code>、<code>~</code>），
+则必须是 <em>MAJOR.MINOR.PATCH</em> 形式，并安装“精确版本”；
+它<em>不会</em>像普通依赖那样按 caret 规则解释。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---git"><a class="option-anchor" href="#option-cargo-install---git"><code>--git</code> <em>url</em></a></dt>
-<dd class="option-desc"><p>Git URL to install the specified crate from.</p>
+<dd class="option-desc"><p>从指定 git URL 安装 crate。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---branch"><a class="option-anchor" href="#option-cargo-install---branch"><code>--branch</code> <em>branch</em></a></dt>
-<dd class="option-desc"><p>Branch to use when installing from git.</p>
+<dd class="option-desc"><p>从 git 安装时使用的分支。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---tag"><a class="option-anchor" href="#option-cargo-install---tag"><code>--tag</code> <em>tag</em></a></dt>
-<dd class="option-desc"><p>Tag to use when installing from git.</p>
+<dd class="option-desc"><p>从 git 安装时使用的 tag。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---rev"><a class="option-anchor" href="#option-cargo-install---rev"><code>--rev</code> <em>sha</em></a></dt>
-<dd class="option-desc"><p>Specific commit to use when installing from git.</p>
+<dd class="option-desc"><p>从 git 安装时使用的指定提交。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---path"><a class="option-anchor" href="#option-cargo-install---path"><code>--path</code> <em>path</em></a></dt>
-<dd class="option-desc"><p>Filesystem path to local crate to install from.</p>
+<dd class="option-desc"><p>从本地 crate 路径安装。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---list"><a class="option-anchor" href="#option-cargo-install---list"><code>--list</code></a></dt>
-<dd class="option-desc"><p>List all installed packages and their versions.</p>
+<dd class="option-desc"><p>列出所有已安装 package 及版本。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--n"><a class="option-anchor" href="#option-cargo-install--n"><code>-n</code></a></dt>
 <dt class="option-term" id="option-cargo-install---dry-run"><a class="option-anchor" href="#option-cargo-install---dry-run"><code>--dry-run</code></a></dt>
-<dd class="option-desc"><p>(unstable) Perform all checks without installing.</p>
+<dd class="option-desc"><p>（不稳定）执行所有检查但不安装。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--f"><a class="option-anchor" href="#option-cargo-install--f"><code>-f</code></a></dt>
 <dt class="option-term" id="option-cargo-install---force"><a class="option-anchor" href="#option-cargo-install---force"><code>--force</code></a></dt>
-<dd class="option-desc"><p>Force overwriting existing crates or binaries. This can be used if a package
-has installed a binary with the same name as another package. This is also
-useful if something has changed on the system that you want to rebuild with,
-such as a newer version of <code>rustc</code>.</p>
+<dd class="option-desc"><p>强制覆盖已有 crate 或二进制。
+当某 package 安装了与其他 package 同名二进制时可使用。
+当系统环境变化（例如 `rustc` 升级）需要重建时也有用。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---no-track"><a class="option-anchor" href="#option-cargo-install---no-track"><code>--no-track</code></a></dt>
-<dd class="option-desc"><p>By default, Cargo keeps track of the installed packages with a metadata file
-stored in the installation root directory. This flag tells Cargo not to use or
-create that file. With this flag, Cargo will refuse to overwrite any existing
-files unless the <code>--force</code> flag is used. This also disables Cargo’s ability to
-protect against multiple concurrent invocations of Cargo installing at the
-same time.</p>
+<dd class="option-desc"><p>默认情况下 Cargo 会在安装根目录维护元数据文件以跟踪已安装包。
+该参数会禁止使用或创建该文件。
+启用后，除非使用 <code>--force</code>，否则 Cargo 会拒绝覆盖任何已有文件。
+同时也会禁用 Cargo 对“并发安装调用冲突”的保护能力。</p>
 </dd>
 
 
-<dt class="option-term" id="option-cargo-install---bin"><a class="option-anchor" href="#option-cargo-install---bin"><code>--bin</code> <em>name</em>…</a></dt>
-<dd class="option-desc"><p>Install only the specified binary.</p>
+<dt class="option-term" id="option-cargo-install---bin"><a class="option-anchor" href="#option-cargo-install---bin"><code>--bin</code> <em>name</em></a></dt>
+<dd class="option-desc"><p>仅安装指定二进制。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---bins"><a class="option-anchor" href="#option-cargo-install---bins"><code>--bins</code></a></dt>
-<dd class="option-desc"><p>Install all binaries. This is the default behavior.</p>
+<dd class="option-desc"><p>安装全部二进制。这是默认行为。</p>
 </dd>
 
 
-<dt class="option-term" id="option-cargo-install---example"><a class="option-anchor" href="#option-cargo-install---example"><code>--example</code> <em>name</em>…</a></dt>
-<dd class="option-desc"><p>Install only the specified example.</p>
+<dt class="option-term" id="option-cargo-install---example"><a class="option-anchor" href="#option-cargo-install---example"><code>--example</code> <em>name</em></a></dt>
+<dd class="option-desc"><p>仅安装指定示例。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---examples"><a class="option-anchor" href="#option-cargo-install---examples"><code>--examples</code></a></dt>
-<dd class="option-desc"><p>Install all examples.</p>
+<dd class="option-desc"><p>安装全部示例。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---root"><a class="option-anchor" href="#option-cargo-install---root"><code>--root</code> <em>dir</em></a></dt>
-<dd class="option-desc"><p>Directory to install packages into.</p>
+<dd class="option-desc"><p>安装目标目录。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---registry"><a class="option-anchor" href="#option-cargo-install---registry"><code>--registry</code> <em>registry</em></a></dt>
-<dd class="option-desc"><p>Name of the registry to use. Registry names are defined in <a href="../reference/config.html">Cargo config
-files</a>. If not specified, the default registry is used,
-which is defined by the <code>registry.default</code> config key which defaults to
-<code>crates-io</code>.</p>
+<dd class="option-desc"><p>要使用的注册表名称。注册表名称定义在 <a href="../reference/config.html">Cargo 配置文件</a>中。
+若未指定，则使用默认注册表，该默认值由 <code>registry.default</code> 配置键决定，
+其默认值是 <code>crates-io</code>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---index"><a class="option-anchor" href="#option-cargo-install---index"><code>--index</code> <em>index</em></a></dt>
-<dd class="option-desc"><p>The URL of the registry index to use.</p>
+<dd class="option-desc"><p>要使用的注册表索引 URL。</p>
 </dd>
 
 
 </dl>
 
-### Feature Selection
+### Feature 选择
 
-The feature flags allow you to control which features are enabled. When no
-feature options are given, the `default` feature is activated for every
-selected package.
+Feature 参数可用于控制启用哪些特性。
+当未给出 feature 选项时，所有被选 package 都会启用 `default` feature。
 
-See [the features documentation](../reference/features.html#command-line-feature-options)
-for more details.
+更多细节见
+[features 文档](../reference/features.html#command-line-feature-options)。
 
 <dl>
 
 <dt class="option-term" id="option-cargo-install--F"><a class="option-anchor" href="#option-cargo-install--F"><code>-F</code> <em>features</em></a></dt>
 <dt class="option-term" id="option-cargo-install---features"><a class="option-anchor" href="#option-cargo-install---features"><code>--features</code> <em>features</em></a></dt>
-<dd class="option-desc"><p>Space or comma separated list of features to activate. Features of workspace
-members may be enabled with <code>package-name/feature-name</code> syntax. This flag may
-be specified multiple times, which enables all specified features.</p>
+<dd class="option-desc"><p>要启用的 feature 列表（空格或逗号分隔）。
+可通过 <code>package-name/feature-name</code> 语法启用 workspace 成员的 feature。
+该参数可重复指定，最终会启用所有给出的 feature。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---all-features"><a class="option-anchor" href="#option-cargo-install---all-features"><code>--all-features</code></a></dt>
-<dd class="option-desc"><p>Activate all available features of all selected packages.</p>
+<dd class="option-desc"><p>启用所有已选 package 的全部可用 feature。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---no-default-features"><a class="option-anchor" href="#option-cargo-install---no-default-features"><code>--no-default-features</code></a></dt>
-<dd class="option-desc"><p>Do not activate the <code>default</code> feature of the selected packages.</p>
+<dd class="option-desc"><p>不启用已选 package 的 <code>default</code> feature。</p>
 </dd>
 
 
 </dl>
 
-### Compilation Options
+### 编译选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-install---target"><a class="option-anchor" href="#option-cargo-install---target"><code>--target</code> <em>triple</em></a></dt>
-<dd class="option-desc"><p>Install for the specified target architecture. The default is the host architecture. The general format of the triple is
-<code>&lt;arch&gt;&lt;sub&gt;-&lt;vendor&gt;-&lt;sys&gt;-&lt;abi&gt;</code>.</p>
-<p>Possible values:</p>
+<dd class="option-desc"><p>为指定目标架构安装。默认是主机架构。
+triple 的一般格式为
+<code>&lt;arch&gt;&lt;sub&gt;-&lt;vendor&gt;-&lt;sys&gt;-&lt;abi&gt;</code>。</p>
+<p>可选值：</p>
 <ul>
-<li>Any supported target in <code>rustc --print target-list</code>.</li>
-<li><code>"host-tuple"</code>, which will internally be substituted by the host’s target. This can be particularly useful if you’re cross-compiling some crates, and don’t want to specify your host’s machine as a target (for instance, an <code>xtask</code> in a shared project that may be worked on by many hosts).</li>
-<li>A path to a custom target specification. See <a href="../../rustc/targets/custom.html#custom-target-lookup-path">Custom Target Lookup Path</a> for more information.</li>
+<li><code>rustc --print target-list</code> 中列出的任意支持目标。</li>
+<li><code>"host-tuple"</code>，它会在内部替换为主机目标。
+这在交叉编译部分 crate 时很有用，
+尤其是你不想把当前主机目标显式写入 target 列表时
+（例如共享项目里会被多种主机执行的 <code>xtask</code>）。</li>
+<li>自定义 target 规范文件的路径。更多信息见
+<a href="../../rustc/targets/custom.html#custom-target-lookup-path">Custom Target Lookup Path</a>。</li>
 </ul>
-<p>This may also be specified with the <code>build.target</code> <a href="../reference/config.html">config value</a>.</p>
-<p>Note that specifying this flag makes Cargo run in a different mode where the
-target artifacts are placed in a separate directory. See the
-<a href="../reference/build-cache.html">build cache</a> documentation for more details.</p>
+<p>也可通过 <code>build.target</code> <a href="../reference/config.html">配置值</a> 指定。</p>
+<p>注意：指定此参数会让 Cargo 进入另一种模式，
+目标产物会放到单独目录。
+详情见 <a href="../reference/build-cache.html">build cache</a> 文档。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---target-dir"><a class="option-anchor" href="#option-cargo-install---target-dir"><code>--target-dir</code> <em>directory</em></a></dt>
-<dd class="option-desc"><p>Directory for all generated artifacts and intermediate files. May also be
-specified with the <code>CARGO_TARGET_DIR</code> environment variable, or the
-<code>build.target-dir</code> <a href="../reference/config.html">config value</a>.
-Defaults to a new temporary folder located in the
-temporary directory of the platform.</p>
-<p>When using <code>--path</code>, by default it will use <code>target</code> directory in the workspace
-of the local crate unless <code>--target-dir</code>
-is specified.</p>
+<dd class="option-desc"><p>所有生成产物与中间文件所在目录。
+也可通过环境变量 <code>CARGO_TARGET_DIR</code> 或
+<code>build.target-dir</code> <a href="../reference/config.html">配置值</a> 指定。
+默认会在系统临时目录下创建新的临时文件夹。</p>
+<p>使用 <code>--path</code> 时，默认会使用本地 crate 所在 workspace 的
+<code>target</code> 目录，除非显式指定 <code>--target-dir</code>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---debug"><a class="option-anchor" href="#option-cargo-install---debug"><code>--debug</code></a></dt>
-<dd class="option-desc"><p>Build with the <code>dev</code> profile instead of the <code>release</code> profile.
-See also the <code>--profile</code> option for choosing a specific profile by name.</p>
+<dd class="option-desc"><p>使用 <code>dev</code> profile 构建，而非 <code>release</code> profile。
+若要按名称选择特定 profile，也可使用 <code>--profile</code>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---profile"><a class="option-anchor" href="#option-cargo-install---profile"><code>--profile</code> <em>name</em></a></dt>
-<dd class="option-desc"><p>Install with the given profile.
-See <a href="../reference/profiles.html">the reference</a> for more details on profiles.</p>
+<dd class="option-desc"><p>使用给定 profile 安装。
+更多信息见 <a href="../reference/profiles.html">参考文档</a>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---timings"><a class="option-anchor" href="#option-cargo-install---timings"><code>--timings</code></a></dt>
-<dd class="option-desc"><p>Output information how long each compilation takes, and track concurrency
-information over time.</p>
-<p>A file <code>cargo-timing.html</code> will be written to the <code>target/cargo-timings</code>
-directory at the end of the build. An additional report with a timestamp
-in its filename is also written if you want to look at a previous run.
-These reports are suitable for human consumption only, and do not provide
-machine-readable timing data.</p>
+<dd class="option-desc"><p>输出各编译步骤耗时，以及随时间变化的并发信息。</p>
+<p>构建结束后会在 <code>target/cargo-timings</code> 目录写入
+<code>cargo-timing.html</code>。
+此外还会写入一个文件名带时间戳的报告，便于查看历史运行。
+这些报告仅适合人工阅读，不提供机器可读的时序数据。</p>
 </dd>
 
 
 
 </dl>
 
-### Manifest Options
+### Manifest 选项
 
 <dl>
 <dt class="option-term" id="option-cargo-install---ignore-rust-version"><a class="option-anchor" href="#option-cargo-install---ignore-rust-version"><code>--ignore-rust-version</code></a></dt>
-<dd class="option-desc"><p>Ignore <code>rust-version</code> specification in packages.</p>
+<dd class="option-desc"><p>忽略 package 中的 <code>rust-version</code> 约束。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---locked"><a class="option-anchor" href="#option-cargo-install---locked"><code>--locked</code></a></dt>
-<dd class="option-desc"><p>Asserts that the exact same dependencies and versions are used as when the
-existing <code>Cargo.lock</code> file was originally generated. Cargo will exit with an
-error when either of the following scenarios arises:</p>
+<dd class="option-desc"><p>断言使用与现有 <code>Cargo.lock</code> 初次生成时完全相同的依赖和版本。
+若出现以下任一情况，Cargo 会报错退出：</p>
 <ul>
-<li>The lock file is missing.</li>
-<li>Cargo attempted to change the lock file due to a different dependency resolution.</li>
+<li>锁文件缺失。</li>
+<li>由于依赖解析变化，Cargo 试图修改锁文件。</li>
 </ul>
-<p>It may be used in environments where deterministic builds are desired,
-such as in CI pipelines.</p>
+<p>适用于需要确定性构建的环境，例如 CI 流水线。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---offline"><a class="option-anchor" href="#option-cargo-install---offline"><code>--offline</code></a></dt>
-<dd class="option-desc"><p>Prevents Cargo from accessing the network for any reason. Without this
-flag, Cargo will stop with an error if it needs to access the network and
-the network is not available. With this flag, Cargo will attempt to
-proceed without the network if possible.</p>
-<p>Beware that this may result in different dependency resolution than online
-mode. Cargo will restrict itself to crates that are downloaded locally, even
-if there might be a newer version as indicated in the local copy of the index.
-See the <a href="cargo-fetch.html">cargo-fetch(1)</a> command to download dependencies before going
-offline.</p>
-<p>May also be specified with the <code>net.offline</code> <a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>禁止 Cargo 以任何理由访问网络。
+若不加此参数，在需要访问网络但网络不可用时，Cargo 会报错退出；
+加上此参数后，Cargo 会在可能情况下尝试离线继续执行。</p>
+<p>注意这可能导致与在线模式不同的依赖解析。
+Cargo 只会使用本地已下载的 crate，
+即便本地索引显示存在更新版本也不会获取。
+可在离线前先使用 <a href="cargo-fetch.html">cargo-fetch(1)</a> 下载依赖。</p>
+<p>也可通过 <code>net.offline</code> <a href="../reference/config.html">配置值</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---frozen"><a class="option-anchor" href="#option-cargo-install---frozen"><code>--frozen</code></a></dt>
-<dd class="option-desc"><p>Equivalent to specifying both <code>--locked</code> and <code>--offline</code>.</p>
+<dd class="option-desc"><p>等价于同时指定 <code>--locked</code> 和 <code>--offline</code>。</p>
 </dd>
 
 </dl>
 
-### Miscellaneous Options
+### 其他选项
 
 <dl>
 <dt class="option-term" id="option-cargo-install--j"><a class="option-anchor" href="#option-cargo-install--j"><code>-j</code> <em>N</em></a></dt>
 <dt class="option-term" id="option-cargo-install---jobs"><a class="option-anchor" href="#option-cargo-install---jobs"><code>--jobs</code> <em>N</em></a></dt>
-<dd class="option-desc"><p>Number of parallel jobs to run. May also be specified with the
-<code>build.jobs</code> <a href="../reference/config.html">config value</a>. Defaults to
-the number of logical CPUs. If negative, it sets the maximum number of
-parallel jobs to the number of logical CPUs plus provided value. If
-a string <code>default</code> is provided, it sets the value back to defaults.
-Should not be 0.</p>
+<dd class="option-desc"><p>并行任务数。也可通过 <code>build.jobs</code> <a href="../reference/config.html">配置值</a> 指定。
+默认值为逻辑 CPU 数。
+若为负数，则表示“逻辑 CPU 数 + 给定值”。
+若为字符串 <code>default</code>，则恢复默认值。
+不能为 0。</p>
 </dd>
 
 <dt class="option-term" id="option-cargo-install---keep-going"><a class="option-anchor" href="#option-cargo-install---keep-going"><code>--keep-going</code></a></dt>
-<dd class="option-desc"><p>Build as many crates in the dependency graph as possible, rather than aborting
-the build on the first one that fails to build.</p>
-<p>For example if the current package depends on dependencies <code>fails</code> and <code>works</code>,
-one of which fails to build, <code>cargo install -j1</code> may or may not build the
-one that succeeds (depending on which one of the two builds Cargo picked to run
-first), whereas <code>cargo install -j1 --keep-going</code> would definitely run both
-builds, even if the one run first fails.</p>
+<dd class="option-desc"><p>尽可能构建依赖图中更多 crate，而不是在第一个失败时立即中止。</p>
+<p>例如当前 package 依赖 <code>fails</code> 与 <code>works</code>，其中一个构建失败。
+<code>cargo install -j1</code> 可能会也可能不会构建成功的那个
+（取决于 Cargo 先选择构建哪一个）；
+而 <code>cargo install -j1 --keep-going</code> 一定会尝试两者，
+即便先执行的那个失败。</p>
 </dd>
 
 </dl>
 
-### Display Options
+### 显示选项
 
 <dl>
 <dt class="option-term" id="option-cargo-install--v"><a class="option-anchor" href="#option-cargo-install--v"><code>-v</code></a></dt>
 <dt class="option-term" id="option-cargo-install---verbose"><a class="option-anchor" href="#option-cargo-install---verbose"><code>--verbose</code></a></dt>
-<dd class="option-desc"><p>Use verbose output. May be specified twice for “very verbose” output which
-includes extra output such as dependency warnings and build script output.
-May also be specified with the <code>term.verbose</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>使用详细输出。可重复指定两次以获得“非常详细”输出，
+其中包含依赖警告、构建脚本输出等额外信息。
+也可通过 <code>term.verbose</code>
+<a href="../reference/config.html">配置值</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--q"><a class="option-anchor" href="#option-cargo-install--q"><code>-q</code></a></dt>
 <dt class="option-term" id="option-cargo-install---quiet"><a class="option-anchor" href="#option-cargo-install---quiet"><code>--quiet</code></a></dt>
-<dd class="option-desc"><p>Do not print cargo log messages.
-May also be specified with the <code>term.quiet</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>不打印 cargo 日志消息。
+也可通过 <code>term.quiet</code>
+<a href="../reference/config.html">配置值</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---color"><a class="option-anchor" href="#option-cargo-install---color"><code>--color</code> <em>when</em></a></dt>
-<dd class="option-desc"><p>Control when colored output is used. Valid values:</p>
+<dd class="option-desc"><p>控制何时使用彩色输出。可选值：</p>
 <ul>
-<li><code>auto</code> (default): Automatically detect if color support is available on the
-terminal.</li>
-<li><code>always</code>: Always display colors.</li>
-<li><code>never</code>: Never display colors.</li>
+<li><code>auto</code>（默认）：自动检测终端是否支持颜色。</li>
+<li><code>always</code>：始终显示颜色。</li>
+<li><code>never</code>：从不显示颜色。</li>
 </ul>
-<p>May also be specified with the <code>term.color</code>
-<a href="../reference/config.html">config value</a>.</p>
+<p>也可通过 <code>term.color</code>
+<a href="../reference/config.html">配置值</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---message-format"><a class="option-anchor" href="#option-cargo-install---message-format"><code>--message-format</code> <em>fmt</em></a></dt>
-<dd class="option-desc"><p>The output format for diagnostic messages. Can be specified multiple times
-and consists of comma-separated values. Valid values:</p>
+<dd class="option-desc"><p>诊断信息输出格式。
+可多次指定，值为逗号分隔。可选值：</p>
 <ul>
-<li><code>human</code> (default): Display in a human-readable text format. Conflicts with
-<code>short</code> and <code>json</code>.</li>
-<li><code>short</code>: Emit shorter, human-readable text messages. Conflicts with <code>human</code>
-and <code>json</code>.</li>
-<li><code>json</code>: Emit JSON messages to stdout. See
-<a href="../reference/external-tools.html#json-messages">the reference</a>
-for more details. Conflicts with <code>human</code> and <code>short</code>.</li>
-<li><code>json-diagnostic-short</code>: Ensure the <code>rendered</code> field of JSON messages contains
-the “short” rendering from rustc. Cannot be used with <code>human</code> or <code>short</code>.</li>
-<li><code>json-diagnostic-rendered-ansi</code>: Ensure the <code>rendered</code> field of JSON messages
-contains embedded ANSI color codes for respecting rustc’s default color
-scheme. Cannot be used with <code>human</code> or <code>short</code>.</li>
-<li><code>json-render-diagnostics</code>: Instruct Cargo to not include rustc diagnostics
-in JSON messages printed, but instead Cargo itself should render the
-JSON diagnostics coming from rustc. Cargo’s own JSON diagnostics and others
-coming from rustc are still emitted. Cannot be used with <code>human</code> or <code>short</code>.</li>
+<li><code>human</code>（默认）：人类可读文本格式。与 <code>short</code>、<code>json</code> 冲突。</li>
+<li><code>short</code>：更短的人类可读文本。与 <code>human</code>、<code>json</code> 冲突。</li>
+<li><code>json</code>：向 stdout 输出 JSON 消息。
+详见 <a href="../reference/external-tools.html#json-messages">参考文档</a>。
+与 <code>human</code>、<code>short</code> 冲突。</li>
+<li><code>json-diagnostic-short</code>：确保 JSON 消息中的 <code>rendered</code> 字段
+包含 rustc 的“short”渲染结果。
+不能与 <code>human</code> 或 <code>short</code> 共用。</li>
+<li><code>json-diagnostic-rendered-ansi</code>：确保 JSON 消息中的 <code>rendered</code> 字段
+包含 ANSI 颜色码，以遵循 rustc 默认配色。
+不能与 <code>human</code> 或 <code>short</code> 共用。</li>
+<li><code>json-render-diagnostics</code>：让 Cargo 不再直接包含 rustc 的诊断 JSON，
+而由 Cargo 自身渲染 rustc 诊断。Cargo 自身诊断和其它来自 rustc 的消息仍会输出。
+不能与 <code>human</code> 或 <code>short</code> 共用。</li>
 </ul>
 </dd>
 
 
 </dl>
 
-### Common Options
+### 通用选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-install-+toolchain"><a class="option-anchor" href="#option-cargo-install-+toolchain"><code>+</code><em>toolchain</em></a></dt>
-<dd class="option-desc"><p>If Cargo has been installed with rustup, and the first argument to <code>cargo</code>
-begins with <code>+</code>, it will be interpreted as a rustup toolchain name (such
-as <code>+stable</code> or <code>+nightly</code>).
-See the <a href="https://rust-lang.github.io/rustup/overrides.html">rustup documentation</a>
-for more information about how toolchain overrides work.</p>
+<dd class="option-desc"><p>若 Cargo 通过 rustup 安装，并且传给 <code>cargo</code> 的第一个参数以 <code>+</code> 开头，
+它会被解释为 rustup 工具链名称（例如 <code>+stable</code> 或 <code>+nightly</code>）。
+详情见 <a href="https://rust-lang.github.io/rustup/overrides.html">rustup 文档</a>
+中关于工具链覆盖的说明。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install---config"><a class="option-anchor" href="#option-cargo-install---config"><code>--config</code> <em>KEY=VALUE</em> or <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Overrides a Cargo configuration value. The argument should be in TOML syntax of <code>KEY=VALUE</code>,
-or provided as a path to an extra configuration file. This flag may be specified multiple times.
-See the <a href="../reference/config.html#command-line-overrides">command-line overrides section</a> for more information.</p>
+<dd class="option-desc"><p>覆盖 Cargo 配置值。参数可为 TOML 语法的 <code>KEY=VALUE</code>，
+也可为额外配置文件路径。此参数可多次指定。
+详情见 <a href="../reference/config.html#command-line-overrides">命令行覆盖</a> 章节。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--C"><a class="option-anchor" href="#option-cargo-install--C"><code>-C</code> <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Changes the current working directory before executing any specified operations. This affects
-things like where cargo looks by default for the project manifest (<code>Cargo.toml</code>), as well as
-the directories searched for discovering <code>.cargo/config.toml</code>, for example. This option must
-appear before the command name, for example <code>cargo -C path/to/my-project build</code>.</p>
-<p>This option is only available on the <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly
-channel</a> and
-requires the <code>-Z unstable-options</code> flag to enable (see
-<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>).</p>
+<dd class="option-desc"><p>在执行任何操作前切换当前工作目录。
+这会影响 Cargo 默认查找项目清单（<code>Cargo.toml</code>）的位置，
+以及发现 <code>.cargo/config.toml</code> 时的搜索目录等。
+该选项必须出现在命令名前，例如 <code>cargo -C path/to/my-project build</code>。</p>
+<p>该选项仅在 <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly
+channel</a> 可用，
+并且需要通过 <code>-Z unstable-options</code> 启用（见
+<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>）。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--h"><a class="option-anchor" href="#option-cargo-install--h"><code>-h</code></a></dt>
 <dt class="option-term" id="option-cargo-install---help"><a class="option-anchor" href="#option-cargo-install---help"><code>--help</code></a></dt>
-<dd class="option-desc"><p>Prints help information.</p>
+<dd class="option-desc"><p>打印帮助信息。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo-install--Z"><a class="option-anchor" href="#option-cargo-install--Z"><code>-Z</code> <em>flag</em></a></dt>
-<dd class="option-desc"><p>Unstable (nightly-only) flags to Cargo. Run <code>cargo -Z help</code> for details.</p>
+<dd class="option-desc"><p>Cargo 的不稳定（仅 nightly）参数。运行 <code>cargo -Z help</code> 查看详情。</p>
 </dd>
 
 
 </dl>
 
-## ENVIRONMENT
+## 环境
 
-See [the reference](../reference/environment-variables.html) for
-details on environment variables that Cargo reads.
+Cargo 读取的环境变量详情，请参见[参考文档](../reference/environment-variables.html)。
 
-## EXIT STATUS
+## 退出状态
 
-* `0`: Cargo succeeded.
-* `101`: Cargo failed to complete.
+* `0`：Cargo 成功。
+* `101`：Cargo 未能完成。
 
-## EXAMPLES
+## 示例
 
-1. Install or upgrade a package from crates.io:
+1. 从 crates.io 安装或升级 package：
 
        cargo install ripgrep
 
-2. Install or reinstall the package in the current directory:
+2. 安装或重装当前目录中的 package：
 
        cargo install --path .
 
-3. View the list of installed packages:
+3. 查看已安装 package 列表：
 
        cargo install --list
 
-## SEE ALSO
+## 另请参见
 [cargo(1)](cargo.html), [cargo-uninstall(1)](cargo-uninstall.html), [cargo-search(1)](cargo-search.html), [cargo-publish(1)](cargo-publish.html)

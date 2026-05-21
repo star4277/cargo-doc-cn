@@ -1,10 +1,10 @@
-# cargo(1)
+﻿# cargo(1)
 
-## NAME
+## 名称
 
-cargo --- The Rust package manager
+cargo --- Rust 包管理器
 
-## SYNOPSIS
+## 概要
 
 `cargo` [_options_] _command_ [_args_]\
 `cargo` [_options_] `--version`\
@@ -12,361 +12,339 @@ cargo --- The Rust package manager
 `cargo` [_options_] `--help`\
 `cargo` [_options_] `--explain` _code_
 
-## DESCRIPTION
+## 描述
 
-This program is a package manager and build tool for the Rust language,
-available at <https://rust-lang.org>.
+这是 Rust 语言的包管理与构建工具，可在 <https://rust-lang.org> 获取。
 
-_command_ may be one of:
-- built-in commands, see below
-- [aliases]
-- [external tools]
+_command_ 可以是：
+- 内建命令（见下文）
+- [别名]
+- [外部工具]
 
-[aliases]: ../reference/config.html#alias
-[external tools]: ../reference/external-tools.html#custom-subcommands
+[别名]: ../reference/config.html#alias
+[外部工具]: ../reference/external-tools.html#custom-subcommands
 
-## COMMANDS
+## 命令
 
-### Build Commands
+### 构建命令
 
 [cargo-bench(1)](cargo-bench.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Execute benchmarks of a package.
+&nbsp;&nbsp;&nbsp;&nbsp;执行 package 的基准测试。
 
 [cargo-build(1)](cargo-build.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Compile a package.
+&nbsp;&nbsp;&nbsp;&nbsp;编译 package。
 
 [cargo-check(1)](cargo-check.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Check a local package and all of its dependencies for errors.
+&nbsp;&nbsp;&nbsp;&nbsp;检查本地 package 及其全部依赖中的错误。
 
 [cargo-clean(1)](cargo-clean.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Remove artifacts that Cargo has generated in the past.
+&nbsp;&nbsp;&nbsp;&nbsp;删除 Cargo 过去生成的产物。
 
 [cargo-doc(1)](cargo-doc.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Build a package's documentation.
+&nbsp;&nbsp;&nbsp;&nbsp;构建 package 文档。
 
 [cargo-fetch(1)](cargo-fetch.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Fetch dependencies of a package from the network.
+&nbsp;&nbsp;&nbsp;&nbsp;从网络获取 package 依赖。
 
 [cargo-fix(1)](cargo-fix.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Automatically fix lint warnings reported by rustc.
+&nbsp;&nbsp;&nbsp;&nbsp;自动修复 rustc 报告的 lint 警告。
 
 [cargo-run(1)](cargo-run.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Run a binary or example of the local package.
+&nbsp;&nbsp;&nbsp;&nbsp;运行本地 package 的二进制或示例。
 
 [cargo-rustc(1)](cargo-rustc.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Compile a package, and pass extra options to the compiler.
+&nbsp;&nbsp;&nbsp;&nbsp;编译 package，并向编译器传递额外选项。
 
 [cargo-rustdoc(1)](cargo-rustdoc.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Build a package's documentation, using specified custom flags.
+&nbsp;&nbsp;&nbsp;&nbsp;使用指定自定义标志构建 package 文档。
 
 [cargo-test(1)](cargo-test.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Execute unit and integration tests of a package.
+&nbsp;&nbsp;&nbsp;&nbsp;执行 package 的单元测试与集成测试。
 
-### Manifest Commands
+### Manifest 命令
 
 [cargo-add(1)](cargo-add.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Add dependencies to a `Cargo.toml` manifest file.
+&nbsp;&nbsp;&nbsp;&nbsp;向 `Cargo.toml` manifest 文件添加依赖。
 
 [cargo-generate-lockfile(1)](cargo-generate-lockfile.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Generate `Cargo.lock` for a project.
+&nbsp;&nbsp;&nbsp;&nbsp;为项目生成 `Cargo.lock`。
 
 [cargo-info(1)](cargo-info.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Display information about a package in the registry. Default registry is crates.io.
+&nbsp;&nbsp;&nbsp;&nbsp;显示 registry 中 package 的信息。默认 registry 为 crates.io。
 
 [cargo-locate-project(1)](cargo-locate-project.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Print a JSON representation of a `Cargo.toml` file's location.
+&nbsp;&nbsp;&nbsp;&nbsp;以 JSON 形式输出 `Cargo.toml` 文件位置。
 
 [cargo-metadata(1)](cargo-metadata.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Output the resolved dependencies of a package in machine-readable format.
+&nbsp;&nbsp;&nbsp;&nbsp;以机器可读格式输出 package 的解析后依赖信息。
 
 [cargo-pkgid(1)](cargo-pkgid.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Print a fully qualified package specification.
+&nbsp;&nbsp;&nbsp;&nbsp;打印完整限定的 package 规格。
 
 [cargo-remove(1)](cargo-remove.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Remove dependencies from a `Cargo.toml` manifest file.
+&nbsp;&nbsp;&nbsp;&nbsp;从 `Cargo.toml` manifest 文件移除依赖。
 
 [cargo-tree(1)](cargo-tree.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Display a tree visualization of a dependency graph.
+&nbsp;&nbsp;&nbsp;&nbsp;以树形方式展示依赖图。
 
 [cargo-update(1)](cargo-update.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Update dependencies as recorded in the local lock file.
+&nbsp;&nbsp;&nbsp;&nbsp;更新本地锁文件中记录的依赖。
 
 [cargo-vendor(1)](cargo-vendor.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Vendor all dependencies locally.
+&nbsp;&nbsp;&nbsp;&nbsp;将所有依赖本地 Vendor 化。
 
-### Package Commands
+### 包管理命令
 
 [cargo-init(1)](cargo-init.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Create a new Cargo package in an existing directory.
+&nbsp;&nbsp;&nbsp;&nbsp;在已有目录中创建新的 Cargo package。
 
 [cargo-install(1)](cargo-install.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Build and install a Rust binary.
+&nbsp;&nbsp;&nbsp;&nbsp;构建并安装 Rust 二进制。
 
 [cargo-new(1)](cargo-new.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Create a new Cargo package.
+&nbsp;&nbsp;&nbsp;&nbsp;创建新的 Cargo package。
 
 [cargo-search(1)](cargo-search.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Search packages in crates.io.
+&nbsp;&nbsp;&nbsp;&nbsp;在 crates.io 中搜索 package。
 
 [cargo-uninstall(1)](cargo-uninstall.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Remove a Rust binary.
+&nbsp;&nbsp;&nbsp;&nbsp;删除 Rust 二进制。
 
-### Publishing Commands
+### 发布命令
 
 [cargo-login(1)](cargo-login.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Save an API token from the registry locally.
+&nbsp;&nbsp;&nbsp;&nbsp;将 registry 的 API token 保存到本地。
 
 [cargo-logout(1)](cargo-logout.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Remove an API token from the registry locally.
+&nbsp;&nbsp;&nbsp;&nbsp;从本地移除 registry 的 API token。
 
 [cargo-owner(1)](cargo-owner.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Manage the owners of a crate on the registry.
+&nbsp;&nbsp;&nbsp;&nbsp;管理 registry 上 crate 的所有者。
 
 [cargo-package(1)](cargo-package.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Assemble the local package into a distributable tarball.
+&nbsp;&nbsp;&nbsp;&nbsp;将本地 package 组装为可分发 tarball。
 
 [cargo-publish(1)](cargo-publish.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Upload a package to the registry.
+&nbsp;&nbsp;&nbsp;&nbsp;将 package 上传到 registry。
 
 [cargo-yank(1)](cargo-yank.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Remove a pushed crate from the index.
+&nbsp;&nbsp;&nbsp;&nbsp;从索引中移除已推送 crate。
 
-### Report Commands
+### 报告命令
 
 [cargo-report(1)](cargo-report.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Generate and display various kinds of reports.
+&nbsp;&nbsp;&nbsp;&nbsp;生成并显示多种报告。
 
 [cargo-report-future-incompatibilities(1)](cargo-report-future-incompatibilities.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Reports any crates which will eventually stop compiling.
+&nbsp;&nbsp;&nbsp;&nbsp;报告未来将停止编译的 crate。
 
-### General Commands
+### 通用命令
 
 [cargo-help(1)](cargo-help.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Display help information about Cargo.
+&nbsp;&nbsp;&nbsp;&nbsp;显示 Cargo 帮助信息。
 
 [cargo-version(1)](cargo-version.html)\
-&nbsp;&nbsp;&nbsp;&nbsp;Show version information.
+&nbsp;&nbsp;&nbsp;&nbsp;显示版本信息。
 
-## OPTIONS
+## 选项
 
-### Special Options
+### 特殊选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo--V"><a class="option-anchor" href="#option-cargo--V"><code>-V</code></a></dt>
 <dt class="option-term" id="option-cargo---version"><a class="option-anchor" href="#option-cargo---version"><code>--version</code></a></dt>
-<dd class="option-desc"><p>Print version info and exit. If used with <code>--verbose</code>, prints extra
-information.</p>
+<dd class="option-desc"><p>打印版本信息并退出。若与 <code>--verbose</code> 一起使用，会打印额外信息。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---list"><a class="option-anchor" href="#option-cargo---list"><code>--list</code></a></dt>
-<dd class="option-desc"><p>List all installed Cargo subcommands. If used with <code>--verbose</code>, prints extra
-information.</p>
+<dd class="option-desc"><p>列出所有已安装的 Cargo 子命令。若与 <code>--verbose</code> 一起使用，会打印额外信息。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---explain"><a class="option-anchor" href="#option-cargo---explain"><code>--explain</code> <em>code</em></a></dt>
-<dd class="option-desc"><p>Run <code>rustc --explain CODE</code> which will print out a detailed explanation of an
-error message (for example, <code>E0004</code>).</p>
+<dd class="option-desc"><p>运行 <code>rustc --explain CODE</code>，输出错误消息的详细说明
+（例如 <code>E0004</code>）。</p>
 </dd>
 
 
 </dl>
 
-### Display Options
+### 显示选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo--v"><a class="option-anchor" href="#option-cargo--v"><code>-v</code></a></dt>
 <dt class="option-term" id="option-cargo---verbose"><a class="option-anchor" href="#option-cargo---verbose"><code>--verbose</code></a></dt>
-<dd class="option-desc"><p>Use verbose output. May be specified twice for “very verbose” output which
-includes extra output such as dependency warnings and build script output.
-May also be specified with the <code>term.verbose</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>启用详细输出。可指定两次得到“非常详细”输出，
+其中包含依赖警告、构建脚本输出等额外信息。
+也可通过 <code>term.verbose</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo--q"><a class="option-anchor" href="#option-cargo--q"><code>-q</code></a></dt>
 <dt class="option-term" id="option-cargo---quiet"><a class="option-anchor" href="#option-cargo---quiet"><code>--quiet</code></a></dt>
-<dd class="option-desc"><p>Do not print cargo log messages.
-May also be specified with the <code>term.quiet</code>
-<a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>不打印 cargo 日志消息。
+也可通过 <code>term.quiet</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---color"><a class="option-anchor" href="#option-cargo---color"><code>--color</code> <em>when</em></a></dt>
-<dd class="option-desc"><p>Control when colored output is used. Valid values:</p>
+<dd class="option-desc"><p>控制何时使用彩色输出。有效值：</p>
 <ul>
-<li><code>auto</code> (default): Automatically detect if color support is available on the
-terminal.</li>
-<li><code>always</code>: Always display colors.</li>
-<li><code>never</code>: Never display colors.</li>
+<li><code>auto</code>（默认）：自动检测终端是否支持颜色。</li>
+<li><code>always</code>：始终显示颜色。</li>
+<li><code>never</code>：从不显示颜色。</li>
 </ul>
-<p>May also be specified with the <code>term.color</code>
-<a href="../reference/config.html">config value</a>.</p>
+<p>也可通过 <code>term.color</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 </dl>
 
-### Manifest Options
+### Manifest 选项
 
 <dl>
 <dt class="option-term" id="option-cargo---locked"><a class="option-anchor" href="#option-cargo---locked"><code>--locked</code></a></dt>
-<dd class="option-desc"><p>Asserts that the exact same dependencies and versions are used as when the
-existing <code>Cargo.lock</code> file was originally generated. Cargo will exit with an
-error when either of the following scenarios arises:</p>
+<dd class="option-desc"><p>断言必须使用与现有 <code>Cargo.lock</code> 初次生成时完全一致的依赖与版本。
+出现以下任一情况时 Cargo 会报错退出：</p>
 <ul>
-<li>The lock file is missing.</li>
-<li>Cargo attempted to change the lock file due to a different dependency resolution.</li>
+<li>锁文件缺失。</li>
+<li>因依赖解析不同，Cargo 尝试修改锁文件。</li>
 </ul>
-<p>It may be used in environments where deterministic builds are desired,
-such as in CI pipelines.</p>
+<p>可用于追求确定性构建的环境，例如 CI 流水线。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---offline"><a class="option-anchor" href="#option-cargo---offline"><code>--offline</code></a></dt>
-<dd class="option-desc"><p>Prevents Cargo from accessing the network for any reason. Without this
-flag, Cargo will stop with an error if it needs to access the network and
-the network is not available. With this flag, Cargo will attempt to
-proceed without the network if possible.</p>
-<p>Beware that this may result in different dependency resolution than online
-mode. Cargo will restrict itself to crates that are downloaded locally, even
-if there might be a newer version as indicated in the local copy of the index.
-See the <a href="cargo-fetch.html">cargo-fetch(1)</a> command to download dependencies before going
-offline.</p>
-<p>May also be specified with the <code>net.offline</code> <a href="../reference/config.html">config value</a>.</p>
+<dd class="option-desc"><p>阻止 Cargo 以任何理由访问网络。未设置该标志时，如果 Cargo 需要访问网络但网络
+不可用，会直接报错。设置后，Cargo 会在可能情况下尝试离线继续。</p>
+<p>注意，这可能导致与在线模式不同的依赖解析结果。Cargo 会限制为仅使用本地已下载
+crate，即便本地索引副本显示有更新版本。
+可先用 <a href="cargo-fetch.html">cargo-fetch(1)</a> 下载依赖，再转入离线。</p>
+<p>也可通过 <code>net.offline</code> <a href="../reference/config.html">配置项</a> 指定。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---frozen"><a class="option-anchor" href="#option-cargo---frozen"><code>--frozen</code></a></dt>
-<dd class="option-desc"><p>Equivalent to specifying both <code>--locked</code> and <code>--offline</code>.</p>
+<dd class="option-desc"><p>等价于同时指定 <code>--locked</code> 与 <code>--offline</code>。</p>
 </dd>
 
 </dl>
 
-### Common Options
+### 通用选项
 
 <dl>
 
 <dt class="option-term" id="option-cargo-+toolchain"><a class="option-anchor" href="#option-cargo-+toolchain"><code>+</code><em>toolchain</em></a></dt>
-<dd class="option-desc"><p>If Cargo has been installed with rustup, and the first argument to <code>cargo</code>
-begins with <code>+</code>, it will be interpreted as a rustup toolchain name (such
-as <code>+stable</code> or <code>+nightly</code>).
-See the <a href="https://rust-lang.github.io/rustup/overrides.html">rustup documentation</a>
-for more information about how toolchain overrides work.</p>
+<dd class="option-desc"><p>如果 Cargo 通过 rustup 安装，且 <code>cargo</code> 的第一个参数以 <code>+</code> 开头，
+则会被解释为 rustup 工具链名称（如 <code>+stable</code> 或 <code>+nightly</code>）。
+更多覆盖规则见 <a href="https://rust-lang.github.io/rustup/overrides.html">rustup 文档</a>。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo---config"><a class="option-anchor" href="#option-cargo---config"><code>--config</code> <em>KEY=VALUE</em> or <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Overrides a Cargo configuration value. The argument should be in TOML syntax of <code>KEY=VALUE</code>,
-or provided as a path to an extra configuration file. This flag may be specified multiple times.
-See the <a href="../reference/config.html#command-line-overrides">command-line overrides section</a> for more information.</p>
+<dd class="option-desc"><p>覆盖 Cargo 配置值。参数应为 TOML 语法的 <code>KEY=VALUE</code>，
+或额外配置文件路径。此标志可多次指定。
+更多信息见<a href="../reference/config.html#command-line-overrides">命令行覆盖</a>章节。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo--C"><a class="option-anchor" href="#option-cargo--C"><code>-C</code> <em>PATH</em></a></dt>
-<dd class="option-desc"><p>Changes the current working directory before executing any specified operations. This affects
-things like where cargo looks by default for the project manifest (<code>Cargo.toml</code>), as well as
-the directories searched for discovering <code>.cargo/config.toml</code>, for example. This option must
-appear before the command name, for example <code>cargo -C path/to/my-project build</code>.</p>
-<p>This option is only available on the <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly
-channel</a> and
-requires the <code>-Z unstable-options</code> flag to enable (see
-<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>).</p>
+<dd class="option-desc"><p>在执行任何指定操作前先切换当前工作目录。这会影响 cargo 默认查找项目
+manifest（<code>Cargo.toml</code>）的位置，以及发现 <code>.cargo/config.toml</code> 时搜索的目录等。
+该选项必须出现在命令名之前，例如 <code>cargo -C path/to/my-project build</code>。</p>
+<p>该选项仅在 <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly channel</a>
+可用，并需要 `-Z unstable-options` 启用（见
+<a href="https://github.com/rust-lang/cargo/issues/10098">#10098</a>）。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo--h"><a class="option-anchor" href="#option-cargo--h"><code>-h</code></a></dt>
 <dt class="option-term" id="option-cargo---help"><a class="option-anchor" href="#option-cargo---help"><code>--help</code></a></dt>
-<dd class="option-desc"><p>Prints help information.</p>
+<dd class="option-desc"><p>打印帮助信息。</p>
 </dd>
 
 
 <dt class="option-term" id="option-cargo--Z"><a class="option-anchor" href="#option-cargo--Z"><code>-Z</code> <em>flag</em></a></dt>
-<dd class="option-desc"><p>Unstable (nightly-only) flags to Cargo. Run <code>cargo -Z help</code> for details.</p>
+<dd class="option-desc"><p>传递给 Cargo 的不稳定（仅 nightly）标志。运行 <code>cargo -Z help</code> 查看详情。</p>
 </dd>
 
 
 </dl>
 
-## ENVIRONMENT
+## 环境
 
-See [the reference](../reference/environment-variables.html) for
-details on environment variables that Cargo reads.
+Cargo 读取的环境变量详情见[参考文档](../reference/environment-variables.html)。
 
-## EXIT STATUS
+## 退出状态
 
-* `0`: Cargo succeeded.
-* `101`: Cargo failed to complete.
+* `0`：Cargo 执行成功。
+* `101`：Cargo 未能完成。
 
-## FILES
+## 文件
 
 `~/.cargo/`\
-&nbsp;&nbsp;&nbsp;&nbsp;Default location for Cargo's "home" directory where it
-stores various files. The location can be changed with the `CARGO_HOME`
-environment variable.
+&nbsp;&nbsp;&nbsp;&nbsp;Cargo“主目录”的默认位置，会在此存储各类文件。可通过 `CARGO_HOME`
+环境变量修改该位置。
 
 `$CARGO_HOME/bin/`\
-&nbsp;&nbsp;&nbsp;&nbsp;Binaries installed by [cargo-install(1)](cargo-install.html) will be located here. If using
-[rustup], executables distributed with Rust are also located here.
+&nbsp;&nbsp;&nbsp;&nbsp;由 [cargo-install(1)](cargo-install.html) 安装的二进制位于此处。
+若使用 [rustup]，Rust 随附可执行文件也在此目录。
 
 `$CARGO_HOME/config.toml`\
-&nbsp;&nbsp;&nbsp;&nbsp;The global configuration file. See [the reference](../reference/config.html)
-for more information about configuration files.
+&nbsp;&nbsp;&nbsp;&nbsp;全局配置文件。关于配置文件的更多信息见
+[参考文档](../reference/config.html)。
 
 `.cargo/config.toml`\
-&nbsp;&nbsp;&nbsp;&nbsp;Cargo automatically searches for a file named `.cargo/config.toml` in the
-current directory, and all parent directories. These configuration files
-will be merged with the global configuration file.
+&nbsp;&nbsp;&nbsp;&nbsp;Cargo 会自动在当前目录及所有父目录中搜索名为 `.cargo/config.toml`
+的文件。这些配置文件会与全局配置文件合并。
 
 `$CARGO_HOME/credentials.toml`\
-&nbsp;&nbsp;&nbsp;&nbsp;Private authentication information for logging in to a registry.
+&nbsp;&nbsp;&nbsp;&nbsp;用于登录 registry 的私有认证信息。
 
 `$CARGO_HOME/registry/`\
-&nbsp;&nbsp;&nbsp;&nbsp;This directory contains cached downloads of the registry index and any
-downloaded dependencies.
+&nbsp;&nbsp;&nbsp;&nbsp;该目录包含 registry 索引缓存下载内容及已下载依赖。
 
 `$CARGO_HOME/git/`\
-&nbsp;&nbsp;&nbsp;&nbsp;This directory contains cached downloads of git dependencies.
+&nbsp;&nbsp;&nbsp;&nbsp;该目录包含 git 依赖的缓存下载内容。
 
-Please note that the internal structure of the `$CARGO_HOME` directory is not
-stable yet and may be subject to change.
+请注意：`$CARGO_HOME` 目录的内部结构尚未稳定，未来可能变化。
 
 [rustup]: https://rust-lang.github.io/rustup/
 
-## EXAMPLES
+## 示例
 
-1. Build a local package and all of its dependencies:
+1. 构建本地 package 及其全部依赖：
 
        cargo build
 
-2. Build a package with optimizations:
+2. 以优化模式构建 package：
 
        cargo build --release
 
-3. Run tests for a cross-compiled target:
+3. 为交叉编译目标运行测试：
 
        cargo test --target i686-unknown-linux-gnu
 
-4. Create a new package that builds an executable:
+4. 创建一个可构建可执行文件的新 package：
 
        cargo new foobar
 
-5. Create a package in the current directory:
+5. 在当前目录创建 package：
 
        mkdir foo && cd foo
        cargo init .
 
-6. Learn about a command's options and usage:
+6. 查看某个命令的选项与用法：
 
        cargo help clean
 
 ## BUGS
 
-See <https://github.com/rust-lang/cargo/issues> for issues.
+问题请见 <https://github.com/rust-lang/cargo/issues>。
 
-## SEE ALSO
+## 另请参阅
 
 [rustc(1)](https://doc.rust-lang.org/rustc/index.html), [rustdoc(1)](https://doc.rust-lang.org/rustdoc/index.html)
