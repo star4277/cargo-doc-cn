@@ -1,34 +1,29 @@
-# Build Script Examples
+﻿# Build Script Examples
 
-The following sections illustrate some examples of writing build scripts.
+下面通过一些示例说明如何编写构建脚本。
 
-Some common build script functionality can be found via crates on [crates.io].
-Check out the [`build-dependencies`
-keyword](https://crates.io/keywords/build-dependencies) to see what is
-available. The following is a sample of some popular crates[^†]:
+在 [crates.io] 上有许多 crate 提供常见构建脚本能力。
+可以查看 [`build-dependencies`
+keyword](https://crates.io/keywords/build-dependencies) 了解可用项。
+下面列出一些常见 crate[^1]：
 
-* [`bindgen`](https://crates.io/crates/bindgen) --- Automatically generate Rust
-  FFI bindings to C libraries.
-* [`cc`](https://crates.io/crates/cc) --- Compiles C/C++/assembly.
-* [`pkg-config`](https://crates.io/crates/pkg-config) --- Detect system
-  libraries using the `pkg-config` utility.
-* [`cmake`](https://crates.io/crates/cmake) --- Runs the `cmake` build tool to build a native library.
-* [`autocfg`](https://crates.io/crates/autocfg),
-  [`rustc_version`](https://crates.io/crates/rustc_version),
-  [`version_check`](https://crates.io/crates/version_check) --- These crates
-  provide ways to implement conditional compilation based on the current
-  `rustc` such as the version of the compiler.
+* [`bindgen`](https://crates.io/crates/bindgen) --- 自动生成 C 库的 Rust FFI 绑定。
+* [`cc`](https://crates.io/crates/cc) --- 编译 C/C++/汇编代码。
+* [`pkg-config`](https://crates.io/crates/pkg-config) --- 使用 `pkg-config` 工具探测系统库。
+* [`cmake`](https://crates.io/crates/cmake) --- 调用 `cmake` 构建本地库。
+* [`autocfg`](https://crates.io/crates/autocfg)、
+  [`rustc_version`](https://crates.io/crates/rustc_version)、
+  [`version_check`](https://crates.io/crates/version_check) ---
+  用于基于当前 `rustc`（如编译器版本）实现条件编译。
 
-[^†]: This list is not an endorsement. Evaluate your dependencies to see which
-is right for your project.
+[^1]: 该列表不代表官方背书。请自行评估依赖是否适合你的项目。
 
 ## Code generation
 
-Some Cargo packages need to have code generated just before they are compiled
-for various reasons. Here we’ll walk through a simple example which generates a
-library call as part of the build script.
+有些 Cargo package 在编译前需要先生成代码。
+下面通过一个简单示例演示：在构建脚本里生成库调用代码。
 
-First, let’s take a look at the directory structure of this package:
+先看目录结构：
 
 ```text
 .
@@ -40,8 +35,8 @@ First, let’s take a look at the directory structure of this package:
 1 directory, 3 files
 ```
 
-Here we can see that we have a `build.rs` build script and our binary in
-`main.rs`. This package has a basic manifest:
+这里有一个 `build.rs` 构建脚本，以及 `main.rs` 二进制入口。
+manifest 如下：
 
 ```toml
 # Cargo.toml
@@ -52,7 +47,7 @@ version = "0.1.0"
 edition = "2024"
 ```
 
-Let’s see what’s inside the build script:
+再看构建脚本内容：
 
 ```rust,no_run
 // build.rs
@@ -75,35 +70,27 @@ fn main() {
 }
 ```
 
-There’s a couple of points of note here:
+这里有几点要注意：
 
-* The script uses the `OUT_DIR` environment variable to discover where the
-  output files should be located. It can use the process’ current working
-  directory to find where the input files should be located, but in this case we
-  don’t have any input files.
-* In general, build scripts should not modify any files outside of `OUT_DIR`.
-  It may seem fine on the first blush, but it does cause problems when you use
-  such crate as a dependency, because there's an *implicit* invariant that
-  sources in `.cargo/registry` should be immutable. `cargo` won't allow such
-  scripts when packaging.
-  * Sometimes, projects want to check in a generated file, and treat it as
-    source code. However, in this case, the file shouldn't be generated from
-    `build.rs`. Instead, have a test or similar which checks that the file
-    precisely matches the generated version *and fails if the result doesn't
-    match*, and run that test as part of your CI. (The test can generate a
-    temporary file to compare to, and if you want to update the generated file,
-    you can replace the checked-in file with that temporary file.)
-* This script is relatively simple as it just writes out a small generated file.
-  One could imagine that other more complex operations could take place such as
-  generating a Rust module from a C header file or another language definition,
-  for example.
-* The [`rerun-if-changed` instruction](build-scripts.md#rerun-if-changed)
-  tells Cargo that the build script only needs to re-run if the build script
-  itself changes. Without this line, Cargo will automatically run the build
-  script if any file in the package changes. If your code generation uses some
-  input files, this is where you would print a list of each of those files.
+* 脚本通过 `OUT_DIR` 环境变量确定输出文件位置。
+  输入文件一般可通过进程当前工作目录定位；本例没有输入文件。
+* 一般来说，构建脚本不应修改 `OUT_DIR` 之外的文件。
+  这在你自己项目里看似可行，但作为依赖被他人使用时会出问题：
+  `.cargo/registry` 中源码默认应视为不可变。
+  `cargo` 在打包时也不会允许这类脚本。
+  * 有些项目希望把生成文件提交进仓库并当源码使用。
+    这种情况下，不应由 `build.rs` 直接生成。
+    更合适做法是写测试或类似检查，确保仓库内文件与“生成结果”完全一致，
+    一旦不一致就失败，并在 CI 中执行该检查。
+    （测试可生成临时文件做比对；若要更新生成文件，可用临时文件覆盖仓库版本。）
+* 本脚本较简单，只生成一个小文件。
+  更复杂场景可能是从 C 头文件或其他语言定义生成 Rust 模块。
+* [`rerun-if-changed` 指令](build-scripts.md#rerun-if-changed)
+  告诉 Cargo：仅当构建脚本本身变化时才重跑脚本。
+  如果没有这行，Cargo 默认会在 package 任一文件变化时重跑构建脚本。
+  若代码生成依赖输入文件，应在这里输出这些输入文件路径列表。
 
-Next, let’s peek at the library itself:
+再看库代码：
 
 ```rust,ignore
 // src/main.rs
@@ -115,13 +102,12 @@ fn main() {
 }
 ```
 
-This is where the real magic happens. The library is using the rustc-defined
-[`include!` macro][include-macro] in combination with the
-[`concat!`][concat-macro] and [`env!`][env-macro] macros to include the
-generated file (`hello.rs`) into the crate’s compilation.
+关键点在这里：
+它使用 rustc 提供的 [`include!` macro][include-macro]，
+配合 [`concat!`][concat-macro] 和 [`env!`][env-macro]，
+把生成文件（`hello.rs`）直接纳入 crate 编译。
 
-Using the structure shown here, crates can include any number of generated files
-from the build script itself.
+按这种结构，构建脚本可以生成并引入任意数量的文件。
 
 [include-macro]: ../../std/macro.include.html
 [concat-macro]: ../../std/macro.concat.html
@@ -129,12 +115,11 @@ from the build script itself.
 
 ## Building a native library
 
-Sometimes it’s necessary to build some native C or C++ code as part of a
-package. This is another excellent use case of leveraging the build script to
-build a native library before the Rust crate itself. As an example, we’ll create
-a Rust library which calls into C to print “Hello, World!”.
+有时 package 需要构建一些本地 C/C++ 代码。
+这也是构建脚本的典型用途：先构建本地库，再构建 Rust crate。
+下面示例将创建一个调用 C 输出 `Hello, World!` 的 Rust 库。
 
-Like above, let’s first take a look at the package layout:
+先看目录布局：
 
 ```text
 .
@@ -147,7 +132,7 @@ Like above, let’s first take a look at the package layout:
 1 directory, 4 files
 ```
 
-Pretty similar to before! Next, the manifest:
+和上一个例子很像。再看 manifest：
 
 ```toml
 # Cargo.toml
@@ -158,8 +143,7 @@ version = "0.1.0"
 edition = "2024"
 ```
 
-For now we’re not going to use any build dependencies, so let’s take a look at
-the build script now:
+先不引入 build 依赖，直接看构建脚本：
 
 ```rust,no_run
 // build.rs
@@ -186,33 +170,30 @@ fn main() {
 }
 ```
 
-This build script starts out by compiling our C file into an object file (by
-invoking `gcc`) and then converting this object file into a static library (by
-invoking `ar`). The final step is feedback to Cargo itself to say that our
-output was in `out_dir` and the compiler should link the crate to `libhello.a`
-statically via the `-l static=hello` flag.
+该脚本先调用 `gcc` 把 C 文件编译为目标文件，再调用 `ar` 打包为静态库。
+最后通过输出指令告诉 Cargo：
+产物在 `out_dir`，并让编译器通过 `-l static=hello` 静态链接 `libhello.a`。
 
-Note that there are a number of drawbacks to this hard-coded approach:
+这种硬编码写法有几个问题：
 
-* The `gcc` command itself is not portable across platforms. For example it’s
-  unlikely that Windows platforms have `gcc`, and not even all Unix platforms
-  may have `gcc`. The `ar` command is also in a similar situation.
-* These commands do not take cross-compilation into account. If we’re cross
-  compiling for a platform such as Android it’s unlikely that `gcc` will produce
-  an ARM executable.
+* `gcc` 命令不具备跨平台可移植性。
+  例如 Windows 常没有 `gcc`，并且并非所有 Unix 平台都一定有。
+  `ar` 也有类似问题。
+* 未考虑交叉编译。
+  例如目标是 Android 时，本机 `gcc` 大概率不会产出 ARM 可执行代码。
 
-Not to fear, though, this is where a `build-dependencies` entry would help!
-The Cargo ecosystem has a number of packages to make this sort of task much
-easier, portable, and standardized. Let's try the [`cc`
-crate](https://crates.io/crates/cc) from [crates.io]. First, add it to the
-`build-dependencies` in `Cargo.toml`:
+这时就该使用 `build-dependencies` 了。
+Cargo 生态有不少 crate 能把这类工作做得更易用、更可移植、更标准化。
+我们用 [crates.io] 上的 [`cc`
+crate](https://crates.io/crates/cc) 试一下。
+先在 `Cargo.toml` 里加入：
 
 ```toml
 [build-dependencies]
 cc = "1.0"
 ```
 
-And rewrite the build script to use this crate:
+并把构建脚本改成：
 
 ```rust,ignore
 // build.rs
@@ -225,23 +206,18 @@ fn main() {
 }
 ```
 
-The [`cc` crate] abstracts a range of build script requirements for C code:
+[`cc` crate] 对 C 代码构建做了大量抽象：
 
-* It invokes the appropriate compiler (MSVC for windows, `gcc` for MinGW, `cc`
-  for Unix platforms, etc.).
-* It takes the `TARGET` variable into account by passing appropriate flags to
-  the compiler being used.
-* Other environment variables, such as `OPT_LEVEL`, `DEBUG`, etc., are all
-  handled automatically.
-* The stdout output and `OUT_DIR` locations are also handled by the `cc`
-  library.
+* 自动选择合适编译器（Windows 的 MSVC、MinGW 的 `gcc`、Unix 的 `cc` 等）。
+* 读取 `TARGET` 并传递正确编译参数。
+* 自动处理 `OPT_LEVEL`、`DEBUG` 等环境变量。
+* 自动处理 stdout 输出与 `OUT_DIR` 路径。
 
-Here we can start to see some of the major benefits of farming as much
-functionality as possible out to common build dependencies rather than
-duplicating logic across all build scripts!
+这也体现了一个重要收益：
+把通用能力尽量下沉到公共 build dependency，
+比在每个构建脚本里重复造轮子更可靠。
 
-Back to the case study though, let’s take a quick look at the contents of the
-`src` directory:
+回到例子，看下 `src` 目录内容：
 
 ```c
 // src/hello.c
@@ -266,38 +242,34 @@ fn main() {
 }
 ```
 
-And there we go! This should complete our example of building some C code from a
-Cargo package using the build script itself. This also shows why using a build
-dependency can be crucial in many situations and even much more concise!
+这样就完成了：在 Cargo package 中通过构建脚本构建 C 代码。
+也可以看到，在很多场景里 build dependency 不仅关键，而且代码更简洁。
 
-We’ve also seen a brief example of how a build script can use a crate as a
-dependency purely for the build process and not for the crate itself at runtime.
+你也看到了一个典型模式：
+某些 crate 只在构建阶段作为依赖，并不会进入运行时依赖。
 
 [`cc` crate]: https://crates.io/crates/cc
 
 ## Linking to system libraries
 
-This example demonstrates how to link a system library and how the build
-script is used to support this use case.
+这个例子演示如何链接系统库，以及构建脚本在其中的作用。
 
-Quite frequently a Rust crate wants to link to a native library provided on
-the system to bind its functionality or just use it as part of an
-implementation detail. This is quite a nuanced problem when it comes to
-performing this in a platform-agnostic fashion. It is best, if possible, to
-farm out as much of this as possible to make this as easy as possible for
-consumers.
+Rust crate 经常需要链接系统提供的本地库：
+要么做功能绑定，要么作为实现细节。
+要把它做成平台无关实现，细节很多。
+最佳实践通常是：尽可能把复杂性封装掉，降低使用方负担。
 
-For this example, we will be creating a binding to the system's zlib library.
-This is a library that is commonly found on most Unix-like systems that
-provides data compression. This is already wrapped up in the [`libz-sys`
-crate], but for this example, we'll do an extremely simplified version. Check
-out [the source code][libz-source] for the full example.
+这里我们将为系统 `zlib` 库创建绑定。
+`zlib` 在多数类 Unix 系统上常见，提供数据压缩能力。
+真实项目里通常直接用 [`libz-sys`
+crate]，本例只做极简版。
+完整实现请看[源码][libz-source]。
 
-To make it easy to find the location of the library, we will use the
-[`pkg-config` crate]. This crate uses the system's `pkg-config` utility to
-discover information about a library. It will automatically tell Cargo what is
-needed to link the library. This will likely only work on Unix-like systems
-with `pkg-config` installed. Let's start by setting up the manifest:
+为便于定位库，我们使用 [`pkg-config` crate]。
+它调用系统 `pkg-config` 工具获取库信息，
+并自动告诉 Cargo 如何链接该库。
+该方式通常适用于安装了 `pkg-config` 的类 Unix 系统。
+先写 manifest：
 
 ```toml
 # Cargo.toml
@@ -312,11 +284,12 @@ links = "z"
 pkg-config = "0.3.16"
 ```
 
-Take note that we included the `links` key in the `package` table. This tells
-Cargo that we are linking to the `libz` library. See ["Using another sys
-crate"](#using-another-sys-crate) for an example that will leverage this.
+注意 `[package]` 里有 `links` 键。
+这告诉 Cargo：当前 crate 会链接 `libz`。
+后文 ["Using another sys crate"](#using-another-sys-crate)
+会利用这一点。
 
-The build script is fairly simple:
+构建脚本很简单：
 
 ```rust,ignore
 // build.rs
@@ -327,7 +300,7 @@ fn main() {
 }
 ```
 
-Let's round out the example with a basic FFI binding:
+再配一个基础 FFI 绑定：
 
 ```rust,ignore
 // src/lib.rs
@@ -347,8 +320,8 @@ fn test_crc32() {
 }
 ```
 
-Run `cargo build -vv` to see the output from the build script. On a system
-with `libz` already installed, it may look something like this:
+执行 `cargo build -vv` 可查看构建脚本输出。
+在已安装 `libz` 的系统上，可能类似：
 
 ```text
 [libz-sys 0.1.0] cargo::rustc-link-search=native=/usr/lib
@@ -356,15 +329,13 @@ with `libz` already installed, it may look something like this:
 [libz-sys 0.1.0] cargo::rerun-if-changed=build.rs
 ```
 
-Nice! `pkg-config` did all the work of finding the library and telling Cargo
-where it is.
+很好，`pkg-config` 已完成“查找库并告知 Cargo 链接方式”的工作。
 
-It is not unusual for packages to include the source for the library, and
-build it statically if it is not found on the system, or if a feature or
-environment variable is set. For example, the real [`libz-sys` crate] checks the
-environment variable `LIBZ_SYS_STATIC` or the `static` feature to build it
-from source instead of using the system library. Check out [the
-source][libz-source] for a more complete example.
+很多 package 还会内置库源码：
+若系统找不到该库，或某 feature/环境变量开启，就改为静态构建。
+例如真实 [`libz-sys` crate] 会检查环境变量 `LIBZ_SYS_STATIC`
+或 `static` feature，来决定是否从源码构建而非用系统库。
+更完整例子见[源码][libz-source]。
 
 [`libz-sys` crate]: https://crates.io/crates/libz-sys
 [`pkg-config` crate]: https://crates.io/crates/pkg-config
@@ -372,19 +343,18 @@ source][libz-source] for a more complete example.
 
 ## Using another `sys` crate
 
-When using the `links` key, crates may set metadata that can be read by other
-crates that depend on it. This provides a mechanism to communicate information
-between crates. In this example, we'll be creating a C library that makes use
-of zlib from the real [`libz-sys` crate].
+使用 `links` 键时，crate 可以设置元数据供其依赖方读取。
+这提供了 crate 间传递信息的机制。
+这个例子里，我们将创建一个 C 库，并复用真实的 [`libz-sys` crate] 中的 zlib。
 
-If you have a C library that depends on zlib, you can leverage the [`libz-sys`
-crate] to automatically find it or build it. This is great for cross-platform
-support, such as Windows where zlib is not usually installed. `libz-sys` [sets
-the `include`
-metadata](https://github.com/rust-lang/libz-sys/blob/3c594e677c79584500da673f918c4d2101ac97a1/build.rs#L156)
-to tell other packages where to find the header files for zlib. Our build
-script can read that metadata with the `DEP_Z_INCLUDE` environment variable.
-Here's an example:
+如果你的 C 库依赖 zlib，
+可借助 [`libz-sys` crate] 自动查找或构建它。
+这对跨平台支持很有帮助，例如 Windows 通常不预装 zlib。
+`libz-sys` 会[设置 `include`
+元数据](https://github.com/rust-lang/libz-sys/blob/3c594e677c79584500da673f918c4d2101ac97a1/build.rs#L156)，
+告诉其他 package zlib 头文件位置。
+我们的构建脚本可通过 `DEP_Z_INCLUDE` 环境变量读取。
+示例：
 
 ```toml
 # Cargo.toml
@@ -401,9 +371,9 @@ libz-sys = "1.0.25"
 cc = "1.0.46"
 ```
 
-Here we have included `libz-sys` which will ensure that there is only one
-`libz` used in the final library, and give us access to it from our build
-script:
+这里引入 `libz-sys` 后，
+最终库只会链接一个 `libz`，
+并允许我们在构建脚本中获取它的信息：
 
 ```rust,ignore
 // build.rs
@@ -419,24 +389,27 @@ fn main() {
 }
 ```
 
-With `libz-sys` doing all the heavy lifting, the C source code may now include
-the zlib header, and it should find the header, even on systems where it isn't
-already installed.
+在 `libz-sys` 处理完复杂工作后，
+C 源码可直接 `#include` zlib 头文件，
+即便系统原本未安装也能找到头文件。
 
 ```c
 // src/z_user.c
 
 #include "zlib.h"
 
-// … rest of code that makes use of zlib.
+// ... rest of code that makes use of zlib.
 ```
+
 ## Reading target configuration
 
-When a build script needs to make decisions based on the target platform, it should read the `CARGO_CFG_*` environment
-variables rather than using `cfg!` or `#[cfg]` attributes. This is because
-the build script is compiled for and runs on the *host* machine, while
-`CARGO_CFG_*` variables reflect the *target* platform, an important distinction
-when cross-compiling.
+当构建脚本需要依据目标平台做决策时，
+应读取 `CARGO_CFG_*` 环境变量，
+而不是使用 `cfg!` 或 `#[cfg]`。
+原因是：构建脚本本身是在 *host* 机器上编译并运行的，
+而 `CARGO_CFG_*` 反映的是 *target* 平台。
+交叉编译时这一区别尤为关键。
+
 ```rust,ignore
 // build.rs
 
@@ -452,43 +425,38 @@ fn main() {
 }
 ```
 
-Note that some configuration values may contain multiple values separated by
-commas (for example, `CARGO_CFG_TARGET_FAMILY` may be `unix,wasm`). When
-checking these values, be sure to handle this appropriately.
+注意某些配置值可能包含逗号分隔的多个值
+（例如 `CARGO_CFG_TARGET_FAMILY` 可能是 `unix,wasm`）。
+检查这些值时要按多值情况处理。
 
-For a more convenient, typed API, consider using the [`build-rs`] crate
-which handles these details for you.
+若想用更易用的类型化 API，可考虑 [`build-rs`] crate，
+它会帮你处理这些细节。
 
 [`build-rs`]: https://crates.io/crates/build-rs
 
 ## Conditional compilation
 
-A build script may emit [`rustc-cfg` instructions] which can enable conditions
-that can be checked at compile time. In this example, we'll take a look at how
-the [`openssl` crate] uses this to support multiple versions of the OpenSSL
-library.
+构建脚本可输出 [`rustc-cfg` instructions]，
+从而启用可在编译期检测的条件。
+这个例子看看 [`openssl` crate] 如何借此支持多个 OpenSSL 版本。
 
-The [`openssl-sys` crate] implements building and linking the OpenSSL library.
-It supports multiple different implementations (like LibreSSL) and multiple
-versions. It makes use of the `links` key so that it may pass information to
-other build scripts. One of the things it passes is the `version_number` key,
-which is the version of OpenSSL that was detected. The code in the build
-script looks something [like
-this](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl-sys/build/main.rs#L216):
+[`openssl-sys` crate] 负责构建与链接 OpenSSL。
+它支持多种实现（如 LibreSSL）和多个版本。
+它也使用 `links` 键向其他构建脚本传递信息。
+其中一个信息是 `version_number`，即探测到的 OpenSSL 版本。
+相关代码大致[如下](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl-sys/build/main.rs#L216)：
 
 ```rust,ignore
 println!("cargo::metadata=version_number={openssl_version:x}");
 ```
 
-This instruction causes the `DEP_OPENSSL_VERSION_NUMBER` environment variable
-to be set in any crates that directly depend on `openssl-sys`.
+这会让所有直接依赖 `openssl-sys` 的 crate
+获得 `DEP_OPENSSL_VERSION_NUMBER` 环境变量。
 
-The `openssl` crate, which provides the higher-level interface, specifies
-`openssl-sys` as a dependency. The `openssl` build script can read the
-version information generated by the `openssl-sys` build script with the
-`DEP_OPENSSL_VERSION_NUMBER` environment variable. It uses this to generate
-some [`cfg`
-values](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl/build.rs#L18-L36):
+提供上层接口的 `openssl` crate 依赖 `openssl-sys`。
+它的构建脚本可通过 `DEP_OPENSSL_VERSION_NUMBER`
+读取版本信息，并生成一些 [`cfg`
+值](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl/build.rs#L18-L36)：
 
 ```rust,ignore
 // (portion of build.rs)
@@ -517,11 +485,10 @@ if let Ok(version) = env::var("DEP_OPENSSL_VERSION_NUMBER") {
 }
 ```
 
-These `cfg` values can then be used with the [`cfg` attribute] or the [`cfg`
-macro] to conditionally include code. For example, SHA3 support was added in
-OpenSSL 1.1.1, so it is [conditionally
-excluded](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl/src/hash.rs#L67-L85)
-for older versions:
+这些 `cfg` 值随后可配合 [`cfg` attribute] 或 [`cfg`
+macro] 做条件编译。
+例如 SHA3 支持在 OpenSSL 1.1.1 才加入，
+所以在更老版本里会被[条件排除](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl/src/hash.rs#L67-L85)：
 
 ```rust,ignore
 // (portion of openssl crate)
@@ -532,10 +499,10 @@ pub fn sha3_224() -> MessageDigest {
 }
 ```
 
-Of course, one should be careful when using this, since it makes the resulting
-binary even more dependent on the build environment. In this example, if the
-binary is distributed to another system, it may not have the exact same shared
-libraries, which could cause problems.
+当然，这种做法要谨慎。
+它会让产物对构建环境更敏感。
+例如二进制发布到另一台机器后，
+那台机器未必有完全一致的共享库版本，从而可能引发问题。
 
 [`cfg` attribute]: ../../reference/conditional-compilation.md#the-cfg-attribute
 [`cfg` macro]: ../../std/macro.cfg.html

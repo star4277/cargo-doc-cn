@@ -1,12 +1,11 @@
-# Dependency Resolution
+﻿# Dependency Resolution
 
-One of Cargo's primary tasks is to determine the versions of dependencies to
-use based on the version requirements specified in each package. This process
-is called "dependency resolution" and is performed by the "resolver". The
-result of the resolution is stored in the [`Cargo.lock` file] which "locks" the
-dependencies to specific versions, and keeps them fixed over time.
-The [`cargo tree`] command can be used to visualize the result of the
-resolver.
+Cargo 的核心任务之一，是根据各 package 指定的版本要求，
+决定实际应使用哪些依赖版本。
+这个过程称为“依赖解析（dependency resolution）”，
+由“resolver（解析器）”执行。
+解析结果会写入 [`Cargo.lock` file]，把依赖“锁定”为具体版本并在后续保持稳定。
+可用 [`cargo tree`] 命令可视化解析结果。
 
 [`Cargo.lock` file]: ../guide/cargo-toml-vs-cargo-lock.md
 [dependency specifications]: specifying-dependencies.md
@@ -15,11 +14,11 @@ resolver.
 
 ## Constraints and Heuristics
 
-In many cases there is no single "best" dependency resolution.
-The resolver operates under various constraints and heuristics to find a generally applicable resolution.
-To understand how these interact, it is helpful to have a coarse understanding of how dependency resolution works.
+很多情况下并不存在唯一“最佳”的依赖解析结果。
+resolver 会在多种约束与启发式规则下，寻找一个普遍可用的解。
+理解这些规则如何交互，先要对解析流程有一个粗粒度认识。
 
-This pseudo-code approximates what Cargo's resolver does:
+下面的伪代码近似描述了 Cargo resolver 的行为：
 ```rust
 pub fn resolve(workspace: &[Package], policy: Policy) -> Option<ResolveGraph> {
     let dep_queue = Queue::new(workspace);
@@ -58,64 +57,61 @@ fn resolve_next(dep_queue: Queue, resolved: ResolveGraph, policy: Policy) -> Opt
 }
 ```
 
-Key steps:
-- Walking dependencies (`pick_next_dep`):
-  The order dependencies are walked can affect
-  how related version requirements for the same dependency get resolved, see unifying versions,
-  and how much the resolver backtracks, affecting resolver performance,
-- Unifying versions (`try_unify_version`, `needs_version_unification`):
-  Cargo reuses versions where possible to reduce build times and allow types from common dependencies to be passed between APIs.
-  If multiple versions would have been unified if it wasn't for conflicts in their [dependency specifications], Cargo will backtrack, erroring if no solution is found, rather than selecting multiple versions.
-  A [dependency specification] or Cargo may decide that a version is undesirable,
-  preferring to backtrack or error rather than use it.
-- Preferring versions (`pick_next_version`):
-  Cargo may decide that it should prefer a specific version,
-  falling back to the next version when backtracking.
+关键步骤：
+- 遍历依赖（`pick_next_dep`）：
+  遍历顺序会影响同一依赖的相关版本要求如何收敛（见版本统一），
+  也会影响回溯次数，从而影响解析性能。
+- 版本统一（`try_unify_version`、`needs_version_unification`）：
+  Cargo 会尽可能复用同一版本，以减少构建时间并让公共依赖类型可在 API 间传递。
+  如果本可统一但被[依赖声明][dependency specifications]冲突阻止，
+  Cargo 会回溯；若无解，则报错，而不是无条件选择多版本。
+  同时，[依赖声明][dependency specification]或 Cargo 本身也可能认定某版本“不理想”，
+  从而倾向回溯或报错，而不是使用该版本。
+- 版本偏好（`pick_next_version`）：
+  Cargo 可能优先尝试某个版本，
+  回溯时再退到下一个版本。
 
 ### Version numbers
 
-Generally, Cargo prefers the highest version currently available.
+通常 Cargo 会优先选择当前可用的最高版本。
 
-For example, if you had a package in the resolve graph with:
+例如解析图中有：
 ```toml
 [dependencies]
 bitflags = "*"
 ```
-If at the time the `Cargo.lock` file is generated, the greatest version of
-`bitflags` is `1.2.1`, then the package will use `1.2.1`.
+当 `Cargo.lock` 生成时，若 `bitflags` 最高版本是 `1.2.1`，
+则会使用 `1.2.1`。
 
-For an example of a possible exception, see [Rust version](#rust-version).
+可能的例外见 [Rust version](#rust-version)。
 
 ### Version requirements
 
-Package specify what versions they support, rejecting all others, through
-[version requirements].
+package 通过[版本要求][version requirements]声明可接受版本并拒绝其他版本。
 
-For example, if you had a package in the resolve graph with:
+例如：
 ```toml
 [dependencies]
 bitflags = "1.0"  # meaning `>=1.0.0,<2.0.0`
 ```
-If at the time the `Cargo.lock` file is generated, the greatest version of
-`bitflags` is `1.2.1`, then the package will use `1.2.1` because it is the
-greatest within the compatibility range. If `2.0.0` is published, it will
-still use `1.2.1` because `2.0.0` is considered incompatible.
+当 `Cargo.lock` 生成时，若 `bitflags` 最高版本是 `1.2.1`，
+则会选 `1.2.1`，因为它在兼容范围内且最高。
+即使 `2.0.0` 已发布，也仍会使用 `1.2.1`，因为 `2.0.0` 不兼容。
 
 [version requirements]: specifying-dependencies.md#version-requirement-syntax
 
 ### SemVer compatibility
 
-Cargo assumes packages follow [SemVer] and will unify dependency versions if they are
-[SemVer] compatible according to the [Caret version requirements].
-If two compatible versions cannot be unified because of conflicting version requirements,
-Cargo will error.
+Cargo 假设 package 遵循 [SemVer]，
+并按 [Caret version requirements] 判定“可兼容”时进行版本统一。
+若两个兼容版本因版本要求冲突无法统一，Cargo 会报错。
 
-See the [SemVer Compatibility] chapter for guidance on what is considered a
-"compatible" change.
+关于“什么算兼容变更”，见 [SemVer Compatibility] 章节。
 
-Examples:
+示例：
 
-The following two packages will have their dependencies on `bitflags` unified because any version picked will be compatible with each other.
+以下两个 package 对 `bitflags` 的依赖会被统一，
+因为任意被选版本都互相兼容：
 ```toml
 # Package A
 [dependencies]
@@ -126,7 +122,7 @@ bitflags = "1.0"  # meaning `>=1.0.0,<2.0.0`
 bitflags = "1.1"  # meaning `>=1.1.0,<2.0.0`
 ```
 
-The following packages will error because the version requirements conflict, selecting two distinct compatible versions.
+以下会报错，因为版本要求冲突，无法在“兼容版本范围内”统一为单一版本：
 ```toml
 # Package A
 [dependencies]
@@ -137,9 +133,10 @@ log = "=0.4.11"
 log = "=0.4.8"
 ```
 
-The following two packages will not have their dependencies on `rand` unified because only incompatible versions are available for each.
-Instead, two different versions (e.g. 0.6.5 and 0.7.3) will be resolved and built.
-This can lead to potential problems, see the [Version-incompatibility hazards] section for more details.
+以下两个 package 的 `rand` 不会统一，
+因为各自只能用互不兼容的版本。
+最终会解析并构建两个版本（如 0.6.5 与 0.7.3）。
+这可能带来风险，详见 [Version-incompatibility hazards]。
 ```toml
 # Package A
 [dependencies]
@@ -150,10 +147,10 @@ rand = "0.7"  # meaning `>=0.7.0,<0.8.0`
 rand = "0.6"  # meaning `>=0.6.0,<0.7.0`
 ```
 
-Generally, the following two packages will not have their dependencies unified because incompatible versions are available that satisfy the version requirements:
-Instead, two different versions (e.g. 0.6.5 and 0.7.3) will be resolved and built.
-The application of other constraints or heuristics may cause these to be unified,
-picking one version (e.g. 0.6.5).
+通常，下面这两个 package 也不会统一，
+因为存在满足要求但互不兼容的版本：
+最终会解析并构建两个版本（如 0.6.5 与 0.7.3）。
+但其他约束/启发式也可能使其被统一到一个版本（如 0.6.5）。
 ```toml
 # Package A
 [dependencies]
@@ -171,72 +168,67 @@ rand = "0.6"  # meaning `>=0.6.0,<0.7.0`
 
 #### Version-incompatibility hazards
 
-When multiple versions of a crate appear in the resolve graph, this can cause
-problems when types from those crates are exposed by the crates using them.
-This is because the types and items are considered different by the Rust
-compiler, even if they have the same name. Libraries should take care when
-publishing a SemVer-incompatible version (for example, publishing `2.0.0`
-after `1.0.0` has been in use), particularly for libraries that are widely
-used.
+当解析图中出现同一 crate 的多个版本时，
+如果这些 crate 暴露的类型在上层交叉使用，就可能出问题。
+原因是 Rust 编译器会把它们视为不同类型/项，哪怕名字相同。
+库在发布 SemVer 不兼容版本时要格外谨慎（例如 `1.0.0` 已广泛使用后发布 `2.0.0`），
+尤其是生态中使用广泛的库。
 
-The "[semver trick]" is a workaround for this problem of publishing a breaking
-change while retaining compatibility with older versions. The linked page goes
-into detail about what the problem is and how to address it. In short, when a
-library wants to publish a SemVer-breaking release, publish the new release,
-and also publish a point release of the previous version that reexports the
-types from the newer version.
+“[semver trick]”是一个常见规避手法：
+在发布 breaking 版本时，保持对旧版本的兼容体验。
+链接文档有完整说明。简而言之：
+发布新大版本后，再发布旧大版本的一个补丁版本，
+由它重新导出新版本中的类型。
 
-These incompatibilities usually manifest as a compile-time error, but
-sometimes they will only appear as a runtime misbehavior. For example, let's
-say there is a common library named `foo` that ends up appearing with both
-version `1.0.0` and `2.0.0` in the resolve graph. If [`downcast_ref`] is used
-on an object created by a library using version `1.0.0`, and the code calling
-`downcast_ref` is downcasting to a type from version `2.0.0`, the downcast
-will fail at runtime.
+这类不兼容通常体现为编译错误，
+但有时会在运行时才表现为异常行为。
+例如公共库 `foo` 同时以 `1.0.0` 和 `2.0.0` 出现在解析图中。
+若对“由依赖 `foo` 1.0.0 的库创建的对象”调用 [`downcast_ref`]，
+而调用侧按 `foo` 2.0.0 的类型去 downcast，
+运行时 downcast 会失败。
 
-It is important to make sure that if you have multiple versions of a library
-that you are properly using them, especially if it is ever possible for the
-types from different versions to be used together. The [`cargo tree
--d`][`cargo tree`] command can be used to identify duplicate versions and
-where they come from. Similarly, it is important to consider the impact on the
-ecosystem if you publish a SemVer-incompatible version of a popular library.
+因此若你的图中确实有多版本并存，
+务必确认使用方式正确，尤其当不同版本类型可能交汇时。
+可用 [`cargo tree -d`][`cargo tree`] 定位重复版本及其来源。
+同样，若你为热门库发布 SemVer 不兼容版本，也要评估其生态影响。
 
 [semver trick]: https://github.com/dtolnay/semver-trick
 [`downcast_ref`]: ../../std/any/trait.Any.html#method.downcast_ref
 
 ### Lock file
 
-Cargo gives the highest priority to versions contained in the [`Cargo.lock` file], when used.
-This is intended to balance reproducible builds with adjusting to changes in the manifest.
+在使用 [`Cargo.lock` file] 时，Cargo 会优先采用其中记录的版本。
+这用于平衡“可复现构建”与“manifest 变化带来的调整”。
 
-For example, if you had a package in the resolve graph with:
+例如：
 ```toml
 [dependencies]
 bitflags = "*"
 ```
-If at the time your `Cargo.lock` file is generated, the greatest version of
-`bitflags` is `1.2.1`, then the package will use `1.2.1` and recorded in the `Cargo.lock` file.
+当 `Cargo.lock` 生成时，若 `bitflags` 最高版本是 `1.2.1`，
+则会使用并记录 `1.2.1`。
 
-By the time Cargo next runs, `bitflags` `1.3.5` is out.
-When resolving dependencies,
-`1.2.1` will still be used because it is present in your `Cargo.lock` file.
+之后即便发布了 `bitflags` `1.3.5`，
+下次解析仍会继续用 `1.2.1`，因为它已在 `Cargo.lock` 中。
 
-The package is then edited to:
+若随后把 package 改成：
 ```toml
 [dependencies]
 bitflags = "1.3.0"
 ```
-`bitflags` `1.2.1` does not match this version requirement and so that entry in your `Cargo.lock` file is ignored and version `1.3.5` will now be used and recorded in your `Cargo.lock` file.
+此时 `1.2.1` 不满足新要求，
+`Cargo.lock` 中该条目会被忽略，
+最终会选并记录 `1.3.5`。
 
 ### Rust version
 
-To support developing software with a minimum supported [Rust version],
-the resolver can take into account a dependency version's compatibility with your Rust version.
-This is controlled by the config field [`resolver.incompatible-rust-versions`].
+为了支持“按最低 [Rust version] 开发软件”，
+resolver 可把“依赖版本对 Rust 版本的兼容性”纳入考虑。
+该行为由配置项 [`resolver.incompatible-rust-versions`] 控制。
 
-With the `fallback` setting, the resolver will prefer packages with a Rust version that is
-less than or equal to your own Rust version.
-For example, you are using Rust 1.85 to develop the following package:
+在 `fallback` 设置下，resolver 会优先选择 Rust 版本
+小于等于你当前 Rust 版本的依赖。
+例如你使用 Rust 1.85 开发：
 ```toml
 [package]
 name = "my-cli"
@@ -245,13 +237,14 @@ rust-version = "1.62"
 [dependencies]
 clap = "4.0"  # resolves to 4.0.32
 ```
-The resolver would pick version 4.0.32 because it has a Rust version of 1.60.0.
-- 4.0.0 is not picked because it is a [lower version number](#version-numbers) despite it also having a Rust version of 1.60.0.
-- 4.5.20 is not picked because it is incompatible with `my-cli`'s Rust version of 1.62 despite having a much [higher version](#version-numbers) and it has a Rust version of 1.74.0 which is compatible with your 1.85 toolchain.
+resolver 会选 `4.0.32`，因为它的 Rust 版本是 1.60.0。
+- 不选 4.0.0，因为虽然同为 Rust 1.60.0，但它是[更低版本号](#version-numbers)。
+- 不选 4.5.20，因为它对 `my-cli` 的 Rust 1.62 不兼容，
+  即便它[版本更高](#version-numbers)，且对你本机 1.85 toolchain 兼容（Rust 1.74.0）。
 
-If a version requirement does not include a Rust version compatible dependency version,
-the resolver won't error but will instead pick a version, even if its potentially suboptimal.
-For example, you change the dependency on `clap`:
+如果某个版本要求下“没有任何兼容你 Rust 版本的依赖版本”，
+resolver 不会报错，而是会退而选一个版本（即便可能次优）。
+例如把 `clap` 改为：
 ```toml
 [package]
 name = "my-cli"
@@ -260,19 +253,19 @@ rust-version = "1.62"
 [dependencies]
 clap = "4.2"  # resolves to 4.5.20
 ```
-No version of `clap` matches that [version requirement](#version-requirements)
-that is compatible with Rust version 1.62.
-The resolver will then pick an incompatible version, like 4.5.20 despite it having a Rust version of 1.74.
+在该[版本要求](#version-requirements)下，
+不存在与 Rust 1.62 兼容的 `clap` 版本。
+resolver 会因此选择不兼容版本，比如 Rust 1.74 的 4.5.20。
 
-When the resolver selects a dependency version of a package,
-it does not know all the workspace members that will eventually have a transitive dependency on that version
-and so it cannot take into account only the Rust versions relevant for that dependency.
-The resolver has heuristics to find a "good enough" solution when workspace members have different Rust versions.
-This applies even for packages in a workspace without a Rust version.
+resolver 在为某 package 选择依赖版本时，
+并不知道未来哪些 workspace 成员会经由传递依赖使用该版本，
+因此无法仅针对“与该依赖真正相关的 Rust 版本”做最优判断。
+当 workspace 成员 Rust 版本不一致时，
+resolver 会使用启发式找一个“足够好”的解。
+即便某些包没声明 Rust 版本，也受此影响。
 
-When a workspace has members with different Rust versions,
-the resolver may pick a lower dependency version than necessary.
-For example, you have the following workspace members:
+当 workspace 成员 Rust 版本不同，resolver 可能会选得偏低。
+例如：
 ```toml
 [package]
 name = "a"
@@ -284,11 +277,11 @@ name = "b"
 [dependencies]
 clap = "4.2"  # resolves to 4.5.20
 ```
-Though package `b` does not have a Rust version and could use a higher version like 4.5.20,
-4.0.32 will be selected because of package `a`'s Rust version of 1.62.
+虽然 `b` 未声明 Rust 版本，理论上可用更高版本如 4.5.20，
+但会因为 `a` 的 Rust 1.62 而选中 4.0.32。
 
-Or the resolver may pick too high of a version.
-For example, you have the following workspace members:
+也可能选得偏高。
+例如：
 ```toml
 [package]
 name = "a"
@@ -303,47 +296,43 @@ name = "b"
 [dependencies]
 clap = "4.5"  # resolves to 4.5.20
 ```
-Though each package has a version requirement for `clap` that would meet its own Rust version,
-because of [version unification](#version-numbers),
-the resolver will need to pick one version that works in both cases and that would be a version like 4.5.20.
+虽然每个 package 单独看都有满足自身 Rust 版本的 `clap` 要求，
+但因为[版本统一](#version-numbers)，
+resolver 必须选一个两边都共用的版本，最终会选类似 4.5.20。
 
 [Rust version]: rust-version.md
 [`resolver.incompatible-rust-versions`]: config.md#resolverincompatible-rust-versions
 
 ### Features
 
-For the purpose of generating `Cargo.lock`, the resolver builds the dependency
-graph as-if all [features] of all [workspace] members are enabled. This
-ensures that any optional dependencies are available and properly resolved
-with the rest of the graph when features are added or removed with the
-[`--features` command-line flag](features.md#command-line-feature-options).
-The resolver runs a second time to determine the actual features used when
-*compiling* a crate, based on the features selected on the command-line.
+为了生成 `Cargo.lock`，resolver 会按“启用所有 [workspace] 成员的所有 [features]”来构建依赖图。
+这可确保在通过[`--features` 参数](features.md#command-line-feature-options)
+增减 feature 时，可选依赖仍能与整张依赖图正确解析。
+随后 resolver 会再运行一次，根据命令行实际选择的 feature，
+确定*编译*时真正使用的 feature。
 
-Dependencies are resolved with the union of all features enabled on them. For
-example, if one package depends on the [`im`] package with the [`serde`
-dependency] enabled and another package depends on it with the [`rayon`
-dependency] enabled, then `im` will be built with both features enabled, and
-the `serde` and `rayon` crates will be included in the resolve graph. If no
-packages depend on `im` with those features, then those optional dependencies
-will be ignored, and they will not affect resolution.
+依赖的 feature 会按“并集”解析。
+例如一个 package 依赖 [`im`] 并启用其 [`serde` dependency]，
+另一个 package 依赖 `im` 并启用其 [`rayon` dependency]，
+那么 `im` 会在两个 feature 都启用的情况下构建，
+`serde` 与 `rayon` 也会被纳入解析图。
+若没有 package 启用这些 feature，对应可选依赖会被忽略，不影响解析。
 
-When building multiple packages in a workspace (such as with `--workspace` or
-multiple `-p` flags), the features of the dependencies of all of those
-packages are unified. If you have a circumstance where you want to avoid that
-unification for different workspace members, you will need to build them via
-separate `cargo` invocations.
+当一次构建 workspace 内多个 package（如 `--workspace` 或多个 `-p`）时，
+这些 package 的依赖 feature 会被统一。
+若你希望不同 workspace 成员避免 feature 统一，
+需要拆成多次独立 `cargo` 调用。
 
-The resolver will skip over versions of packages that are missing required
-features. For example, if a package depends on version `^1` of [`regex`] with
-the [`perf` feature], then the oldest version it can select is `1.3.0`,
-because versions prior to that did not contain the `perf` feature. Similarly,
-if a feature is removed from a new release, then packages that require that
-feature will be stuck on the older releases that contain that feature. It is
-discouraged to remove features in a SemVer-compatible release. Beware that
-optional dependencies also define an implicit feature, so removing an optional
-dependency or making it non-optional can cause problems, see [removing an
-optional dependency].
+resolver 会跳过“缺少必需 feature”的包版本。
+例如某 package 依赖 [`regex`] `^1` 且要求 [`perf` feature]，
+那么它可选的最旧版本是 `1.3.0`，
+因为更早版本没有 `perf` feature。
+类似地，如果新版本删除某 feature，
+要求该 feature 的 package 会被迫停在旧版本。
+不建议在 SemVer 兼容发布中删除 feature。
+还需注意：可选依赖也会隐式定义同名 feature，
+因此删除可选依赖或把它改为非可选都可能出问题，
+见 [removing an optional dependency]。
 
 [`im`]: https://crates.io/crates/im
 [`perf` feature]: https://github.com/rust-lang/regex/blob/1.3.0/Cargo.toml#L56
@@ -356,15 +345,14 @@ optional dependency].
 
 #### Feature resolver version 2
 
-When `resolver = "2"` is specified in `Cargo.toml` (see [resolver
-versions](#resolver-versions) below), a different feature resolver is used
-which uses a different algorithm for unifying features. The version `"1"`
-resolver will unify features for a package no matter where it is specified.
-The version `"2"` resolver will avoid unifying features in the following
-situations:
+当在 `Cargo.toml` 指定 `resolver = "2"`（见下文 [resolver
+versions](#resolver-versions)）时，
+会使用不同的 feature resolver 与不同的 feature 统一算法。
+`"1"` 版会不分场景地统一某 package 的 feature。
+`"2"` 版会在以下场景避免统一：
 
-* Features for target-specific dependencies are not enabled if the target is
-  not currently being built. For example:
+* 若目标特定依赖对应的目标平台当前未构建，
+  则其 feature 不会启用。例如：
 
   ```toml
   [dependencies.common]
@@ -376,11 +364,10 @@ situations:
   features = ["f2"]
   ```
 
-  When building this example for a non-Windows platform, the `f2` feature will
-  *not* be enabled.
+  在非 Windows 平台构建时，`f2` *不会* 启用。
 
-* Features enabled on [build-dependencies] or proc-macros will not be unified
-  when those same dependencies are used as a normal dependency. For example:
+* 若同一依赖既作为普通依赖又作为 [build-dependencies]/proc-macro 依赖，
+  则构建依赖路径上启用的 feature 不会与普通依赖统一。例如：
 
   ```toml
   [dependencies]
@@ -390,13 +377,12 @@ situations:
   log = {version = "0.4", features=['std']}
   ```
 
-  When building the build script, the `log` crate will be built with the `std`
-  feature. When building the library of your package, it will not enable the
-  feature.
+  构建构建脚本时，`log` 会带 `std` feature 构建；
+  构建 package 的 library 时不会启用该 feature。
 
-* Features enabled on [dev-dependencies] will not be unified when those same
-  dependencies are used as a normal dependency, unless those dev-dependencies
-  are currently being built. For example:
+* 若同一依赖既作为普通依赖又作为 [dev-dependencies]，
+  则 dev 路径上启用的 feature 不会统一，
+  除非这些 dev-dependencies 当前确实在被构建。例如：
 
   ```toml
   [dependencies]
@@ -406,12 +392,11 @@ situations:
   serde = {version = "1.0", features = ["std"]}
   ```
 
-  In this example, the library will normally link against `serde` without the
-  `std` feature. However, when built as a test or example, it will include the
-  `std` feature. For example, `cargo test` or `cargo build --all-targets` will
-  unify these features. Note that dev-dependencies in dependencies are always
-  ignored, this is only relevant for the top-level package or workspace
-  members.
+  此例中，library 通常会在不启用 `std` 的情况下链接 `serde`。
+  但当以 test/example 方式构建时，会包含 `std` feature。
+  例如 `cargo test` 或 `cargo build --all-targets` 会统一这些 feature。
+  注意：依赖的 dev-dependencies 始终会被忽略，
+  此处仅针对顶层 package 或 workspace 成员。
 
 [build-dependencies]: specifying-dependencies.md#build-dependencies
 [dev-dependencies]: specifying-dependencies.md#development-dependencies
@@ -419,76 +404,70 @@ situations:
 
 ### `links`
 
-The [`links` field] is used to ensure only one copy of a native library is
-linked into a binary. The resolver will attempt to find a graph where there is
-only one instance of each `links` name. If it is unable to find a graph that
-satisfies that constraint, it will return an error.
+[`links` field] 用于确保二进制中同一本地库只链接一份。
+resolver 会尝试找到满足“每个 `links` 名只出现一次”的图。
+若找不到满足该约束的图，就会报错。
 
-For example, it is an error if one package depends on [`libgit2-sys`] version
-`0.11` and another depends on `0.12`, because Cargo is unable to unify those,
-but they both link to the `git2` native library. Due to this requirement, it
-is encouraged to be very careful when making SemVer-incompatible releases with
-the `links` field if your library is in common use.
+例如，若一个 package 依赖 [`libgit2-sys`] `0.11`，
+另一个依赖 `0.12`，会报错。
+因为 Cargo 无法把它们统一，
+但两者都链接到本地 `git2` 库。
+因此如果你的库被广泛使用，且使用了 `links` 字段，
+发布 SemVer 不兼容版本时应格外谨慎。
 
 [`links` field]: manifest.md#the-links-field
 [`libgit2-sys`]: https://crates.io/crates/libgit2-sys
 
 ### Yanked versions
 
-[Yanked releases][yank] are those that are marked that they should not be
-used. When the resolver is building the graph, it will ignore all yanked
-releases unless they already exist in the `Cargo.lock` file or are explicitly
-requested by the [`--precise`] flag of `cargo update`.
+[Yanked releases][yank] 是被标记为“不应继续使用”的发布版本。
+resolver 构图时会忽略所有 yank 版本，
+除非它们已在 `Cargo.lock` 中，
+或被 `cargo update` 的 [`--precise`] 显式请求。
 
 [yank]: publishing.md#cargo-yank
 [`--precise`]: ../commands/cargo-update.md#option-cargo-update---precise
 
 ## Dependency updates
 
-Dependency resolution is automatically performed by all Cargo commands that
-need to know about the dependency graph. For example, [`cargo build`] will run
-the resolver to discover all the dependencies to build. After the first time
-it runs, the result is stored in the `Cargo.lock` file. Subsequent commands
-will run the resolver, keeping dependencies locked to the versions in
-`Cargo.lock` *if it can*.
+所有需要依赖图信息的 Cargo 命令都会自动执行依赖解析。
+例如 [`cargo build`] 会先运行 resolver，找出需要构建的依赖。
+首次解析后结果写入 `Cargo.lock`。
+后续命令会再次运行 resolver，并在可能时保持 `Cargo.lock` 中已锁定版本。
 
-If the dependency list in `Cargo.toml` has been modified, for example changing
-the version of a dependency from `1.0` to `2.0`, then the resolver will select
-a new version for that dependency that matches the new requirements. If that
-new dependency introduces new requirements, those new requirements may also
-trigger additional updates. The `Cargo.lock` file will be updated with the new
-result. The `--locked` or `--frozen` flags can be used to change this behavior
-to prevent automatic updates when requirements change, and return an error
-instead.
+如果 `Cargo.toml` 依赖列表变化，
+例如把某依赖从 `1.0` 改成 `2.0`，
+resolver 会选择满足新要求的新版本。
+若新依赖又引入新的要求，可能触发更多连锁更新。
+最终 `Cargo.lock` 会更新为新结果。
+使用 `--locked` 或 `--frozen` 可阻止这种自动更新，
+在要求变化时改为直接报错。
 
-[`cargo update`] can be used to update the entries in `Cargo.lock` when new
-versions are published. Without any options, it will attempt to update all
-packages in the lock file. The `-p` flag can be used to target the update for
-a specific package, and other flags such as `--recursive` or `--precise` can
-be used to control how versions are selected.
+[`cargo update`] 可在新版本发布后更新 `Cargo.lock` 条目。
+不带参数时会尝试更新 lock 文件中所有 package。
+可用 `-p` 定向更新某个 package，
+也可用 `--recursive`、`--precise` 等控制版本选择策略。
 
 [`cargo build`]: ../commands/cargo-build.md
 [`cargo update`]: ../commands/cargo-update.md
 
 ## Overrides
 
-Cargo has several mechanisms to override dependencies within the graph. The
-[Overriding Dependencies] chapter goes into detail on how to use overrides.
-The overrides appear as an overlay to a registry, replacing the patched
-version with the new entry. Otherwise, resolution is performed like normal.
+Cargo 提供多种机制在依赖图内覆盖依赖。
+具体用法见 [Overriding Dependencies] 章节。
+覆盖会作为 registry 的一层 overlay 生效，
+把被 patch 的版本替换为新条目，其余解析逻辑与平常一致。
 
 [Overriding Dependencies]: overriding-dependencies.md
 
 ## Dependency kinds
 
-There are three kinds of dependencies in a package: normal, [build], and
-[dev][dev-dependencies]. For the most part these are all treated the same from
-the perspective of the resolver. One difference is that dev-dependencies for
-non-workspace members are always ignored, and do not influence resolution.
+package 里有三类依赖：普通依赖、[build] 依赖、[dev][dev-dependencies] 依赖。
+从 resolver 角度看，大多数行为一致。
+一个差异是：非 workspace 成员的 dev-dependencies 总是被忽略，不影响解析。
 
-[Platform-specific dependencies] with the `[target]` table are resolved as-if
-all platforms are enabled. In other words, the resolver ignores the platform
-or `cfg` expression.
+`[target]` 表里的[平台特定依赖]会按“所有平台都启用”来解析。
+也就是 resolver 会忽略平台和 `cfg` 表达式。
 
 [build]: specifying-dependencies.md#build-dependencies
 [dev-dependencies]: specifying-dependencies.md#development-dependencies
@@ -496,31 +475,27 @@ or `cfg` expression.
 
 ### dev-dependency cycles
 
-Usually the resolver does not allow cycles in the graph, but it does allow
-them for [dev-dependencies]. For example, project "foo" has a dev-dependency
-on "bar", which has a normal dependency on "foo" (usually as a "path"
-dependency). This is allowed because there isn't really a cycle from the
-perspective of the build artifacts. In this example, the "foo" library is
-built (which does not need "bar" because "bar" is only used for tests), and
-then "bar" can be built depending on "foo", then the "foo" tests can be built
-linking to "bar".
+通常 resolver 不允许图中有环，
+但对 [dev-dependencies] 允许。
+例如项目 `foo` 的 dev-dependency 是 `bar`，
+而 `bar` 普通依赖 `foo`（通常是 `path` 依赖）。
+这是允许的，因为从构建产物角度看并不形成真实循环：
+先构建 `foo` library（不需要 `bar`，因 `bar` 仅测试使用），
+再构建依赖 `foo` 的 `bar`，最后构建链接 `bar` 的 `foo` 测试。
 
-Beware that this can lead to confusing errors. In the case of building library
-unit tests, there are actually two copies of the library linked into the final
-test binary: the one that was linked with "bar", and the one built that
-contains the unit tests. Similar to the issues highlighted in the
-[Version-incompatibility hazards] section, the types between the two are not
-compatible. Be careful when exposing types of "foo" from "bar" in this
-situation, since the "foo" unit tests won't treat them the same as the local
-types.
+但这可能导致令人困惑的错误。
+以 library 单元测试为例，最终测试二进制里实际上会链接两份库：
+一份是和 `bar` 链接的 `foo`，另一份是包含单元测试代码的 `foo`。
+与 [Version-incompatibility hazards] 中的问题类似，
+这两份之间的类型互不兼容。
+在这种情况下，若 `bar` 暴露了 `foo` 的类型，
+`foo` 的单元测试里它们不会被视为本地同一类型。
 
-If possible, try to split your package into multiple packages and restructure
-it so that it remains strictly acyclic.
+如果可能，尽量把 package 拆分重构，保持严格无环。
 
 ## Resolver versions
 
-Different resolver behavior can be specified through the resolver
-version in `Cargo.toml` like this:
+可在 `Cargo.toml` 通过 resolver 版本指定不同行为：
 
 ```toml
 [package]
@@ -528,16 +503,16 @@ name = "my-package"
 version = "1.0.0"
 resolver = "2"
 ```
-- `"1"` (default)
-- `"2"` ([`edition = "2021"`](manifest.md#the-edition-field) default): Introduces changes in [feature
-unification](#features). See the [features chapter][features-2] for more
-details.
-- `"3"` ([`edition = "2024"`](manifest.md#the-edition-field) default, requires Rust 1.84+): Change the default for [`resolver.incompatible-rust-versions`] from `allow` to `fallback`
+- `"1"`（默认）
+- `"2"`（[`edition = "2021"`](manifest.md#the-edition-field) 默认）：
+  引入 [feature 统一](#features) 相关变化。
+  详见 [features chapter][features-2]。
+- `"3"`（[`edition = "2024"`](manifest.md#the-edition-field) 默认，需 Rust 1.84+）：
+  将 [`resolver.incompatible-rust-versions`] 的默认值从 `allow` 改为 `fallback`。
 
-The resolver is a global option that affects the entire workspace. The
-`resolver` version in dependencies is ignored, only the value in the top-level
-package will be used. If using a [virtual workspace], the version should be
-specified in the `[workspace]` table, for example:
+resolver 是影响整个 workspace 的全局选项。
+依赖里的 `resolver` 值会被忽略，只使用顶层 package 的值。
+若使用 [virtual workspace]，应在 `[workspace]` 表里指定，例如：
 
 ```toml
 [workspace]
@@ -545,111 +520,97 @@ members = ["member1", "member2"]
 resolver = "2"
 ```
 
-> **MSRV:** Requires 1.51+
+> **MSRV:** 需要 1.51+
 
 [virtual workspace]: workspaces.md#virtual-workspace
 [features-2]: features.md#feature-resolver-version-2
 
 ## Recommendations
 
-The following are some recommendations for setting the version within your
-package, and for specifying dependency requirements. These are general
-guidelines that should apply to common situations, but of course some
-situations may require specifying unusual requirements.
+下面是关于“设置包版本”与“编写依赖要求”的建议。
+这些是适用于常见场景的通用指导，但特殊场景可能需要非常规要求。
 
-* Follow the [SemVer guidelines] when deciding how to update your version
-  number, and whether or not you will need to make a SemVer-incompatible
-  version change.
-* Use caret requirements for dependencies, such as `"1.2.3"`, for most
-  situations. This ensures that the resolver can be maximally flexible in
-  choosing a version while maintaining build compatibility.
-  * Specify all three components with the version you are currently using.
-    This helps set the minimum version that will be used, and ensures that
-    other users won't end up with an older version of the dependency that
-    might be missing something that your package requires.
-  * Avoid `*` requirements, as they are not allowed on [crates.io], and they
-    can pull in SemVer-breaking changes during a normal `cargo update`.
-  * Avoid overly broad version requirements. For example, `>=2.0.0` can pull
-    in any SemVer-incompatible version, like version `5.0.0`, which can result
-    in broken builds in the future.
-  * Avoid overly narrow version requirements if possible. For example, if you
-    specify a tilde requirement like `bar="~1.3"`, and another package
-    specifies a requirement of `bar="1.4"`, this will fail to resolve, even
-    though minor releases should be compatible.
-* Try to keep the dependency versions up-to-date with the actual minimum
-  versions that your library requires. For example, if you have a requirement
-  of `bar="1.0.12"`, and then in a future release you start using new features
-  added in the `1.1.0` release of "bar", update your dependency requirement to
-  `bar="1.1.0"`.
+* 决定如何更新版本号、是否需要 SemVer breaking 版本时，遵循 [SemVer guidelines]。
+* 大多数场景下依赖建议使用 caret 要求（如 `"1.2.3"`）。
+  这样 resolver 在保持构建兼容前提下，拥有最大的版本选择灵活性。
+  * 建议写全三段版本号，并以当前实际使用版本为准。
+    这有助于设定最小版本，避免其他用户被解析到过旧依赖而缺少你需要的能力。
+  * 避免 `*` 要求：它在 [crates.io] 不允许，且普通 `cargo update` 时可能拉入 SemVer breaking 变更。
+  * 避免过宽版本要求。例如 `>=2.0.0` 可能拉入任意不兼容版本（如 `5.0.0`），
+    将来容易导致构建损坏。
+  * 若可能也避免过窄要求。
+    例如你写 `bar="~1.3"`，而另一个 package 写 `bar="1.4"`，
+    即使次版本理论兼容，也会解析失败。
+* 尽量让依赖版本要求与库“实际最低需要版本”保持同步。
+  例如你原先 `bar="1.0.12"`，后续版本开始使用 `bar` `1.1.0` 新能力，
+  就应把要求更新到 `bar="1.1.0"`。
 
-  If you fail to do this, it may not be immediately obvious because Cargo can
-  opportunistically choose the newest version when you run a blanket `cargo
-  update`. However, if another user depends on your library, and runs `cargo
-  update your-library`, it will *not* automatically update "bar" if it is
-  locked in their `Cargo.lock`. It will only update "bar" in that situation if
-  the dependency declaration is also updated. Failure to do so can cause
-  confusing build errors for the user using `cargo update your-library`.
-* If two packages are tightly coupled, then an `=` dependency requirement may
-  help ensure that they stay in sync. For example, a library with a companion
-  proc-macro library will sometimes make assumptions between the two libraries
-  that won't work well if the two are out of sync (and it is never expected to
-  use the two libraries independently). The parent library can use an `=`
-  requirement on the proc-macro, and re-export the macros for easy access.
-* `0.0.x` versions can be used for packages that are permanently unstable.
+  否则问题可能不易立刻暴露：
+  因为你本地执行全量 `cargo update` 时，Cargo 可能机会性选择最新版本。
+  但若他人依赖你的库并执行 `cargo update your-library`，
+  如果 `bar` 在其 `Cargo.lock` 已被锁定，则不会自动更新。
+  只有依赖声明也更新时，`bar` 才会更新。
+  若未同步更新依赖声明，用户可能遇到难以理解的构建错误。
+* 若两个 package 紧耦合，可考虑使用 `=` 依赖要求确保同步。
+  例如某库与其配套 proc-macro 库常有隐含耦合，
+  若二者版本不同步可能出问题（且通常也不预期被独立使用）。
+  父库可对 proc-macro 使用 `=` 约束，并重新导出宏以便使用。
+* 对长期不稳定 package，可使用 `0.0.x` 版本线。
 
-In general, the stricter you make the dependency requirements, the more likely
-it will be for the resolver to fail. Conversely, if you use requirements that
-are too loose, it may be possible for new versions to be published that will
-break the build.
+总体而言：依赖要求越严格，resolver 失败概率越高；
+要求过松，则未来新版本更可能引入破坏构建的变化。
 
 [SemVer guidelines]: semver.md
 [crates.io]: https://crates.io/
 
 ## Troubleshooting
 
-The following illustrates some problems you may experience, and some possible
-solutions.
+下面给出一些常见问题与可能解决办法。
 
 ### Why was a dependency included?
 
-Say you see dependency `rand` in the `cargo check` output but don't think it's needed and want to understand why it's being pulled in.
+假设你在 `cargo check` 输出看到依赖 `rand`，
+但觉得不该出现，想查它为什么被引入。
 
-You can run
+可以运行：
 ```console
 $ cargo tree --workspace --target all --all-features --invert rand
 rand v0.8.5
-└── ...
+├── ...
 
 rand v0.8.5
-└── ...
+├── ...
 ```
 
 ### Why was that feature on this dependency enabled?
 
-You might identify that it was an activated feature that caused `rand` to show up.  **To figure out which package activated the feature, you can add the `--edges features`**
+你可能发现是某个 feature 被启用才导致 `rand` 出现。
+**要定位是哪个 package 启用了该 feature，可加 `--edges features`：**
 ```console
 $ cargo tree --workspace --target all --all-features --edges features --invert rand
 rand v0.8.5
-└── ...
+├── ...
 
 rand v0.8.5
-└── ...
+├── ...
 ```
 
 ### Unexpected dependency duplication
 
-You see multiple instances of `rand` when you run
+当你运行：
 ```console
 $ cargo tree --workspace --target all --all-features --duplicates
 rand v0.7.3
-└── ...
+├── ...
 
 rand v0.8.5
-└── ...
+├── ...
 ```
 
-The resolver algorithm has converged on a solution that includes two copies of a
-dependency when one would suffice. For example:
+若看到多个 `rand` 实例，
+说明 resolver 收敛到了“一个依赖出现两份”的解，
+即使理论上一份也许够用。
+例如：
 
 ```toml
 # Package A
@@ -661,64 +622,59 @@ rand = "0.7"
 rand = ">=0.6"  # note: open requirements such as this are discouraged
 ```
 
-In this example, Cargo may build two copies of the `rand` crate, even though a
-single copy at version `0.7.3` would meet all requirements. This is because the
-resolver's algorithm favors building the latest available version of `rand` for
-Package B, which is `0.8.5` at the time of this writing, and that is
-incompatible with Package A's specification. The resolver's algorithm does not
-currently attempt to "deduplicate" in this situation.
+在该例中，Cargo 可能会构建两份 `rand`，
+尽管单用 `0.7.3` 也能满足所有要求。
+原因是 resolver 倾向给 Package B 选择当下最新 `rand`（编写本文时是 `0.8.5`），
+而它与 Package A 的要求不兼容。
+当前算法不会在这种场景主动做“去重收敛”。
 
-The use of open-ended version requirements like `>=0.6` is discouraged in Cargo.
-But, if you run into this situation, the [`cargo update`] command with the
-`--precise` flag can be used to manually remove such duplications.
+Cargo 不鼓励使用 `>=0.6` 这种开放式版本要求。
+但若你遇到此情况，可用 [`cargo update`] + `--precise`
+手动去除这类重复。
 
 [`cargo update`]: ../commands/cargo-update.md
 
 ### Why wasn't a newer version selected?
 
-Say you noticed that the latest version of a dependency wasn't selected when you ran:
+如果你执行：
 ```console
 $ cargo update
 ```
-You can enable some extra logging to see why this happened:
+后发现并未选中依赖最新版本，
+可开启额外日志查看原因：
 ```console
 $ env CARGO_LOG=cargo::core::resolver=trace cargo update
 ```
-**Note:** Cargo log targets and levels may change over time.
+**注意：**Cargo 日志 target 与级别可能随时间变化。
 
 ### SemVer-breaking patch release breaks the build
 
-Sometimes a project may inadvertently publish a point release with a
-SemVer-breaking change. When users update with `cargo update`, they will pick
-up this new release, and then their build may break. In this situation, it is
-recommended that the project should [yank] the release, and either remove the
-SemVer-breaking change, or publish it as a new SemVer-major version increase.
+有时项目会误发布包含 SemVer breaking 变更的补丁版本。
+用户执行 `cargo update` 后会拉到该版本，导致构建失败。
+这种情况建议项目方先 [yank] 该版本，
+然后要么移除 breaking 变更，要么改为提升 SemVer 主版本发布。
 
-If the change happened in a third-party project, if possible try to
-(politely!) work with the project to resolve the issue.
+如果问题来自第三方项目，
+尽量（礼貌地）与对方协作解决。
 
-While waiting for the release to be yanked, some workarounds depend on the
-circumstances:
+在版本被 yank 之前，可根据场景采用临时方案：
 
-* If your project is the end product (such as a binary executable), just avoid
-  updating the offending package in `Cargo.lock`. This can be done with the
-  `--precise` flag in [`cargo update`].
-* If you publish a binary on [crates.io], then you can temporarily add an `=`
-  requirement to force the dependency to a specific good version.
-  * Binary projects can alternatively recommend users to use the `--locked`
-    flag with [`cargo install`] to use the original `Cargo.lock` that contains
-    the known good version.
-* Libraries may also consider publishing a temporary new release with stricter
-  requirements that avoid the troublesome dependency. You may want to consider
-  using range requirements (instead of `=`) to avoid overly-strict
-  requirements that may conflict with other packages using the same
-  dependency. Once the problem has been resolved, you can publish another
-  point release that relaxes the dependency back to a caret requirement.
-* If it looks like the third-party project is unable or unwilling to yank the
-  release, then one option is to update your code to be compatible with the
-  changes, and update the dependency requirement to set the minimum version to
-  the new release. You will also need to consider if this is a SemVer-breaking
-  change of your own library, for example if it exposes types from the
-  dependency.
+* 若你的项目是最终产物（如二进制），
+  就先不要更新 `Cargo.lock` 里出问题的包。
+  可通过 [`cargo update`] 的 `--precise` 实现。
+* 若你在 [crates.io] 发布二进制，
+  可临时加 `=` 约束，强制依赖到某个已知正常版本。
+  * 二进制项目也可建议用户使用 [`cargo install`] 的 `--locked`，
+    以使用原始 `Cargo.lock` 中的已知可用版本。
+* 库项目可考虑临时发一个新小版本，
+  收紧依赖要求以避开问题版本。
+  你可以考虑使用区间要求（而不是 `=`）避免过严约束，
+  以免与其他 package 发生冲突。
+  问题解决后再发一个小版本，把依赖放宽回 caret 要求。
+* 若第三方项目看起来无法/不愿 yank，
+  一个方案是更新你的代码以兼容其变更，
+  并把依赖最小版本提升到该新版本。
+  同时也要评估这是否构成你自己库的 SemVer breaking 变更，
+  例如你对外暴露了该依赖的类型。
 
 [`cargo install`]: ../commands/cargo-install.md

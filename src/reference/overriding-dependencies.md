@@ -1,47 +1,37 @@
-# Overriding Dependencies
+﻿# Overriding Dependencies
 
-The desire to override a dependency can arise through a number of scenarios.
-Most of them, however, boil down to the ability to work with a crate before
-it's been published to [crates.io]. For example:
+在不少场景下，你会希望覆盖依赖。
+这些场景大多都归结为：你想在某个 crate 发布到 [crates.io] 之前就先使用它。
+例如：
 
-* A crate you're working on is also used in a much larger application you're
-  working on, and you'd like to test a bug fix to the library inside of the
-  larger application.
-* An upstream crate you don't work on has a new feature or a bug fix on the
-  master branch of its git repository which you'd like to test out.
-* You're about to publish a new major version of your crate, but you'd like to
-  do integration testing across an entire package to ensure the new major
-  version works.
-* You've submitted a fix to an upstream crate for a bug you found, but you'd
-  like to immediately have your application start depending on the fixed
-  version of the crate to avoid blocking on the bug fix getting merged.
+* 你正在开发的某个 crate 也被一个更大的应用使用，你希望在这个大应用里先验证对该库的 bug 修复。
+* 你并未直接维护的上游 crate，在其 git 仓库的 master 分支上已有新功能或 bug 修复，你想先试用。
+* 你即将发布 crate 的新主版本，但希望先在整个 package 范围做集成测试，确认新主版本可用。
+* 你向上游 crate 提交了 bug 修复，但希望你的应用立刻依赖修复后的版本，而不是等待 PR 合并。
 
-These scenarios can be solved with the [`[patch]` manifest
-section](#the-patch-section).
+这些场景都可以通过 [`[patch]` manifest
+段](#the-patch-section)解决。
 
-This chapter walks through a few different use cases, and includes details
-on the different ways to override a dependency.
+本章会演示几个不同用例，并说明覆盖依赖的几种方式。
 
-* Example use cases
-    * [Testing a bugfix](#testing-a-bugfix)
-    * [Working with an unpublished minor version](#working-with-an-unpublished-minor-version)
-        * [Overriding repository URL](#overriding-repository-url)
-    * [Prepublishing a breaking change](#prepublishing-a-breaking-change)
-    * [Using `[patch]` with multiple versions](#using-patch-with-multiple-versions)
-* Reference
-    * [The `[patch]` section](#the-patch-section)
-    * [The `[replace]` section](#the-replace-section)
-    * [`paths` overrides](#paths-overrides)
+* 示例用例
+    * [测试 bug 修复](#testing-a-bugfix)
+    * [使用尚未发布的次版本](#working-with-an-unpublished-minor-version)
+        * [覆盖仓库 URL](#overriding-repository-url)
+    * [预发布破坏性变更](#prepublishing-a-breaking-change)
+    * [在多个版本中使用 `[patch]`](#using-patch-with-multiple-versions)
+* 参考
+    * [`[patch]` 段](#the-patch-section)
+    * [`[replace]` 段](#the-replace-section)
+    * [`paths` 覆盖](#paths-overrides)
 
-> **Note**: See also specifying a dependency with [multiple locations], which
-> can be used to override the source for a single dependency declaration in a
-> local package.
+> **注意**：另见在依赖声明中指定 [multiple locations]。
+> 这可用于在本地 package 内，只覆盖单个依赖声明的来源。
 
 ## Testing a bugfix
 
-Let's say you're working with the [`uuid` crate] but while you're working on it
-you discover a bug. You are, however, quite enterprising so you decide to also
-try to fix the bug! Originally your manifest will look like:
+假设你在使用 [`uuid` crate]，开发过程中发现了一个 bug。
+你决定自己修它。最初你的 manifest 可能是：
 
 [`uuid` crate]: https://crates.io/crates/uuid
 
@@ -54,39 +44,35 @@ version = "0.1.0"
 uuid = "1.0"
 ```
 
-First thing we'll do is to clone the [`uuid` repository][uuid-repository]
-locally via:
+第一步，先在本地 clone [`uuid` 仓库][uuid-repository]：
 
 ```console
 $ git clone https://github.com/uuid-rs/uuid.git
 ```
 
-Next we'll edit the manifest of `my-library` to contain:
+接着把 `my-library` 的 manifest 改为：
 
 ```toml
 [patch.crates-io]
 uuid = { path = "../path/to/uuid" }
 ```
 
-Here we declare that we're *patching* the source `crates-io` with a new
-dependency. This will effectively add the local checked out version of `uuid` to
-the crates.io registry for our local package.
+这里声明的是：我们要用一个新依赖去 *patch* `crates-io` 这个源。
+效果上相当于把本地 checkout 的 `uuid`，加入当前 package 看到的 crates.io 注册表视图。
 
-Next up we need to ensure that our lock file is updated to use this new version
-of `uuid` so our package uses the locally checked out copy instead of one from
-crates.io. The way `[patch]` works is that it'll load the dependency at
-`../path/to/uuid` and then whenever crates.io is queried for versions of `uuid`
-it'll *also* return the local version.
+接下来要确保 lock 文件更新为使用这个新版本的 `uuid`，
+让 package 使用本地副本而非 crates.io 上的版本。
+`[patch]` 的工作方式是：加载 `../path/to/uuid` 这个依赖，
+并在查询 crates.io 的 `uuid` 版本时，把“本地版本”也一起返回。
 
-This means that the version number of the local checkout is significant and will
-affect whether the patch is used. Our manifest declared `uuid = "1.0"` which
-means we'll only resolve to `>= 1.0.0, < 2.0.0`, and Cargo's greedy resolution
-algorithm also means that we'll resolve to the maximum version within that
-range. Typically this doesn't matter as the version of the git repository will
-already be greater or match the maximum version published on crates.io, but it's
-important to keep this in mind!
+这意味着本地 checkout 的版本号很关键，它会影响 patch 是否会被选中。
+我们的 manifest 写的是 `uuid = "1.0"`，
+即只会解析到 `>= 1.0.0, < 2.0.0`。
+同时 Cargo 的贪心解析策略会尽量选这个范围内的最大版本。
+通常问题不大，因为 git 仓库里的版本一般会大于或至少等于 crates.io 已发布最大版本，
+但这点一定要记住。
 
-In any case, typically all you need to do now is:
+一般来说你现在只需：
 
 ```console
 $ cargo build
@@ -95,16 +81,15 @@ $ cargo build
     Finished dev [unoptimized + debuginfo] target(s) in 0.32 secs
 ```
 
-And that's it! You're now building with the local version of `uuid` (note the
-path in parentheses in the build output). If you don't see the local path version getting
-built then you may need to run `cargo update uuid --precise $version` where
-`$version` is the version of the locally checked out copy of `uuid`.
+完成。现在你已在使用本地 `uuid`（注意输出括号中的路径）。
+如果你没看到本地路径版本被构建，可能需要执行
+`cargo update uuid --precise $version`，
+其中 `$version` 是你本地 checkout 的 `uuid` 版本号。
 
-Once you've fixed the bug you originally found the next thing you'll want to do
-is to likely submit that as a pull request to the `uuid` crate itself. Once
-you've done this then you can also update the `[patch]` section. The listing
-inside of `[patch]` is just like the `[dependencies]` section, so once your pull
-request is merged you could change your `path` dependency to:
+修好 bug 之后，你大概率会向 `uuid` 提交 PR。
+提交后也可以更新 `[patch]` 段。
+`[patch]` 内条目和 `[dependencies]` 写法一致，
+所以当 PR 合并后，你可以把 `path` 依赖改成：
 
 ```toml
 [patch.crates-io]
@@ -115,16 +100,15 @@ uuid = { git = 'https://github.com/uuid-rs/uuid.git' }
 
 ## Working with an unpublished minor version
 
-Let's now shift gears a bit from bug fixes to adding features. While working on
-`my-library` you discover that a whole new feature is needed in the `uuid`
-crate. You've implemented this feature, tested it locally above with `[patch]`,
-and submitted a pull request. Let's go over how you continue to use and test it
-before it's actually published.
+下面从修 bug 切到加功能。
+你在开发 `my-library` 时发现 `uuid` 需要一个全新功能。
+你已经实现该功能、通过 `[patch]` 做过本地测试，并提交了 PR。
+现在看一下在它正式发布前，如何继续使用并测试它。
 
-Let's also say that the current version of `uuid` on crates.io is `1.0.0`, but
-since then the master branch of the git repository has updated to `1.0.1`. This
-branch includes your new feature you submitted previously. To use this
-repository we'll edit our `Cargo.toml` to look like
+假设 crates.io 上当前 `uuid` 版本是 `1.0.0`，
+但 git 仓库 master 分支已经更新到 `1.0.1`，
+且包含你提交的新功能。
+要使用这个仓库，可把 `Cargo.toml` 改成：
 
 ```toml
 [package]
@@ -138,18 +122,16 @@ uuid = "1.0.1"
 uuid = { git = 'https://github.com/uuid-rs/uuid.git' }
 ```
 
-Note that our local dependency on `uuid` has been updated to `1.0.1` as it's
-what we'll actually require once the crate is published. This version doesn't
-exist on crates.io, though, so we provide it with the `[patch]` section of the
-manifest.
+注意我们把本地对 `uuid` 的依赖升级到 `1.0.1`，
+因为这就是 crate 发布后真正需要的版本。
+该版本虽然还不存在于 crates.io，但可通过 manifest 的 `[patch]` 提供。
 
-Now when our library is built it'll fetch `uuid` from the git repository and
-resolve to 1.0.1 inside the repository instead of trying to download a version
-from crates.io. Once 1.0.1 is published on crates.io the `[patch]` section can
-be deleted.
+这样构建时，库会从 git 仓库拉取 `uuid`，
+并解析到仓库中的 `1.0.1`，而不是去 crates.io 下载。
+等 `1.0.1` 发布到 crates.io 后，就可以删除 `[patch]` 段。
 
-It's also worth noting that `[patch]` applies *transitively*. Let's say you use
-`my-library` in a larger package, such as:
+还要注意 `[patch]` 是*传递生效*的。
+假设你在更大的 package 中使用 `my-library`，例如：
 
 ```toml
 [package]
@@ -164,33 +146,30 @@ uuid = "1.0"
 uuid = { git = 'https://github.com/uuid-rs/uuid.git' }
 ```
 
-Remember that `[patch]` is applicable *transitively* but can only be defined at
-the *top level* so the consumers of `my-library` have to repeat the `[patch]` section
-if necessary. Here, though, the new `uuid` crate applies to *both* our dependency on
-`uuid` and the `my-library -> uuid` dependency. The `uuid` crate will be resolved to
-one version for this entire crate graph, 1.0.1, and it'll be pulled from the git
-repository.
+记住 `[patch]` 虽然是*传递*的，但只能定义在*顶层*，
+所以 `my-library` 的使用方如有需要仍需重复写 `[patch]`。
+不过在这个例子里，新 `uuid` 会同时作用于：
+直接 `uuid` 依赖，以及 `my-library -> uuid` 依赖。
+整个 crate 图中的 `uuid` 会统一解析到同一个版本 `1.0.1`，并从 git 仓库获取。
 
 ### Overriding repository URL
 
-In case the dependency you want to override isn't loaded from `crates.io`,
-you'll have to change a bit how you use `[patch]`. For example, if the
-dependency is a git dependency, you can override it to a local path with:
+如果你要覆盖的依赖来源不是 `crates.io`，
+那么 `[patch]` 的写法要稍微调整。
+例如依赖本身是 git 依赖时，可这样覆盖到本地路径：
 
 ```toml
 [patch."https://github.com/your/repository"]
 my-library = { path = "../my-library/path" }
 ```
 
-And that's it!
+就这么简单。
 
 ## Prepublishing a breaking change
 
-Let's take a look at working with a new major version of a crate, typically
-accompanied with breaking changes. Sticking with our previous crates, this
-means that we're going to be creating version 2.0.0 of the `uuid` crate. After
-we've submitted all changes upstream we can update our manifest for
-`my-library` to look like:
+再来看新主版本场景，通常伴随破坏性变更。
+沿用前面的 crate，我们要创建 `uuid` 的 `2.0.0`。
+当上游变更都提交后，可把 `my-library` 的 manifest 改成：
 
 ```toml
 [dependencies]
@@ -200,10 +179,9 @@ uuid = "2.0"
 uuid = { git = "https://github.com/uuid-rs/uuid.git", branch = "2.0.0" }
 ```
 
-And that's it! Like with the previous example the 2.0.0 version doesn't actually
-exist on crates.io but we can still put it in through a git dependency through
-the usage of the `[patch]` section. As a thought exercise let's take another
-look at the `my-binary` manifest from above again as well:
+完成。和前例一样，`2.0.0` 尚未存在于 crates.io，
+但依然可以通过 `[patch]` + git 依赖引入。
+再看一次上文的 `my-binary` manifest：
 
 ```toml
 [package]
@@ -218,19 +196,18 @@ uuid = "1.0"
 uuid = { git = 'https://github.com/uuid-rs/uuid.git', branch = '2.0.0' }
 ```
 
-Note that this will actually resolve to two versions of the `uuid` crate. The
-`my-binary` crate will continue to use the 1.x.y series of the `uuid` crate but
-the `my-library` crate will use the `2.0.0` version of `uuid`. This will allow you
-to gradually roll out breaking changes to a crate through a dependency graph
-without being forced to update everything all at once.
+注意这里实际上会解析出两个 `uuid` 版本。
+`my-binary` 继续使用 `uuid` 的 1.x.y 系列，
+而 `my-library` 会使用 `uuid` 2.0.0。
+这让你可以在依赖图中逐步推广破坏性变更，
+而不必一次性升级全部依赖。
 
 ## Using `[patch]` with multiple versions
 
-You can patch in multiple versions of the same crate with the `package` key
-used to rename dependencies. For example let's say that the `serde` crate has
-a bugfix that we'd like to use to its `1.*` series but we'd also like to
-prototype using a `2.0.0` version of serde we have in our git repository. To
-configure this we'd do:
+你可以通过 `package` 键（用于依赖重命名）
+同时 patch 同一个 crate 的多个版本。
+例如 `serde` 的 1.* 系列有一个你想要的修复，
+同时你还想试验 git 仓库里的 `serde` 2.0.0：
 
 ```toml
 [patch.crates-io]
@@ -238,21 +215,18 @@ serde = { git = 'https://github.com/serde-rs/serde.git' }
 serde2 = { git = 'https://github.com/example/serde.git', package = 'serde', branch = 'v2' }
 ```
 
-The first `serde = ...` directive indicates that serde `1.*` should be used
-from the git repository (pulling in the bugfix we need) and the second `serde2
-= ...` directive indicates that the `serde` package should also be pulled from
-the `v2` branch of `https://github.com/example/serde`. We're assuming here
-that `Cargo.toml` on that branch mentions version `2.0.0`.
+第一条 `serde = ...` 表示 `serde` 1.* 从 git 仓库获取（拿到所需修复）。
+第二条 `serde2 = ...` 表示同时也从 `https://github.com/example/serde` 的 `v2` 分支
+拉取 `serde` package。
+这里假设该分支的 `Cargo.toml` 标注版本 `2.0.0`。
 
-Note that when using the `package` key the `serde2` identifier here is actually
-ignored. We simply need a unique name which doesn't conflict with other patched
-crates.
+注意当使用 `package` 键时，这里的 `serde2` 标识符本身会被忽略。
+它只需要是一个不与其他 patch crate 冲突的唯一名字。
 
 ## The `[patch]` section
 
-The `[patch]` section of `Cargo.toml` can be used to override dependencies
-with other copies. The syntax is similar to the
-[`[dependencies]`][dependencies] section:
+`Cargo.toml` 的 `[patch]` 段可用于用“其他副本”覆盖依赖。
+语法类似 [`[dependencies]`][dependencies]：
 
 ```toml
 [patch.crates-io]
@@ -266,42 +240,37 @@ git = 'https://github.com/example/baz.git'
 baz = { git = 'https://github.com/example/patched-baz.git', branch = 'my-branch' }
 ```
 
-> **Note**: The `[patch]` table can also be specified as a [configuration
-> option](config.md), such as in a `.cargo/config.toml` file or a CLI option
-> like `--config 'patch.crates-io.rand.path="rand"'`. This can be useful for
-> local-only changes that you don't want to commit, or temporarily testing a
-> patch.
+> **注意**：`[patch]` 也可作为[配置项](config.md)指定，
+> 比如写在 `.cargo/config.toml`，或通过 CLI 参数
+> `--config 'patch.crates-io.rand.path="rand"'`。
+> 这对“只在本地生效、不想提交”的改动，或临时测试 patch 很有用。
 
-The `[patch]` table is made of dependency-like sub-tables. Each key after
-`[patch]` is a URL of the source that is being patched, or the name of a
-registry. The name `crates-io` may be used to override the default registry
-[crates.io]. The first `[patch]` in the example above demonstrates overriding
-[crates.io], and the second `[patch]` demonstrates overriding a git source.
+`[patch]` 由“类似依赖声明”的子表构成。
+`[patch]` 后面的每个键要么是被 patch 的源 URL，要么是某个 registry 名称。
+可用 `crates-io` 表示默认注册表 [crates.io]。
+上例第一个 `[patch]` 展示了覆盖 [crates.io]，
+第二个 `[patch]` 展示了覆盖 git 源。
 
-Each entry in these tables is a normal dependency specification, the same as
-found in the `[dependencies]` section of the manifest. The dependencies listed
-in the `[patch]` section are resolved and used to patch the source at the
-URL specified. The above manifest snippet patches the `crates-io` source (e.g.
-crates.io itself) with the `foo` crate and `bar` crate. It also
-patches the `https://github.com/example/baz` source with a `my-branch` that
-comes from elsewhere.
+这些表中的每个条目，都是普通依赖声明，写法与 manifest 的 `[dependencies]` 相同。
+`[patch]` 中列出的依赖会被解析并用于 patch 指定 URL 的源。
+上面的片段等价于：
+把 `crates-io` 源（即 crates.io）中的 `foo` 与 `bar` 换成指定副本；
+并把 `https://github.com/example/baz` 源中的 `baz` 换成来自其他位置的 `my-branch`。
 
-Sources can be patched with versions of crates that do not exist, and they can
-also be patched with versions of crates that already exist. If a source is
-patched with a crate version that already exists in the source, then the
-source's original crate is replaced.
+源可以被 patch 成“原本不存在的 crate 版本”，
+也可以 patch 成“源中已存在的版本”。
+如果 patch 的版本在源中已存在，那么源里的原始 crate 会被替换。
 
-Cargo only looks at the patch settings in the `Cargo.toml` manifest at the
-root of the workspace. Patch settings defined in dependencies will be
-ignored.
+Cargo 只会读取 workspace 根目录 `Cargo.toml` 里的 patch 设置。
+在依赖中定义的 patch 设置会被忽略。
 
 ## The `[replace]` section
 
-> **Note**: `[replace]` is deprecated. You should use the
-> [`[patch]`](#the-patch-section) table instead.
+> **注意**：`[replace]` 已弃用。请改用
+> [`[patch]`](#the-patch-section)。
 
-This section of Cargo.toml can be used to override dependencies with other
-copies. The syntax is similar to the `[dependencies]` section:
+`Cargo.toml` 的该段也可用于用其他副本覆盖依赖。
+语法类似 `[dependencies]`：
 
 ```toml
 [replace]
@@ -309,49 +278,44 @@ copies. The syntax is similar to the `[dependencies]` section:
 "bar:1.0.2" = { path = 'my/local/bar' }
 ```
 
-Each key in the `[replace]` table is a [package ID
-specification](pkgid-spec.md), which allows arbitrarily choosing a node in the
-dependency graph to override (the 3-part version number is required). The
-value of each key is the same as the `[dependencies]` syntax for specifying
-dependencies, except that you can't specify features. Note that when a crate
-is overridden the copy it's overridden with must have both the same name and
-version, but it can come from a different source (e.g., git or a local path).
+`[replace]` 表中的每个键都是一个 [package ID
+specification](pkgid-spec.md)，
+可用于任意选择依赖图中的节点进行覆盖（必须写 3 段版本号）。
+每个键的值与 `[dependencies]` 指定依赖的语法一致，
+但不能指定 features。
+注意：被覆盖 crate 与用于替换的 crate 必须同名同版本，
+但来源可不同（如 git 或本地路径）。
 
-Cargo only looks at the replace settings in the `Cargo.toml` manifest at the
-root of the workspace. Replace settings defined in dependencies will be
-ignored.
+Cargo 只会读取 workspace 根目录 `Cargo.toml` 中的 replace 设置。
+在依赖里定义的 replace 设置会被忽略。
 
 ## `paths` overrides
 
-Sometimes you're only temporarily working on a crate and you don't want to have
-to modify `Cargo.toml` like with the `[patch]` section above. For this use
-case Cargo offers a much more limited version of overrides called **path
-overrides**.
+有时你只是临时修改某个 crate，
+并不想像上面 `[patch]` 那样改 `Cargo.toml`。
+这种场景 Cargo 提供了能力更受限的覆盖方式：**path overrides**。
 
-Path overrides are specified through [`.cargo/config.toml`](config.md) instead of
-`Cargo.toml`. Inside of `.cargo/config.toml` you'll specify a key called `paths`:
+Path override 配置写在 [`.cargo/config.toml`](config.md)，而不是 `Cargo.toml`。
+在 `.cargo/config.toml` 中可指定 `paths` 键：
 
 ```toml
 paths = ["/path/to/uuid"]
 ```
 
-This array should be filled with directories that contain a `Cargo.toml`. In
-this instance, we’re just adding `uuid`, so it will be the only one that’s
-overridden. This path can be either absolute or relative to the directory that
-contains the `.cargo` folder.
+该数组应填入包含 `Cargo.toml` 的目录。
+在这个例子里我们只添加 `uuid`，
+因此只有它会被覆盖。
+该路径可以是绝对路径，也可以是相对 `.cargo` 文件夹所在目录的相对路径。
 
-Path overrides are more restricted than the `[patch]` section, however, in
-that they cannot change the structure of the dependency graph. When a
-path replacement is used then the previous set of dependencies
-must all match exactly to the new `Cargo.toml` specification. For example this
-means that path overrides cannot be used to test out adding a dependency to a
-crate. Instead, `[patch]` must be used in that situation. As a result, usage of a
-path override is typically isolated to quick bug fixes rather than larger
-changes.
+不过 path overrides 比 `[patch]` 限制更多：
+它不能改变依赖图结构。
+使用 path 替换时，新 `Cargo.toml` 的依赖集合必须与原先完全一致。
+例如，这意味着你不能用 path override 来测试“给 crate 新增一个依赖”。
+这类场景必须使用 `[patch]`。
+因此 path override 通常只适合快速修 bug，而非大改动。
 
-> **Note**: using a local configuration to override paths will only work for
-> crates that have been published to [crates.io]. You cannot use this feature
-> to tell Cargo how to find local unpublished crates.
+> **注意**：使用本地配置覆盖路径，只对已发布到 [crates.io] 的 crate 生效。
+> 你不能用这个功能告诉 Cargo 如何查找本地未发布 crate。
 
 
 [crates.io]: https://crates.io/
