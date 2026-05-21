@@ -1,4 +1,4 @@
-﻿# Overriding Dependencies
+﻿# 覆盖依赖
 
 在不少场景下，你会希望覆盖依赖。
 这些场景大多都归结为：你想在某个 crate 发布到 [crates.io] 之前就先使用它。
@@ -28,7 +28,7 @@
 > **注意**：另见在依赖声明中指定 [multiple locations]。
 > 这可用于在本地 package 内，只覆盖单个依赖声明的来源。
 
-## Testing a bugfix
+## 测试 bug 修复
 
 假设你在使用 [`uuid` crate]，开发过程中发现了一个 bug。
 你决定自己修它。最初你的 manifest 可能是：
@@ -98,7 +98,7 @@ uuid = { git = 'https://github.com/uuid-rs/uuid.git' }
 
 [uuid-repository]: https://github.com/uuid-rs/uuid
 
-## Working with an unpublished minor version
+## 使用尚未发布的次版本
 
 下面从修 bug 切到加功能。
 你在开发 `my-library` 时发现 `uuid` 需要一个全新功能。
@@ -152,7 +152,7 @@ uuid = { git = 'https://github.com/uuid-rs/uuid.git' }
 直接 `uuid` 依赖，以及 `my-library -> uuid` 依赖。
 整个 crate 图中的 `uuid` 会统一解析到同一个版本 `1.0.1`，并从 git 仓库获取。
 
-### Overriding repository URL
+### 覆盖仓库 URL
 
 如果你要覆盖的依赖来源不是 `crates.io`，
 那么 `[patch]` 的写法要稍微调整。
@@ -165,7 +165,7 @@ my-library = { path = "../my-library/path" }
 
 就这么简单。
 
-## Prepublishing a breaking change
+## 预发布破坏性变更
 
 再来看新主版本场景，通常伴随破坏性变更。
 沿用前面的 crate，我们要创建 `uuid` 的 `2.0.0`。
@@ -202,7 +202,7 @@ uuid = { git = 'https://github.com/uuid-rs/uuid.git', branch = '2.0.0' }
 这让你可以在依赖图中逐步推广破坏性变更，
 而不必一次性升级全部依赖。
 
-## Using `[patch]` with multiple versions
+## 在多个版本中使用 `[patch]`
 
 你可以通过 `package` 键（用于依赖重命名）
 同时 patch 同一个 crate 的多个版本。
@@ -223,7 +223,7 @@ serde2 = { git = 'https://github.com/example/serde.git', package = 'serde', bran
 注意当使用 `package` 键时，这里的 `serde2` 标识符本身会被忽略。
 它只需要是一个不与其他 patch crate 冲突的唯一名字。
 
-## The `[patch]` section
+## `[patch]` 段
 
 `Cargo.toml` 的 `[patch]` 段可用于用“其他副本”覆盖依赖。
 语法类似 [`[dependencies]`][dependencies]：
@@ -264,7 +264,7 @@ baz = { git = 'https://github.com/example/patched-baz.git', branch = 'my-branch'
 Cargo 只会读取 workspace 根目录 `Cargo.toml` 里的 patch 设置。
 在依赖中定义的 patch 设置会被忽略。
 
-## The `[replace]` section
+## `[replace]` 段
 
 > **注意**：`[replace]` 已弃用。请改用
 > [`[patch]`](#the-patch-section)。
@@ -289,7 +289,7 @@ specification](pkgid-spec.md)，
 Cargo 只会读取 workspace 根目录 `Cargo.toml` 中的 replace 设置。
 在依赖里定义的 replace 设置会被忽略。
 
-## `paths` overrides
+## `paths` 覆盖
 
 有时你只是临时修改某个 crate，
 并不想像上面 `[patch]` 那样改 `Cargo.toml`。

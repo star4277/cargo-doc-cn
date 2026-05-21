@@ -1,20 +1,18 @@
 # Unstable Features
 
-Experimental Cargo features are only available on the [nightly channel]. You
-are encouraged to experiment with these features to see if they meet your
-needs, and if there are any issues or problems. Check the linked tracking
-issues listed below for more information on the feature, and click the GitHub
-subscribe button if you want future updates.
+实验性的 Cargo 特性仅在 [nightly channel] 可用。
+建议你实际尝试这些特性，评估它们是否满足需求、是否存在问题。
+可查看下方关联的 tracking issue 了解每个特性的详细信息；
+如果希望跟进后续进展，可在 GitHub 对对应 issue 订阅。
 
-After some period of time, if the feature does not have any major concerns, it
-can be [stabilized], which will make it available on stable once the current
-nightly release reaches the stable channel (anywhere from 6 to 12 weeks).
+经过一段时间后，如果某特性没有重大问题，就可能被 [stabilized]。
+一旦当前 nightly 发布流转到 stable（通常约 6 到 12 周），
+该特性就会在 stable 可用。
 
-There are three different ways that unstable features can be enabled based on
-how the feature works:
+根据特性类型不同，不稳定特性有三种启用方式：
 
-* New syntax in `Cargo.toml` requires a `cargo-features` key at the top of
-  `Cargo.toml`, before any tables. For example:
+* 对 `Cargo.toml` 的新语法，需要在 `Cargo.toml` 顶部（任何 table 之前）
+  添加 `cargo-features` 键。例如：
 
   ```toml
   # This specifies which new Cargo.toml features are enabled.
@@ -26,24 +24,21 @@ how the feature works:
   im-a-teapot = true  # This is a new option enabled by test-dummy-unstable.
   ```
 
-* New command-line flags, options, and subcommands require the `-Z
-  unstable-options` CLI option to also be included. For example, the new
-  `--artifact-dir` option is only available on nightly:
+* 新的命令行 flag / option / 子命令，需要额外带上
+  `-Z unstable-options`。例如新的 `--artifact-dir` 仅在 nightly 可用：
 
   ```cargo +nightly build --artifact-dir=out -Z unstable-options```
 
-* `-Z` command-line flags are used to enable new functionality that may not
-  have an interface, or the interface has not yet been designed, or for more
-  complex features that affect multiple parts of Cargo. For example, the
-  [mtime-on-use](#mtime-on-use) feature can be enabled with:
+* `-Z` 命令行 flag 用于启用一些新能力：
+  这些能力可能尚无稳定接口、接口尚未定型，或属于影响 Cargo 多个子系统的复杂特性。
+  例如可用以下方式启用 [mtime-on-use](#mtime-on-use)：
 
   ```cargo +nightly build -Z mtime-on-use```
 
-  Run `cargo -Z help` to see a list of flags available.
+  运行 `cargo -Z help` 可查看可用 flag 列表。
 
-  Anything which can be configured with a `-Z` flag can also be set in the
-  cargo [config file] (`.cargo/config.toml`) in the `unstable` table. For
-  example:
+  任何可通过 `-Z` 配置的项，也可在 cargo [config file]
+  （`.cargo/config.toml`）的 `unstable` 表中设置。例如：
 
   ```toml
   [unstable]
@@ -51,9 +46,9 @@ how the feature works:
   build-std = ["core", "alloc"]
   ```
 
-Each new feature described below should explain how to use it.
+下文每个新特性都应包含对应使用方式说明。
 
-*For the latest nightly, see the [nightly version] of this page.*
+*若要查看最新 nightly 文档，请参阅本页的 [nightly version]。*
 
 [config file]: config.md
 [nightly channel]: ../../book/appendix-07-nightly-rust.html
@@ -62,189 +57,176 @@ Each new feature described below should explain how to use it.
 
 ## List of unstable features
 
-* Unstable-specific features
-    * [-Z allow-features](#allow-features) --- Provides a way to restrict which unstable features are used.
-* Build scripts and linking
-    * [Metabuild](#metabuild) --- Provides declarative build scripts.
-    * [Multiple Build Scripts](#multiple-build-scripts) --- Allows use of multiple build scripts.
-    * [Any Build Script Metadata](#any-build-script-metadata) --- Allow any build script to specify env vars via `cargo::metadata=key=value`
-* Resolver and features
-    * [no-index-update](#no-index-update) --- Prevents cargo from updating the index cache.
-    * [avoid-dev-deps](#avoid-dev-deps) --- Prevents the resolver from including dev-dependencies during resolution.
-    * [minimal-versions](#minimal-versions) --- Forces the resolver to use the lowest compatible version instead of the highest.
-    * [direct-minimal-versions](#direct-minimal-versions) — Forces the resolver to use the lowest compatible version instead of the highest.
-    * [public-dependency](#public-dependency) --- Allows dependencies to be classified as either public or private.
-    * [msrv-policy](#msrv-policy) --- MSRV-aware resolver and version selection
-    * [precise-pre-release](#precise-pre-release) --- Allows pre-release versions to be selected with `update --precise`
-    * [sbom](#sbom) --- Generates SBOM pre-cursor files for compiled artifacts
-    * [update-breaking](#update-breaking) --- Allows upgrading to breaking versions with `update --breaking`
-    * [feature-unification](#feature-unification) --- Enable new feature unification modes in workspaces
-    * [lockfile-publish-time](#lockfile-publish-time) --- Limit resolver to packages older than the specified time
-* Output behavior
-    * [artifact-dir](#artifact-dir) --- Adds a directory where artifacts are copied to.
-    * [build-dir-new-layout](#build-dir-new-layout) --- Enables the new build-dir filesystem layout
-    * [Different binary name](#different-binary-name) --- Assign a name to the built binary that is separate from the crate name.
-    * [root-dir](#root-dir) --- Controls the root directory relative to which paths are printed
-* Compile behavior
-    * [mtime-on-use](#mtime-on-use) --- Updates the last-modified timestamp on every dependency every time it is used, to provide a mechanism to delete unused artifacts.
-    * [build-std](#build-std) --- Builds the standard library instead of using pre-built binaries.
-    * [build-std-features](#build-std-features) --- Sets features to use with the standard library.
-    * [binary-dep-depinfo](#binary-dep-depinfo) --- Causes the dep-info file to track binary dependencies.
-    * [checksum-freshness](#checksum-freshness) --- When passed, the decision as to whether a crate needs to be rebuilt is made using file checksums instead of the file mtime.
-    * [panic-abort-tests](#panic-abort-tests) --- Allows running tests with the "abort" panic strategy.
-    * [host-config](#host-config) --- Allows setting `[target]`-like configuration settings for host build targets.
-    * [no-embed-metadata](#no-embed-metadata) --- Passes `-Zembed-metadata=no` to the compiler, which avoid embedding metadata into rlib and dylib artifacts, to save disk space.
-    * [target-applies-to-host](#target-applies-to-host) --- Alters whether certain flags will be passed to host build targets.
-    * [gc](#gc) --- Global cache garbage collection.
-    * [open-namespaces](#open-namespaces) --- Allow multiple packages to participate in the same API namespace
-    * [panic-immediate-abort](#panic-immediate-abort) --- Passes `-Cpanic=immediate-abort` to the compiler.
-    * [compile-time-deps](#compile-time-deps) --- Perma-unstable feature for rust-analyzer
-    * [fine-grain-locking](#fine-grain-locking) --- Use fine grain locking instead of locking the entire build cache
-    * [json-target-spec](#json-target-spec) --- Allows the use of `.json` custom target specs.
+* 不稳定专用特性
+    * [-Z allow-features](#allow-features) --- 限制可使用的不稳定特性集合。
+* 构建脚本与链接
+    * [Metabuild](#metabuild) --- 提供声明式构建脚本。
+    * [Multiple Build Scripts](#multiple-build-scripts) --- 允许使用多个构建脚本。
+    * [Any Build Script Metadata](#any-build-script-metadata) --- 允许任意构建脚本通过 `cargo::metadata=key=value` 指定环境变量。
+* 解析器与特性
+    * [no-index-update](#no-index-update) --- 阻止 cargo 更新索引缓存。
+    * [avoid-dev-deps](#avoid-dev-deps) --- 在解析时避免纳入 dev-dependencies。
+    * [minimal-versions](#minimal-versions) --- 强制解析器使用最低兼容版本，而非最高版本。
+    * [direct-minimal-versions](#direct-minimal-versions) — 仅对直接依赖强制使用最低兼容版本，而非最高版本。
+    * [public-dependency](#public-dependency) --- 允许将依赖标记为 public 或 private。
+    * [msrv-policy](#msrv-policy) --- MSRV 感知的解析与版本选择。
+    * [precise-pre-release](#precise-pre-release) --- 允许通过 `update --precise` 选择预发布版本。
+    * [sbom](#sbom) --- 为编译产物生成 SBOM 前置文件。
+    * [update-breaking](#update-breaking) --- 允许使用 `update --breaking` 升级到破坏性版本。
+    * [feature-unification](#feature-unification) --- 在工作区中启用新的 feature 统一模式。
+    * [lockfile-publish-time](#lockfile-publish-time) --- 将解析范围限制为指定时间之前发布的包。
+* 输出行为
+    * [artifact-dir](#artifact-dir) --- 增加一个用于复制构建产物的目录。
+    * [build-dir-new-layout](#build-dir-new-layout) --- 启用新的 build-dir 文件系统布局。
+    * [Different binary name](#different-binary-name) --- 允许构建出的二进制名与 crate 名不同。
+    * [root-dir](#root-dir) --- 控制输出路径相对于哪个根目录打印。
+* 编译行为
+    * [mtime-on-use](#mtime-on-use) --- 每次使用依赖时都更新其最后修改时间，为删除未使用产物提供依据。
+    * [build-std](#build-std) --- 构建标准库，而不是使用预编译二进制。
+    * [build-std-features](#build-std-features) --- 设置标准库构建时使用的 feature。
+    * [binary-dep-depinfo](#binary-dep-depinfo) --- 让 dep-info 文件跟踪二进制依赖。
+    * [checksum-freshness](#checksum-freshness) --- 判断 crate 是否需要重建时使用文件校验和而非 mtime。
+    * [panic-abort-tests](#panic-abort-tests) --- 允许以 `abort` panic 策略运行测试。
+    * [host-config](#host-config) --- 允许为主机构建目标设置类似 `[target]` 的配置。
+    * [no-embed-metadata](#no-embed-metadata) --- 向编译器传 `-Zembed-metadata=no`，避免在 rlib/dylib 中嵌入元数据以节省磁盘空间。
+    * [target-applies-to-host](#target-applies-to-host) --- 调整某些 flag 是否会传给主机构建目标。
+    * [gc](#gc) --- 全局缓存垃圾回收。
+    * [open-namespaces](#open-namespaces) --- 允许多个包参与同一 API 命名空间。
+    * [panic-immediate-abort](#panic-immediate-abort) --- 向编译器传 `-Cpanic=immediate-abort`。
+    * [compile-time-deps](#compile-time-deps) --- rust-analyzer 使用的永久不稳定特性。
+    * [fine-grain-locking](#fine-grain-locking) --- 使用细粒度锁，而不是锁住整个构建缓存。
+    * [json-target-spec](#json-target-spec) --- 允许使用 `.json` 自定义目标规格。
 * rustdoc
-    * [rustdoc-map](#rustdoc-map) --- Provides mappings for documentation to link to external sites like [docs.rs](https://docs.rs/).
-    * [scrape-examples](#scrape-examples) --- Shows examples within documentation.
-    * [output-format](#output-format-for-rustdoc) --- Allows documentation to also be emitted in the experimental [JSON format](https://doc.rust-lang.org/nightly/nightly-rustc/rustdoc_json_types/).
-    * [rustdoc-depinfo](#rustdoc-depinfo) --- Use dep-info files in rustdoc rebuild detection.
-    * [rustdoc-mergeable-info](#rustdoc-mergeable-info) --- Use rustdoc mergeable cross-crate-info files.
-* `Cargo.toml` extensions
-    * [Profile `rustflags` option](#profile-rustflags-option) --- Passed directly to rustc.
-    * [Profile `hint-mostly-unused` option](#profile-hint-mostly-unused-option) --- Hint that a dependency is mostly unused, to optimize compilation time.
-    * [codegen-backend](#codegen-backend) --- Select the codegen backend used by rustc.
-    * [per-package-target](#per-package-target) --- Sets the `--target` to use for each individual package.
-    * [artifact dependencies](#artifact-dependencies) --- Allow build artifacts to be included into other build artifacts and build them for different targets.
-    * [Profile `trim-paths` option](#profile-trim-paths-option) --- Control the sanitization of file paths in build outputs.
-    * [`[lints.cargo]`](#lintscargo) --- Allows configuring lints for Cargo.
-    * [path bases](#path-bases) --- Named base directories for path dependencies.
-    * [`unstable-editions`](#unstable-editions) --- Allows use of editions that are not yet stable.
-* Information and metadata
-    * [unit-graph](#unit-graph) --- Emits JSON for Cargo's internal graph structure.
-    * [`cargo rustc --print`](#rustc---print) --- Calls rustc with `--print` to display information from rustc.
-    * [Build analysis](#build-analysis) --- Record and persist detailed build metrics across runs, with new commands to query past builds.
-    * [`rustc-unicode`](#rustc-unicode) --- Enables `rustc`'s unicode error format in Cargo's error messages 
-* Configuration
-    * [`cargo config`](#cargo-config) --- Adds a new subcommand for viewing config files.
-* Registries
-    * [publish-timeout](#publish-timeout) --- Controls the timeout between uploading the crate and being available in the index
-    * [asymmetric-token](#asymmetric-token) --- Adds support for authentication tokens using asymmetric cryptography (`cargo:paseto` provider).
-* Other
-    * [gitoxide](#gitoxide) --- Use `gitoxide` instead of `git2` for a set of operations.
-    * [script](#script) --- Enable support for single-file `.rs` packages.
-    * [native-completions](#native-completions) --- Move cargo shell completions to native completions.
-    * [Package message format](#package-message-format) --- Message format for `cargo package`.
-    * [`fix-edition`](#fix-edition) --- A permanently unstable edition migration helper.
-    * [Plumbing subcommands](https://github.com/crate-ci/cargo-plumbing) --- Low, level commands that act as APIs for Cargo, like `cargo metadata`
+    * [rustdoc-map](#rustdoc-map) --- 为文档提供映射，以链接到 [docs.rs](https://docs.rs/) 等外部站点。
+    * [scrape-examples](#scrape-examples) --- 在文档中展示示例。
+    * [output-format](#output-format-for-rustdoc) --- 允许同时输出实验性的 [JSON format](https://doc.rust-lang.org/nightly/nightly-rustc/rustdoc_json_types/) 文档。
+    * [rustdoc-depinfo](#rustdoc-depinfo) --- 在 rustdoc 重建检测中使用 dep-info 文件。
+    * [rustdoc-mergeable-info](#rustdoc-mergeable-info) --- 使用 rustdoc 可合并的跨 crate 信息文件。
+* `Cargo.toml` 扩展
+    * [Profile `rustflags` option](#profile-rustflags-option) --- 直接传给 rustc。
+    * [Profile `hint-mostly-unused` option](#profile-hint-mostly-unused-option) --- 提示某依赖“多数未使用”，以优化编译时间。
+    * [codegen-backend](#codegen-backend) --- 选择 rustc 使用的代码生成后端。
+    * [per-package-target](#per-package-target) --- 为每个包单独设置 `--target`。
+    * [artifact dependencies](#artifact-dependencies) --- 允许将构建产物作为其他构建产物的输入，并可针对不同目标构建。
+    * [Profile `trim-paths` option](#profile-trim-paths-option) --- 控制构建输出中文件路径的清理。
+    * [`[lints.cargo]`](#lintscargo) --- 允许配置 Cargo 相关 lint。
+    * [path bases](#path-bases) --- 为路径依赖定义命名基目录。
+    * [`unstable-editions`](#unstable-editions) --- 允许使用尚未稳定的 edition。
+* 信息与元数据
+    * [unit-graph](#unit-graph) --- 输出 Cargo 内部图结构的 JSON。
+    * [`cargo rustc --print`](#rustc---print) --- 调用 rustc 的 `--print` 输出信息。
+    * [Build analysis](#build-analysis) --- 跨多次构建记录并持久化详细指标，并提供新命令查询历史构建。
+    * [`rustc-unicode`](#rustc-unicode) --- 在 Cargo 报错中启用 rustc 的 Unicode 错误格式。
+* 配置
+    * [`cargo config`](#cargo-config) --- 新增查看配置文件的子命令。
+* 注册表
+    * [publish-timeout](#publish-timeout) --- 控制 crate 上传后到索引可见之间的超时时间。
+    * [asymmetric-token](#asymmetric-token) --- 增加对非对称加密认证令牌的支持（`cargo:paseto` provider）。
+* 其他
+    * [gitoxide](#gitoxide) --- 在一组操作中用 `gitoxide` 替代 `git2`。
+    * [script](#script) --- 启用单文件 `.rs` 包支持。
+    * [native-completions](#native-completions) --- 将 cargo shell 补全迁移为原生补全。
+    * [Package message format](#package-message-format) --- `cargo package` 的消息格式。
+    * [`fix-edition`](#fix-edition) --- 永久不稳定的 edition 迁移助手。
+    * [Plumbing subcommands](https://github.com/crate-ci/cargo-plumbing) --- 低层命令，可作为 Cargo API 使用（如 `cargo metadata`）。
 
 ## allow-features
 
-This permanently-unstable flag makes it so that only a listed set of
-unstable features can be used. Specifically, if you pass
-`-Zallow-features=foo,bar`, you'll continue to be able to pass `-Zfoo`
-and `-Zbar` to `cargo`, but you will be unable to pass `-Zbaz`. You can
-pass an empty string (`-Zallow-features=`) to disallow all unstable
-features.
+这个永久不稳定 flag 用于限制“仅允许使用指定的不稳定特性”。
+具体来说，如果你传 `-Zallow-features=foo,bar`，
+那么仍可给 `cargo` 传 `-Zfoo` 与 `-Zbar`，
+但不能再传 `-Zbaz`。
+你也可以传空字符串（`-Zallow-features=`）来禁止所有不稳定特性。
 
-`-Zallow-features` also restricts which unstable features can be passed
-to the `cargo-features` entry in `Cargo.toml`. If, for example, you want
-to allow
+`-Zallow-features` 还会限制 `Cargo.toml` 的 `cargo-features`
+里可用的不稳定特性。
+例如你想允许：
 
 ```toml
 cargo-features = ["test-dummy-unstable"]
 ```
 
-where `test-dummy-unstable` is unstable, that features would also be
-disallowed by `-Zallow-features=`, and allowed with
+其中 `test-dummy-unstable` 是不稳定特性；
+它会在 `-Zallow-features=` 下被禁止，
+在下面参数下被允许：
 `-Zallow-features=test-dummy-unstable`.
 
-The list of features passed to cargo's `-Zallow-features` is also passed
-to any Rust tools that cargo ends up calling (like `rustc` or
-`rustdoc`). Thus, if you run `cargo -Zallow-features=`, no unstable
-Cargo _or_ Rust features can be used.
+传给 cargo 的 `-Zallow-features` 特性列表也会传递给 Cargo 调用的 Rust 工具
+（如 `rustc`、`rustdoc`）。
+因此当你执行 `cargo -Zallow-features=` 时，
+不论是 Cargo 还是 Rust 的不稳定特性都无法使用。
 
 ## no-index-update
 * Original Issue: [#3479](https://github.com/rust-lang/cargo/issues/3479)
 * Tracking Issue: [#7404](https://github.com/rust-lang/cargo/issues/7404)
 
-The `-Z no-index-update` flag ensures that Cargo does not attempt to update
-the registry index. This is intended for tools such as Crater that issue many
-Cargo commands, and you want to avoid the network latency for updating the
-index each time.
+`-Z no-index-update` 会确保 Cargo 不尝试更新 registry 索引。
+这主要用于像 Crater 这类会批量执行大量 Cargo 命令的工具，
+可避免每次都更新索引带来的网络延迟。
 
 ## mtime-on-use
 * Original Issue: [#6477](https://github.com/rust-lang/cargo/pull/6477)
 * Cache usage meta tracking issue: [#7150](https://github.com/rust-lang/cargo/issues/7150)
 
-The `-Z mtime-on-use` flag is an experiment to have Cargo update the mtime of
-used files to make it easier for tools like cargo-sweep to detect which files
-are stale. For many workflows this needs to be set on *all* invocations of cargo.
-To make this more practical setting the `unstable.mtime_on_use` flag in `.cargo/config.toml`
-or the corresponding ENV variable will apply the `-Z mtime-on-use` to all
-invocations of nightly cargo. (the config flag is ignored by stable)
+`-Z mtime-on-use` 是一个实验性功能：
+让 Cargo 在文件被使用时更新其 mtime，
+从而让 cargo-sweep 这类工具更容易识别哪些文件已陈旧。
+在很多工作流中，这需要对 *所有* Cargo 调用都启用。
+为便于使用，可以在 `.cargo/config.toml` 中设置 `unstable.mtime_on_use`：
+或使用对应环境变量，把 `-Z mtime-on-use` 应用于所有 nightly cargo 调用
+（该配置在 stable 中会被忽略）。
 
 ## avoid-dev-deps
 * Original Issue: [#4988](https://github.com/rust-lang/cargo/issues/4988)
 * Tracking Issue: [#5133](https://github.com/rust-lang/cargo/issues/5133)
 
-When running commands such as `cargo install` or `cargo build`, Cargo
-currently requires dev-dependencies to be downloaded, even if they are not
-used. The `-Z avoid-dev-deps` flag allows Cargo to avoid downloading
-dev-dependencies if they are not needed. The `Cargo.lock` file will not be
-generated if dev-dependencies are skipped.
+在运行 `cargo install`、`cargo build` 等命令时，
+Cargo 当前即使不使用 dev-dependencies 也会下载它们。
+`-Z avoid-dev-deps` 允许在不需要时跳过 dev-dependencies 下载。
+如果跳过了 dev-dependencies，则不会生成 `Cargo.lock`。
 
 ## minimal-versions
 * Original Issue: [#4100](https://github.com/rust-lang/cargo/issues/4100)
 * Tracking Issue: [#5657](https://github.com/rust-lang/cargo/issues/5657)
 
-> Note: It is not recommended to use this feature. Because it enforces minimal
-> versions for all transitive dependencies, its usefulness is limited since
-> not all external dependencies declare proper lower version bounds. It is
-> intended that it will be changed in the future to only enforce minimal
-> versions for direct dependencies.
+> Note: 不建议使用此特性。
+> 它会对所有传递依赖强制最小版本，而许多外部依赖并未正确声明下界版本，实用性有限。
+> 该特性计划在未来调整为“仅对直接依赖强制最小版本”。
 
-When a `Cargo.lock` file is generated, the `-Z minimal-versions` flag will
-resolve the dependencies to the minimum SemVer version that will satisfy the
-requirements (instead of the greatest version).
+生成 `Cargo.lock` 时，`-Z minimal-versions` 会把依赖解析到“满足要求的最小 SemVer 版本”
+（而非最大版本）。
 
-The intended use-case of this flag is to check, during continuous integration,
-that the versions specified in Cargo.toml are a correct reflection of the
-minimum versions that you are actually using. That is, if Cargo.toml says
-`foo = "1.0.0"` that you don't accidentally depend on features added only in
-`foo 1.5.0`.
+这个 flag 的目标用例是：在 CI 中验证 `Cargo.toml` 指定版本是否真实反映了你实际使用的最小版本。
+也就是说，如果 `Cargo.toml` 写的是 `foo = "1.0.0"`，
+就不应意外依赖只在 `foo 1.5.0` 才引入的功能。
 
 ## direct-minimal-versions
 * Original Issue: [#4100](https://github.com/rust-lang/cargo/issues/4100)
 * Tracking Issue: [#5657](https://github.com/rust-lang/cargo/issues/5657)
 
-When a `Cargo.lock` file is generated, the `-Z direct-minimal-versions` flag will
-resolve the dependencies to the minimum SemVer version that will satisfy the
-requirements (instead of the greatest version) for direct dependencies only.
+生成 `Cargo.lock` 时，`-Z direct-minimal-versions` 会仅对“直接依赖”解析到满足要求的最小 SemVer 版本
+（而非最大版本）。
 
-The intended use-case of this flag is to check, during continuous integration,
-that the versions specified in Cargo.toml are a correct reflection of the
-minimum versions that you are actually using. That is, if Cargo.toml says
-`foo = "1.0.0"` that you don't accidentally depend on features added only in
-`foo 1.5.0`.
+这个 flag 的目标用例同样是：在 CI 中验证 `Cargo.toml` 指定版本是否真实反映了你实际使用的最小版本。
+即若写了 `foo = "1.0.0"`，不应意外依赖只在 `foo 1.5.0` 中新增的功能。
 
-Indirect dependencies are resolved as normal so as not to be blocked on their
-minimal version validation.
+间接依赖仍按常规方式解析，以免被其最小版本校验阻塞。
 
 ## artifact-dir
 * Original Issue: [#4875](https://github.com/rust-lang/cargo/issues/4875)
 * Tracking Issue: [#6790](https://github.com/rust-lang/cargo/issues/6790)
 
-This feature allows you to specify the directory where artifacts will be copied
-to after they are built. Typically artifacts are only written to the
-`target/release` or `target/debug` directories. However, determining the exact
-filename can be tricky since you need to parse JSON output. The `--artifact-dir`
-flag makes it easier to predictably access the artifacts. Note that the
-artifacts are copied, so the originals are still in the `target` directory.
-Example:
+该特性允许指定“构建完成后产物复制到哪里”。
+通常产物只会写入 `target/release` 或 `target/debug`。
+但要确定精确文件名通常较麻烦，因为常需解析 JSON 输出。
+`--artifact-dir` 可让你更可预测地访问产物。
+注意这里是“复制”，原始产物仍保留在 `target` 目录。示例：
 
 ```sh
 cargo +nightly build --artifact-dir=out -Z unstable-options
 ```
 
-This can also be specified in `.cargo/config.toml` files.
+也可在 `.cargo/config.toml` 中配置：
 
 ```toml
 [build]
@@ -255,22 +237,22 @@ artifact-dir = "out"
 * Original Issue: [#9887](https://github.com/rust-lang/cargo/issues/9887)
 * Tracking Issue: None (not currently slated for stabilization)
 
-The `-Zroot-dir` flag sets the root directory relative to which paths are printed.
-This affects both diagnostics and paths emitted by the `file!()` macro.
+`-Zroot-dir` 用于设置路径打印时的基准根目录。
+它同时影响诊断信息与 `file!()` 宏输出路径。
 
 ## Metabuild
 * Tracking Issue: [rust-lang/rust#49803](https://github.com/rust-lang/rust/issues/49803)
 * RFC: [#2196](https://github.com/rust-lang/rfcs/blob/master/text/2196-metabuild.md)
 
-Metabuild is a feature to have declarative build scripts. Instead of writing
-a `build.rs` script, you specify a list of build dependencies in the
-`metabuild` key in `Cargo.toml`. A build script is automatically generated
-that runs each build dependency in order. Metabuild packages can then read
-metadata from `Cargo.toml` to specify their behavior.
+Metabuild 用于实现声明式构建脚本。
+你无需手写 `build.rs`，而是在 `Cargo.toml` 的 `metabuild` 键里列出构建依赖。
+Cargo 会自动生成构建脚本，按顺序运行各构建依赖。
+Metabuild 包可再从 `Cargo.toml` 读取元数据来决定行为。
 
-Include `cargo-features` at the top of `Cargo.toml`, a `metabuild` key in the
-`package`, list the dependencies in `build-dependencies`, and add any metadata
-that the metabuild packages require under `package.metadata`. Example:
+在 `Cargo.toml` 顶部加入 `cargo-features`，
+在 `package` 中加入 `metabuild` 键，
+在 `build-dependencies` 列出依赖，
+并在 `package.metadata` 下填写 metabuild 包需要的元数据。示例：
 
 ```toml
 cargo-features = ["metabuild"]
@@ -288,17 +270,17 @@ bar = "1.0"
 extra-info = "qwerty"
 ```
 
-Metabuild packages should have a public function called `metabuild` that
-performs the same actions as a regular `build.rs` script would perform.
+Metabuild 包应提供一个名为 `metabuild` 的公开函数，
+其执行行为应等价于常规 `build.rs` 脚本。
 
 ## Multiple Build Scripts
 * Tracking Issue: [#14903](https://github.com/rust-lang/cargo/issues/14903)
 * Original Pull Request: [#15630](https://github.com/rust-lang/cargo/pull/15630)
 
-Multiple Build Scripts feature allows you to have multiple build scripts in your package.
+Multiple Build Scripts 特性允许你在同一个包中使用多个构建脚本。
 
-Include `cargo-features` at the top of `Cargo.toml` and add `multiple-build-scripts` to enable feature.
-Add the paths of the build scripts as an array in `package.build`. For example:
+在 `Cargo.toml` 顶部加入 `cargo-features`，并添加 `multiple-build-scripts` 以启用该特性。
+将构建脚本路径以数组形式写入 `package.build`。例如：
 
 ```toml
 cargo-features = ["multiple-build-scripts"]
@@ -309,34 +291,33 @@ version = "0.0.1"
 build = ["foo.rs", "bar.rs"]
 ```
 
-**Accessing Output Directories**:  Output directory of each build script can be accessed by using `<script-name>_OUT_DIR` 
+**访问输出目录**：每个构建脚本的输出目录可通过 `<script-name>_OUT_DIR` 访问
   where the `<script-name>` is the file-stem of the build script, exactly as-is.
   For example, `bar_OUT_DIR` for script at `foo/bar.rs`. (Only set during compilation, can be accessed via `env!` macro)
 
 ## Any Build Script Metadata
 * Tracking Issue: [#14903](https://github.com/rust-lang/cargo/issues/3544)
 
-Allow any build script to specify env vars via `cargo::metadata=key=value`
+允许任意构建脚本通过 `cargo::metadata=key=value` 指定环境变量。
 
-Depedant build scripts can access these key/value pair by reading the `CARGO_DEP_<dep>_<key>` env variable at runtime.
-For build scripts of crates with a `links`, both `DEP_<links>_<key>` and `CARGO_DEP_<dep>_<key>` will be set.
+依赖方构建脚本可在运行时读取 `CARGO_DEP_<dep>_<key>` 环境变量来获取这些键值对。
+对于带 `links` 的 crate 构建脚本，会同时设置 `DEP_<links>_<key>` 和 `CARGO_DEP_<dep>_<key>`。
 
-Note that `dep` and `key` in `CARGO_DEP_<dep>_<key>` are uppercased and hyphens (`-`) replaced with underscores (`_`).
+注意：`CARGO_DEP_<dep>_<key>` 中的 `dep` 与 `key` 会转为大写，连字符（`-`）会替换为下划线（`_`）。
 
 ## public-dependency
 * Tracking Issue: [#44663](https://github.com/rust-lang/rust/issues/44663)
 
-The 'public-dependency' feature allows marking dependencies as 'public'
-or 'private'. When this feature is enabled, additional information is passed to rustc to allow
-the [exported_private_dependencies](../../rustc/lints/listing/warn-by-default.html#exported-private-dependencies) lint to function properly.
+`public-dependency` 特性允许将依赖标记为 `public` 或 `private`。
+启用后，Cargo 会向 rustc 传递额外信息，使 [exported_private_dependencies](../../rustc/lints/listing/warn-by-default.html#exported-private-dependencies) lint 正常工作。
 
-To enable this feature, you can either use `-Zpublic-dependency`
+要启用该特性，可以使用 `-Zpublic-dependency`
 
 ```sh
 cargo +nightly run -Zpublic-dependency
 ```
 
-or `[unstable]` table, for example,
+或在 `[unstable]` 表中设置，例如：
 
 ```toml
 # .cargo/config.toml
@@ -354,48 +335,47 @@ my_dep = { version = "1.2.3", public = true }
 private_dep = "2.0.0" # Will be 'private' by default
 ```
 
-Documentation updates:
-- For workspace's "The `dependencies` table" section, include `public` as an unsupported field for `workspace.dependencies`
-- Required MSRV for use of `public` is 1.83 (see [#14507](https://github.com/rust-lang/cargo/pull/14507))
+文档更新：
+- 对 workspace 的 “`dependencies` 表” 小节，将 `public` 列为 `workspace.dependencies` 的不支持字段。
+- 使用 `public` 所需的最低 MSRV 为 1.83（见 [#14507](https://github.com/rust-lang/cargo/pull/14507)）。
 
 ## msrv-policy
 - [RFC: MSRV-aware Resolver](https://rust-lang.github.io/rfcs/3537-msrv-resolver.html)
 - [#9930](https://github.com/rust-lang/cargo/issues/9930) (MSRV-aware resolver)
 
-Catch-all unstable feature for MSRV-aware cargo features under
-[RFC 2495](https://github.com/rust-lang/rfcs/pull/2495).
+用于承载 [RFC 2495](https://github.com/rust-lang/rfcs/pull/2495) 下所有 MSRV 感知 Cargo 特性的通用不稳定特性。
 
 ### MSRV-aware cargo add
 
-This was stabilized in 1.79 in [#13608](https://github.com/rust-lang/cargo/pull/13608).
+该功能已在 1.79 版本通过 [#13608](https://github.com/rust-lang/cargo/pull/13608) 稳定。
 
 ### MSRV-aware resolver
 
-This was stabilized in 1.84 in [#14639](https://github.com/rust-lang/cargo/pull/14639).
+该功能已在 1.84 版本通过 [#14639](https://github.com/rust-lang/cargo/pull/14639) 稳定。
 
 ### Convert `incompatible_toolchain` error into a lint
 
-Unimplemented
+未实现。
 
 ### `--update-rust-version` flag for `cargo add`, `cargo update`
 
-Unimplemented
+未实现。
 
 ### `package.rust-version = "toolchain"`
 
-Unimplemented
+未实现。
 
 ### Update `cargo new` template to set `package.rust-version = "toolchain"`
 
-Unimplemented
+未实现。
 
 ## precise-pre-release
 
 * Tracking Issue: [#13290](https://github.com/rust-lang/cargo/issues/13290)
 * RFC: [#3493](https://github.com/rust-lang/rfcs/pull/3493)
 
-The `precise-pre-release` feature allows pre-release versions to be selected with `update --precise`
-even when a pre-release is not specified by a projects `Cargo.toml`.
+`precise-pre-release` 特性允许在 `update --precise` 中选择预发布版本，
+即使项目的 `Cargo.toml` 没有显式指定预发布版本也可以。
 
 Take for example this `Cargo.toml`.
 
@@ -404,20 +384,20 @@ Take for example this `Cargo.toml`.
 my-dependency = "0.1.1"
 ```
 
-It's possible to update `my-dependency` to a pre-release with `update -Zunstable-options my-dependency --precise 0.1.2-pre.0`.
-This is because `0.1.2-pre.0` is considered compatible with `0.1.1`.
-It would not be possible to upgrade to `0.2.0-pre.0` from `0.1.1` in the same way.
+可以通过 `update -Zunstable-options my-dependency --precise 0.1.2-pre.0`
+将 `my-dependency` 更新到预发布版本。
+这是因为 `0.1.2-pre.0` 被视为与 `0.1.1` 兼容。
+但不能用同样方式从 `0.1.1` 升级到 `0.2.0-pre.0`。
 
 ## sbom
 * Tracking Issue: [#13709](https://github.com/rust-lang/cargo/pull/13709)
 * RFC: [#3553](https://github.com/rust-lang/rfcs/pull/3553)
 
-The `sbom` build config allows to generate so-called SBOM pre-cursor files
-alongside each compiled artifact. A Software Bill Of Material (SBOM) tool can
-incorporate these generated files to collect important information from the cargo
-build process that are difficult or impossible to obtain in another way.
+`sbom` 构建配置允许在每个编译产物旁生成所谓的 SBOM 前置文件。
+软件物料清单（SBOM）工具可以利用这些生成文件，收集 Cargo 构建过程中的重要信息，
+而这些信息往往难以或无法通过其他方式获取。
 
-To enable this feature either set the `sbom` field in the `.cargo/config.toml`
+要启用该特性，可在 `.cargo/config.toml` 中设置 `sbom` 字段
 
 ```toml
 [unstable]
@@ -427,19 +407,17 @@ sbom = true
 sbom = true
 ```
 
-or set the `CARGO_BUILD_SBOM` environment variable to `true`. The functionality
-is available behind the flag `-Z sbom`.
+或者将环境变量 `CARGO_BUILD_SBOM` 设为 `true`。
+该功能通过 `-Z sbom` 开关启用。
 
-The generated output files are in JSON format and follow the naming scheme
-`<artifact>.cargo-sbom.json`. The JSON file contains information about dependencies,
-target, features and the used `rustc` compiler.
+生成的输出文件为 JSON 格式，命名规则为 `<artifact>.cargo-sbom.json`。
+该 JSON 文件包含依赖、目标、features 以及所用 rustc 编译器信息。
 
-SBOM pre-cursor files are generated for all executable and linkable outputs
-that are uplifted into the target or artifact directories.
+SBOM 前置文件会为所有被复制到 target 或 artifact 目录中的可执行/可链接输出生成。
 
 ### Environment variables Cargo sets for crates
 
-* `CARGO_SBOM_PATH` -- a list of generated SBOM precursor files, separated by the platform PATH separator. The list can be split with `std::env::split_paths`.
+* `CARGO_SBOM_PATH` -- 生成的 SBOM 前置文件列表，以平台 PATH 分隔符分隔；可用 `std::env::split_paths` 拆分。
 
 ### SBOM pre-cursor schema
 
@@ -505,44 +483,35 @@ that are uplifted into the target or artifact directories.
 
 * Tracking Issue: [#12425](https://github.com/rust-lang/cargo/issues/12425)
 
-Allow upgrading dependencies version requirements in `Cargo.toml` across SemVer
-incompatible versions using with the `--breaking` flag.
+允许使用 `--breaking` 标志，将 `Cargo.toml` 中的依赖版本要求升级到 SemVer 不兼容版本。
 
-This only applies to dependencies when
-- The package is a dependency of a workspace member
-- The dependency is not renamed
-- A SemVer-incompatible version is available
-- The "SemVer operator" is used (`^` which is the default)
+这仅适用于满足以下条件的依赖：
+- 该包是某个 workspace 成员的依赖
+- 该依赖未被重命名
+- 存在 SemVer 不兼容的新版本
+- 使用了 “SemVer operator”（`^`，即默认值）
 
-Users may further restrict which packages get upgraded by specifying them on
-the command line.
+用户还可通过命令行显式指定包名，以进一步限制哪些包会被升级。
 
-Example:
+示例：
 ```console
 $ cargo +nightly -Zunstable-options update --breaking
 $ cargo +nightly -Zunstable-options update --breaking clap
 ```
 
-*This is meant to fill a similar role as [cargo-upgrade](https://github.com/killercup/cargo-edit/)*
+*其目标是扮演与 [cargo-upgrade](https://github.com/killercup/cargo-edit/) 类似的角色。*
 
 ## build-std
 * Tracking Repository: <https://github.com/rust-lang/wg-cargo-std-aware>
 
-The `build-std` feature enables Cargo to compile the standard library itself as
-part of a crate graph compilation. This feature has also historically been known
-as "std-aware Cargo". This feature is still in very early stages of development,
-and is also a possible massive feature addition to Cargo. This is a very large
-feature to document, even in the minimal form that it exists in today, so if
-you're curious to stay up to date you'll want to follow the [tracking
-repository](https://github.com/rust-lang/wg-cargo-std-aware) and its set of
-issues.
+`build-std` 特性允许 Cargo 在 crate 图编译的一部分中自行编译标准库。
+它历史上也被称为 “std-aware Cargo”。
+该特性仍处于非常早期的开发阶段，也可能成为 Cargo 的一项大型功能扩展。
+即使只按当前最简形式记录它，也已经是很大的文档量；因此如果你想持续关注进展，应跟踪 [tracking repository](https://github.com/rust-lang/wg-cargo-std-aware) 及其相关 issues。
 
-The functionality implemented today is behind a flag called `-Z build-std`. This
-flag indicates that Cargo should compile the standard library from source code
-using the same profile as the main build itself. Note that for this to work you
-need to have the source code for the standard library available, and at this
-time the only supported method of doing so is to add the `rust-src` rust rustup
-component:
+当前已实现的功能由 `-Z build-std` 标志启用。
+该标志表示 Cargo 应使用与主构建相同的 profile，从源码编译标准库。
+注意：要让它工作，你必须能获取标准库源码；目前唯一受支持的方式是安装 `rust-src` rustup 组件：
 
 ```console
 $ rustup component add rust-src --toolchain nightly
@@ -562,89 +531,78 @@ $ cargo +nightly run -Z build-std --target x86_64-unknown-linux-gnu
 Hello, world!
 ```
 
-Here we recompiled the standard library in debug mode with debug assertions
-(like `src/main.rs` is compiled) and everything was linked together at the end.
+这里我们以 debug 模式、开启 debug assertions 重新编译了标准库
+（类似 `src/main.rs` 的编译方式），并在最后把所有内容链接到一起。
 
-Using `-Z build-std` will implicitly compile the stable crates `core`, `std`,
-`alloc`, and `proc_macro`. If you're using `cargo test` it will also compile the
-`test` crate. If you're working with an environment which does not support some
-of these crates, then you can pass an argument to `-Zbuild-std` as well:
+使用 `-Z build-std` 会隐式编译稳定 crate `core`、`std`、`alloc` 和 `proc_macro`。
+若使用 `cargo test`，还会编译 `test` crate。
+如果你的环境不支持其中某些 crate，也可以给 `-Zbuild-std` 传入参数：
 
 ```console
 $ cargo +nightly build -Z build-std=core,alloc
 ```
 
-The value here is a comma-separated list of standard library crates to build.
+这里的值是要构建的标准库 crate 的逗号分隔列表。
 
 ### Requirements
 
-As a summary, a list of requirements today to use `-Z build-std` are:
+简而言之，当前使用 `-Z build-std` 的要求如下：
 
-* You must install libstd's source code through `rustup component add rust-src`
-* You must use both a nightly Cargo and a nightly rustc
-* The `-Z build-std` flag must be passed to all `cargo` invocations.
+* 必须通过 `rustup component add rust-src` 安装 libstd 源码
+* 必须同时使用 nightly Cargo 和 nightly rustc
+* 所有 `cargo` 调用都必须传入 `-Z build-std`
 
 ### Reporting bugs and helping out
 
-The `-Z build-std` feature is in the very early stages of development! This
-feature for Cargo has an extremely long history and is very large in scope, and
-this is just the beginning. If you'd like to report bugs please either report
-them to:
+`-Z build-std` 特性仍处于非常早期的开发阶段！
+这个 Cargo 特性历史很长、范围很大，而现在才刚开始。
+如果你想反馈 bug，请提交到：
 
-* Cargo --- <https://github.com/rust-lang/cargo/issues/new> --- for implementation bugs
-* The tracking repository ---
-  <https://github.com/rust-lang/wg-cargo-std-aware/issues/new> --- for larger design
-  questions.
+* Cargo --- <https://github.com/rust-lang/cargo/issues/new> --- 用于实现 bug
+* 跟踪仓库 ---
+  <https://github.com/rust-lang/wg-cargo-std-aware/issues/new> --- 用于更大的设计问题。
 
-Also if you'd like to see a feature that's not yet implemented and/or if
-something doesn't quite work the way you'd like it to, feel free to check out
-the [issue tracker](https://github.com/rust-lang/wg-cargo-std-aware/issues) of
-the tracking repository, and if it's not there please file a new issue!
+如果你想查看尚未实现的功能，或某些行为不如预期，也可以查看跟踪仓库的
+[issue tracker](https://github.com/rust-lang/wg-cargo-std-aware/issues)；
+如果没有对应 issue，请直接新建。
 
 ## build-std-features
 * Tracking Repository: <https://github.com/rust-lang/wg-cargo-std-aware>
 
-This flag is a sibling to the `-Zbuild-std` feature flag. This will configure
-the features enabled for the standard library itself when building the standard
-library. The default enabled features, at this time, are `backtrace` and
-`panic-unwind`. This flag expects a comma-separated list and, if provided, will
-override the default list of features enabled.
+该 flag 与 `-Zbuild-std` 同级，用于配置构建标准库时标准库自身启用的 feature。
+当前默认启用的 feature 是 `backtrace` 和 `panic-unwind`。
+该 flag 接受逗号分隔列表，若提供则会覆盖默认启用列表。
 
 ## binary-dep-depinfo
 * Tracking rustc issue: [#63012](https://github.com/rust-lang/rust/issues/63012)
 
-The `-Z binary-dep-depinfo` flag causes Cargo to forward the same flag to
-`rustc` which will then cause `rustc` to include the paths of all binary
-dependencies in the "dep info" file (with the `.d` extension). Cargo then uses
-that information for change-detection (if any binary dependency changes, then
-the crate will be rebuilt). The primary use case is for building the compiler
-itself, which has implicit dependencies on the standard library that would
-otherwise be untracked for change-detection.
+`-Z binary-dep-depinfo` 会让 Cargo 将同名 flag 转发给 `rustc`，
+从而让 rustc 在 “dep info” 文件（`.d` 扩展名）中包含所有二进制依赖的路径。
+Cargo 随后会利用这些信息进行变更检测（如果任何二进制依赖变化，就会重建该 crate）。
+其主要用例是构建编译器本身，因为它对标准库有隐式依赖，而这些依赖本来无法被变更检测追踪。
 
 ## checksum-freshness
 * Tracking issue: [#14136](https://github.com/rust-lang/cargo/issues/14136)
 
-The `-Z checksum-freshness` flag will replace the use of file mtimes in cargo's
-fingerprints with a file checksum value. This is most useful on systems with a poor
-mtime implementation, or in CI/CD. The checksum algorithm can change without notice
-between cargo versions. Fingerprints are used by cargo to determine when a crate needs to be rebuilt.
+`-Z checksum-freshness` 会把 Cargo fingerprints 中使用的文件 mtime 改为文件校验和值。
+这在 mtime 实现较差的系统，或 CI/CD 中最有用。
+校验和算法可能在 Cargo 版本间无预警变更。
+Cargo 通过 fingerprints 决定 crate 何时需要重建。
 
-For the time being files ingested by build script will continue to use mtimes, even when `checksum-freshness`
-is enabled. This is not intended as a long term solution.
+目前，即使启用了 `checksum-freshness`，构建脚本摄取的文件仍会继续使用 mtime。
+这并非长期方案。
 
 ## panic-abort-tests
 * Tracking Issue: [#67650](https://github.com/rust-lang/rust/issues/67650)
 * Original Pull Request: [#7460](https://github.com/rust-lang/cargo/pull/7460)
 
-The `-Z panic-abort-tests` flag will enable nightly support to compile test
-harness crates with `-Cpanic=abort`. Without this flag Cargo will compile tests,
-and everything they depend on, with `-Cpanic=unwind` because it's the only way
-`test`-the-crate knows how to operate. As of [rust-lang/rust#64158], however,
-the `test` crate supports `-C panic=abort` with a test-per-process, and can help
-avoid compiling crate graphs multiple times.
+`-Z panic-abort-tests` 允许在 nightly 下把测试 harness crate 编译为 `-Cpanic=abort`。
+没有这个 flag 时，Cargo 会把测试以及其所有依赖都用 `-Cpanic=unwind` 编译，
+因为这是 `test` crate 目前唯一知道如何工作的方式。
+不过从 [rust-lang/rust#64158] 开始，`test` crate 已支持以“每个测试进程一个”方式使用 `-C panic=abort`，
+这有助于避免重复编译 crate 图。
 
-It's currently unclear how this feature will be stabilized in Cargo, but we'd
-like to stabilize it somehow!
+目前尚不清楚 Cargo 会如何稳定这个特性，但我们希望最终能以某种方式稳定它。
 
 [rust-lang/rust#64158]: https://github.com/rust-lang/rust/pull/64158
 
@@ -652,34 +610,20 @@ like to stabilize it somehow!
 * Original Pull Request: [#9322](https://github.com/rust-lang/cargo/pull/9322)
 * Tracking Issue: [#9453](https://github.com/rust-lang/cargo/issues/9453)
 
-Historically, Cargo's behavior for whether the `linker` and `rustflags`
-configuration options from environment variables and
-[`[target]`](config.md#target) are respected for build scripts, plugins,
-and other artifacts that are _always_ built for the host platform has
-been somewhat inconsistent.
-When `--target` is _not_ passed, Cargo respects the same `linker` and
-`rustflags` for build scripts as for all other compile artifacts. When
-`--target` _is_ passed, however, Cargo respects `linker` from
-[`[target.<host triple>]`](config.md#targettriplelinker), and does not
-pick up any `rustflags` configuration.
-This dual behavior is confusing, but also makes it difficult to correctly
-configure builds where the host triple and the [target triple] happen to
-be the same, but artifacts intended to run on the build host should still
-be configured differently.
+历史上，Cargo 对来自环境变量和 [`[target]`](config.md#target) 的 `linker`、`rustflags`
+配置，在构建脚本、插件以及其他*始终为主机平台构建*的产物上是否生效，行为并不一致。
+当未传 `--target` 时，Cargo 会让构建脚本像其他编译产物一样使用同一组 `linker` 和 `rustflags`。
+但当传入 `--target` 时，Cargo 会使用 [`[target.<host triple>]`](config.md#targettriplelinker) 中的 `linker`，
+并且不会读取任何 `rustflags` 配置。
+这种双重行为既令人困惑，也让“宿主 triple 与 [target triple] 恰好相同，但运行在构建宿主上的产物仍需不同配置”的场景更难正确配置。
 
-`-Ztarget-applies-to-host` enables the top-level
-`target-applies-to-host` setting in Cargo configuration files which
-allows users to opt into different (and more consistent) behavior for
-these properties. When `target-applies-to-host` is unset, or set to
-`true`, in the configuration file, the existing Cargo behavior is
-preserved (though see `-Zhost-config`, which changes that default). When
-it is set to `false`, no options from `[target.<host triple>]`,
-`RUSTFLAGS`, or `[build]` are respected for host artifacts regardless of
-whether `--target` is passed to Cargo. To customize artifacts intended
-to be run on the host, use `[host]` ([`host-config`](#host-config)).
+`-Ztarget-applies-to-host` 会启用 Cargo 配置文件中的顶层 `target-applies-to-host` 设置，
+让用户可以选择更一致的行为。
+当 `target-applies-to-host` 未设置或设为 `true` 时，Cargo 保持现有行为（但请注意 `-Zhost-config` 会改变该默认值）。
+当设为 `false` 时，无论是否传入 `--target`，`[target.<host triple>]`、`RUSTFLAGS` 或 `[build]` 的选项都不会再作用于主机产物。
+若要自定义在主机上运行的产物，请使用 `[host]`（[`host-config`](#host-config)）。
 
-In the future, `target-applies-to-host` may end up defaulting to `false`
-to provide more sane and consistent default behavior.
+未来，`target-applies-to-host` 可能会默认变为 `false`，以提供更合理且一致的默认行为。
 
 ```toml
 # config.toml
@@ -694,14 +638,11 @@ cargo +nightly -Ztarget-applies-to-host build --target x86_64-unknown-linux-gnu
 * Original Pull Request: [#9322](https://github.com/rust-lang/cargo/pull/9322)
 * Tracking Issue: [#9452](https://github.com/rust-lang/cargo/issues/9452)
 
-The `host` key in a config file can be used to pass flags to host build targets
-such as build scripts that must run on the host system instead of the target
-system when cross compiling. It supports both generic and host arch specific
-tables. Matching host arch tables take precedence over generic host tables.
+配置文件中的 `host` 键可用于向主机构建目标传递参数，例如在交叉编译时必须运行于宿主系统而非目标系统的构建脚本。
+它同时支持通用表与按宿主架构划分的专用表，匹配到的宿主架构表优先于通用宿主表。
 
-It requires the `-Zhost-config` and `-Ztarget-applies-to-host`
-command-line options to be set, and that `target-applies-to-host =
-false` is set in the Cargo configuration file.
+它要求同时设置 `-Zhost-config` 与 `-Ztarget-applies-to-host`
+命令行选项，并且在 Cargo 配置文件中设定 `target-applies-to-host = false`。
 
 ```toml
 # config.toml
@@ -716,15 +657,11 @@ rustflags = ["-Clink-arg=--verbose"]
 linker = "/path/to/target/linker"
 ```
 
-The `host.runner` setting wraps execution of host build targets such as build
-scripts, similar to how `target.<triple>.runner` wraps `cargo run`/`test`/`bench`.
+`host.runner` 设置会包裹主机构建目标的执行，比如构建脚本；类似于 `target.<triple>.runner` 包裹 `cargo run`/`test`/`bench`。
 
-The generic `host` table above will be entirely ignored when building on an
-`x86_64-unknown-linux-gnu` host as the `host.x86_64-unknown-linux-gnu` table
-takes precedence.
+当在 `x86_64-unknown-linux-gnu` 宿主上构建时，上面的通用 `host` 表会被完全忽略，因为 `host.x86_64-unknown-linux-gnu` 表优先。
 
-Setting `-Zhost-config` changes the default for `target-applies-to-host` to
-`false` from `true`.
+设置 `-Zhost-config` 会把 `target-applies-to-host` 的默认值从 `true` 改为 `false`。
 
 ```console
 cargo +nightly -Ztarget-applies-to-host -Zhost-config build --target x86_64-unknown-linux-gnu
@@ -733,27 +670,21 @@ cargo +nightly -Ztarget-applies-to-host -Zhost-config build --target x86_64-unkn
 ## unit-graph
 * Tracking Issue: [#8002](https://github.com/rust-lang/cargo/issues/8002)
 
-The `--unit-graph` flag can be passed to any build command (`build`, `check`,
-`run`, `test`, `bench`, `doc`, etc.) to emit a JSON object to stdout which
-represents Cargo's internal unit graph. Nothing is actually built, and the
-command returns immediately after printing. Each "unit" corresponds to an
-execution of the compiler. These objects also include which unit each unit
-depends on.
+`--unit-graph` 可以传给任意构建命令（`build`、`check`、`run`、`test`、`bench`、`doc` 等），
+它会向 stdout 输出一个表示 Cargo 内部 unit 图的 JSON 对象。
+实际上不会执行构建，命令在打印后立即返回。
+每个 “unit” 对应一次编译器执行；这些对象还会包含每个 unit 依赖哪些其他 unit。
 
 ```
 cargo +nightly build --unit-graph -Z unstable-options
 ```
 
-This structure provides a more complete view of the dependency relationship as
-Cargo sees it. In particular, the "features" field supports the new feature
-resolver where a dependency can be built multiple times with different
-features. `cargo metadata` fundamentally cannot represent the relationship of
-features between different dependency kinds, and features now depend on which
-command is run and which packages and targets are selected. Additionally it
-can provide details about intra-package dependencies like build scripts or
-tests.
+该结构比 Cargo 视角下的依赖关系更完整。
+特别是其中的 `features` 字段支持新的 feature resolver，在该模式下一个依赖可因不同 feature 被构建多次。
+`cargo metadata` 从根本上无法表示不同依赖类型之间的 feature 关系，而 feature 现在还取决于运行了哪个命令、选择了哪些包与目标。
+此外，它还能提供包内依赖细节，例如构建脚本或测试。
 
-The following is a description of the JSON structure:
+下面是 JSON 结构说明：
 
 ```javascript
 {
@@ -868,9 +799,8 @@ The following is a description of the JSON structure:
 * Original Issue: [rust-lang/cargo#7878](https://github.com/rust-lang/cargo/issues/7878)
 * Tracking Issue: [rust-lang/cargo#10271](https://github.com/rust-lang/cargo/issues/10271)
 
-This feature provides a new option in the `[profile]` section to specify flags
-that are passed directly to rustc.
-This can be enabled like so:
+该特性在 `[profile]` 段新增了可直接传给 rustc 的参数选项。
+可按如下方式启用：
 
 ```toml
 cargo-features = ["profile-rustflags"]
@@ -882,8 +812,8 @@ cargo-features = ["profile-rustflags"]
 rustflags = [ "-C", "..." ]
 ```
 
-To set this in a profile in Cargo configuration, you need to use either
-`-Z profile-rustflags` or `[unstable]` table to enable it. For example,
+若要在 Cargo 配置的 profile 中设置该项，需要通过
+`-Z profile-rustflags` 或 `[unstable]` 表启用。例如：
 
 ```toml
 # .cargo/config.toml
@@ -897,122 +827,112 @@ rustflags = [ "-C", "..." ]
 ## Profile `hint-mostly-unused` option
 * Tracking Issue: [#15644](https://github.com/rust-lang/cargo/issues/15644)
 
-This feature provides a new option in the `[profile]` section to enable the
-rustc `hint-mostly-unused` option. This is primarily useful to enable for
-specific dependencies:
+该特性在 `[profile]` 段新增了用于启用 rustc `hint-mostly-unused` 的选项。
+它主要适合对特定依赖启用：
 
 ```toml
 [profile.dev.package.huge-mostly-unused-dependency]
 hint-mostly-unused = true
 ```
 
-To enable this feature, pass `-Zprofile-hint-mostly-unused`. However, since
-this option is a hint, using it without passing `-Zprofile-hint-mostly-unused`
-will only warn and ignore the profile option. Versions of Cargo prior to the
-introduction of this feature will give an "unused manifest key" warning, but
-will otherwise function without erroring. This allows using the hint in a
-crate's `Cargo.toml` without mandating the use of a newer Cargo to build it.
+要启用该特性，请传入 `-Zprofile-hint-mostly-unused`。
+不过该选项只是提示；如果未传这个 flag，Cargo 只会给出 warning 并忽略该 profile 选项。
+早于该特性引入版本的 Cargo 会给出 “unused manifest key” 警告，但不会报错。
+这意味着你可以在 crate 的 `Cargo.toml` 里写这个提示，而不强制要求所有构建方都升级到更新的 Cargo。
 
-A crate can also provide this hint automatically for crates that depend on it,
-using the `[hints]` table (which will likewise be ignored by older Cargo):
+crate 还可以通过 `[hints]` 表为依赖它的 crate 自动提供该提示
+（老版本 Cargo 同样会忽略此表）：
 
 ```toml
 [hints]
 mostly-unused = true
 ```
 
-This will cause the crate to default to hint-mostly-unused, unless overridden
-via `profile`, which takes precedence, and which can only be specified in the
-top-level crate being built.
+这会让该 crate 默认启用 hint-mostly-unused。
+若 `profile` 中有显式设置，则以 `profile` 为准（其优先级更高，且只能在顶层被构建 crate 中指定）。
 
 ## rustdoc-map
 * Tracking Issue: [#8296](https://github.com/rust-lang/cargo/issues/8296)
 
-This feature adds configuration settings that are passed to `rustdoc` so that
-it can generate links to dependencies whose documentation is hosted elsewhere
-when the dependency is not documented. First, add this to `.cargo/config`:
+该特性增加会传给 `rustdoc` 的配置项：
+当依赖未在本地生成文档时，它可为“托管在其他位置”的依赖文档生成链接。
+先在 `.cargo/config` 中添加：
 
 ```toml
 [doc.extern-map.registries]
 crates-io = "https://docs.rs/"
 ```
 
-Then, when building documentation, use the following flags to cause links
-to dependencies to link to [docs.rs](https://docs.rs/):
+然后构建文档时使用以下参数，让依赖链接指向 [docs.rs](https://docs.rs/)：
 
 ```
 cargo +nightly doc --no-deps -Zrustdoc-map
 ```
 
-The `registries` table contains a mapping of registry name to the URL to link
-to. The URL may have the markers `{pkg_name}` and `{version}` which will get
-replaced with the corresponding values. If neither are specified, then Cargo
-defaults to appending `{pkg_name}/{version}/` to the end of the URL.
+`registries` 表是“注册表名 -> 链接 URL”的映射。
+URL 可包含 `{pkg_name}` 和 `{version}` 占位符，Cargo 会替换为实际值。
+若两者都未出现，Cargo 默认会在 URL 末尾追加 `{pkg_name}/{version}/`。
 
-Another config setting is available to redirect standard library links. By
-default, rustdoc creates links to <https://doc.rust-lang.org/nightly/>. To
-change this behavior, use the `doc.extern-map.std` setting:
+另一个配置项可用于重定向标准库链接。
+默认情况下，rustdoc 会链接到 <https://doc.rust-lang.org/nightly/>。
+要修改该行为，请使用 `doc.extern-map.std`：
 
 ```toml
 [doc.extern-map]
 std = "local"
 ```
 
-A value of `"local"` means to link to the documentation found in the `rustc`
-sysroot. If you are using rustup, this documentation can be installed with
-`rustup component add rust-docs`.
+值为 `"local"` 表示链接到 `rustc` sysroot 中的本地文档。
+若你使用 rustup，可通过 `rustup component add rust-docs` 安装该文档。
 
-The default value is `"remote"`.
+默认值是 `"remote"`。
 
-The value may also take a URL for a custom location.
+该值也可以是自定义 URL。
 
 ## per-package-target
 * Tracking Issue: [#9406](https://github.com/rust-lang/cargo/pull/9406)
 * Original Pull Request: [#9030](https://github.com/rust-lang/cargo/pull/9030)
 * Original Issue: [#7004](https://github.com/rust-lang/cargo/pull/7004)
 
-The `per-package-target` feature adds two keys to the manifest:
-`package.default-target` and `package.forced-target`. The first makes
-the package be compiled by default (ie. when no `--target` argument is
-passed) for some target. The second one makes the package always be
-compiled for the target.
+`per-package-target` 特性给 manifest 增加了两个键：
+`package.default-target` 和 `package.forced-target`。
+前者用于指定该包“默认”（即未传 `--target`）要编译到的目标；
+后者用于指定该包“始终”编译到的目标。
 
-Example:
+示例：
 
 ```toml
 [package]
 forced-target = "wasm32-unknown-unknown"
 ```
 
-In this example, the crate is always built for
-`wasm32-unknown-unknown`, for instance because it is going to be used
-as a plugin for a main program that runs on the host (or provided on
-the command line) target.
+在此示例中，crate 会始终构建为 `wasm32-unknown-unknown`，
+例如因为它将作为插件供运行在宿主（或命令行指定）目标上的主程序使用。
 
 ## artifact-dependencies
 
 * Tracking Issue: [#9096](https://github.com/rust-lang/cargo/pull/9096)
 * Original Pull Request: [#9992](https://github.com/rust-lang/cargo/pull/9992)
 
-Artifact dependencies allow Cargo packages to depend on `bin`, `cdylib`, and `staticlib` crates,
-and use the artifacts built by those crates at compile time.
+Artifact dependencies 允许 Cargo 包依赖 `bin`、`cdylib`、`staticlib` 类型 crate，
+并在编译期使用这些 crate 生成的产物。
 
-Run `cargo` with `-Z bindeps` to enable this functionality.
+使用 `-Z bindeps` 运行 `cargo` 以启用该功能。
 
 ### artifact-dependencies: Dependency declarations
 
-Artifact-dependencies adds the following keys to a dependency declaration in `Cargo.toml`:
+Artifact-dependencies 为 `Cargo.toml` 依赖声明增加了以下键：
 
-- `artifact` --- This specifies the [Cargo Target](cargo-targets.md) to build.
-  Normally without this field, Cargo will only build the `[lib]` target from a dependency.
-  This field allows specifying which target will be built, and made available as a binary at build time:
+- `artifact` --- 指定要构建的 [Cargo Target](cargo-targets.md)。
+  通常没有该字段时，Cargo 只会构建依赖的 `[lib]` 目标。
+  该字段允许指定应构建哪个目标，并在构建期以二进制产物形式提供：
 
-  * `"bin"` --- Compiled executable binaries, corresponding to all of the `[[bin]]` sections in the dependency's manifest.
-  * `"bin:<bin-name>"` --- Compiled executable binary, corresponding to a specific binary target specified by the given `<bin-name>`.
-  * `"cdylib"` --- A C-compatible dynamic library, corresponding to a `[lib]` section with `crate-type = ["cdylib"]` in the dependency's manifest.
-  * `"staticlib"` --- A C-compatible static library, corresponding to a `[lib]` section with `crate-type = ["staticlib"]` in the dependency's manifest.
+  * `"bin"` --- 编译可执行二进制，对应依赖 manifest 中所有 `[[bin]]` 段。
+  * `"bin:<bin-name>"` --- 编译指定名称 `<bin-name>` 的单个二进制目标。
+  * `"cdylib"` --- C 兼容动态库，对应依赖 manifest 中 `[lib]` 的 `crate-type = ["cdylib"]`。
+  * `"staticlib"` --- C 兼容静态库，对应依赖 manifest 中 `[lib]` 的 `crate-type = ["staticlib"]`。
 
-  The `artifact` value can be a string, or it can be an array of strings to specify multiple targets.
+  `artifact` 可以是字符串，也可以是字符串数组以指定多个目标。
 
   Example:
 
@@ -1022,12 +942,12 @@ Artifact-dependencies adds the following keys to a dependency declaration in `Ca
   zoo = { version = "1.0", artifact = ["bin:cat", "bin:dog"]}
   ```
 
-- `lib` --- This is a Boolean value which indicates whether or not to also build the dependency's library as a normal Rust `lib` dependency.
-  This field can only be specified when `artifact` is specified.
+- `lib` --- 布尔值，表示是否额外把该依赖库按普通 Rust `lib` 依赖构建。
+  该字段只能在指定了 `artifact` 时使用。
 
-  The default for this field is `false` when `artifact` is specified.
-  If this is set to `true`, then the dependency's `[lib]` target will also be built for the platform target the declaring package is being built for.
-  This allows the package to use the dependency from Rust code like a normal dependency in addition to an artifact dependency.
+  当指定 `artifact` 时，该字段默认是 `false`。
+  若设为 `true`，则依赖的 `[lib]` 目标也会按声明包的构建平台目标构建。
+  这样包就能在使用 artifact dependency 的同时，也像普通依赖一样在 Rust 代码中使用该依赖。
 
   Example:
 
@@ -1036,14 +956,14 @@ Artifact-dependencies adds the following keys to a dependency declaration in `Ca
   bar = { version = "1.0", artifact = "bin", lib = true }
   ```
 
-- `target` --- The platform target to build the dependency for.
-  This field can only be specified when `artifact` is specified.
+- `target` --- 构建该依赖所用的平台目标。
+  该字段只能在指定了 `artifact` 时使用。
 
-  The default if this is not specified depends on the dependency kind.
-  For build dependencies, it will be built for the host target.
-  For all other dependencies, it will be built for the same targets the declaring package is built for.
+  若未指定该字段，其默认值取决于依赖类型。
+  对 build-dependencies，会为 host target 构建；
+  对其他依赖，会为声明包构建时使用的同一目标构建。
 
-  For a build dependency, this can also take the special value of `"target"` which means to build the dependency for the same targets that the package is being built for.
+  对 build dependency，该字段还可取特殊值 `"target"`，表示按“包当前构建目标”来构建该依赖。
 
   ```toml
   [build-dependencies]
@@ -1053,30 +973,30 @@ Artifact-dependencies adds the following keys to a dependency declaration in `Ca
 
 ### artifact-dependencies: Environment variables
 
-After building an artifact dependency, Cargo provides the following environment variables that you can use to access the artifact:
+构建完 artifact dependency 后，Cargo 会提供以下环境变量用于访问产物：
 
-- `CARGO_<ARTIFACT-TYPE>_DIR_<DEP>` --- This is the directory containing all the artifacts from the dependency.
+- `CARGO_<ARTIFACT-TYPE>_DIR_<DEP>` --- 该依赖所有产物所在目录。
 
-  `<ARTIFACT-TYPE>` is the `artifact` specified for the dependency (uppercased as in `CDYLIB`, `STATICLIB`, or `BIN`) and `<DEP>` is the name of the dependency.
-  As with other Cargo environment variables, dependency names are converted to uppercase, with dashes replaced by underscores.
+  `<ARTIFACT-TYPE>` 是依赖声明中的 `artifact`（大写形式，如 `CDYLIB`、`STATICLIB`、`BIN`），`<DEP>` 是依赖名。
+  与其他 Cargo 环境变量一致，依赖名会转为大写，连字符会替换为下划线。
 
-  If your manifest renames the dependency, `<DEP>` corresponds to the name you specify, not the original package name.
+  若 manifest 对依赖做了重命名，`<DEP>` 对应你指定的名称，而不是原包名。
 
-- `CARGO_<ARTIFACT-TYPE>_FILE_<DEP>_<NAME>` --- This is the full path to the artifact.
+- `CARGO_<ARTIFACT-TYPE>_FILE_<DEP>_<NAME>` --- 该产物的完整路径。
 
-  `<ARTIFACT-TYPE>` is the `artifact` specified for the dependency (uppercased as above), `<DEP>` is the name of the dependency (transformed as above), and `<NAME>` is the name of the artifact from the dependency.
+  `<ARTIFACT-TYPE>` 为上文同义，`<DEP>` 为转换后的依赖名，`<NAME>` 为该依赖产物名。
 
-  Note that `<NAME>` is not modified in any way from the `name` specified in the crate supplying the artifact, or the crate name if not specified; for instance, it may be in lowercase, or contain dashes.
+  注意 `<NAME>` 不会做任何改写：若产物提供 crate 指定了 `name` 就用该值，否则用 crate 名；因此它可能是小写，也可能包含连字符。
 
-  For convenience, if the artifact name matches the original package name, cargo additionally supplies a copy of this variable with the `_<NAME>` suffix omitted.
-  For instance, if the `cmake` crate supplies a binary named `cmake`, Cargo supplies both `CARGO_BIN_FILE_CMAKE` and `CARGO_BIN_FILE_CMAKE_cmake`.
+  为方便起见，若产物名与原包名一致，Cargo 还会额外提供一个去掉 `_<NAME>` 后缀的同义变量。
+  例如 `cmake` crate 提供名为 `cmake` 的二进制时，Cargo 会同时提供 `CARGO_BIN_FILE_CMAKE` 和 `CARGO_BIN_FILE_CMAKE_cmake`。
 
-For each kind of dependency, these variables are supplied to the same part of the build process that has access to that kind of dependency:
+针对不同依赖类型，这些变量会注入到其对应可访问该依赖的构建阶段：
 
-- For build-dependencies, these variables are supplied to the `build.rs` script, and can be accessed using [`std::env::var_os`](https://doc.rust-lang.org/std/env/fn.var_os.html).
-  (As with any OS file path, these may or may not be valid UTF-8.)
-- For normal dependencies, these variables are supplied during the compilation of the crate, and can be accessed using the [`env!`] macro.
-- For dev-dependencies, these variables are supplied during the compilation of examples, tests, and benchmarks, and can be accessed using the [`env!`] macro.
+- 对 build-dependencies：变量提供给 `build.rs`，可通过 [`std::env::var_os`](https://doc.rust-lang.org/std/env/fn.var_os.html) 读取。
+  （与任意 OS 文件路径一样，它们可能不是合法 UTF-8。）
+- 对普通 dependencies：变量在 crate 编译期间提供，可通过 [`env!`] 宏读取。
+- 对 dev-dependencies：变量在 example/test/benchmark 编译期间提供，也可通过 [`env!`] 宏读取。
 
 [`env!`]: https://doc.rust-lang.org/std/macro.env.html
 
@@ -1084,14 +1004,14 @@ For each kind of dependency, these variables are supplied to the same part of th
 
 #### Example: use a binary executable from a build script
 
-In the `Cargo.toml` file, you can specify a dependency on a binary to make available for a build script:
+在 `Cargo.toml` 中，你可以声明一个二进制依赖供构建脚本使用：
 
 ```toml
 [build-dependencies]
 some-build-tool = { version = "1.0", artifact = "bin" }
 ```
 
-Then inside the build script, the binary can be executed at build time:
+然后在构建脚本中即可在构建期执行该二进制：
 
 ```rust
 fn main() {
@@ -1109,15 +1029,14 @@ fn main() {
 
 #### Example: use _cdylib_ artifact in build script
 
-The `Cargo.toml` in the consuming package, building the `bar` library as `cdylib`
-for a specific build target…
+消费方包中的 `Cargo.toml`：将 `bar` 库按 `cdylib` 为指定构建目标构建……
 
 ```toml
 [build-dependencies]
 bar = { artifact = "cdylib", version = "1.0", target = "wasm32-unknown-unknown" }
 ```
 
-…along with the build script in `build.rs`.
+……并配合 `build.rs` 中的构建脚本。
 
 ```rust
 fn main() {
@@ -1127,15 +1046,14 @@ fn main() {
 
 #### Example: use _binary_ artifact and its library in a binary
 
-The `Cargo.toml` in the consuming package, building the `bar` binary for inclusion
-as artifact while making it available as library as well…
+消费方包中的 `Cargo.toml`：将 `bar` 二进制作为 artifact 引入，同时也把它作为库可用……
 
 ```toml
 [dependencies]
 bar = { artifact = "bin", version = "1.0", lib = true }
 ```
 
-…along with the executable using `main.rs`.
+……并配合使用 `main.rs` 的可执行程序。
 
 ```rust
 fn main() {
@@ -1147,14 +1065,11 @@ fn main() {
 ## publish-timeout
 * Tracking Issue: [11222](https://github.com/rust-lang/cargo/issues/11222)
 
-The `publish.timeout` key in a config file can be used to control how long
-`cargo publish` waits between posting a package to the registry and it being
-available in the local index.
+配置文件中的 `publish.timeout` 可用于控制 `cargo publish` 从上传包到注册表到本地索引可见之间的等待时长。
 
-A timeout of `0` prevents any checks from occurring. The current default is
-`60` seconds.
+超时设为 `0` 表示不执行任何检查。当前默认值是 `60` 秒。
 
-It requires the `-Zpublish-timeout` command-line options to be set.
+需要同时设置命令行选项 `-Zpublish-timeout`。
 
 ```toml
 # config.toml
@@ -1166,71 +1081,76 @@ timeout = 300  # in seconds
 * Tracking Issue: [10519](https://github.com/rust-lang/cargo/issues/10519)
 * RFC: [#3231](https://github.com/rust-lang/rfcs/pull/3231)
 
-The `-Z asymmetric-token` flag enables the `cargo:paseto` credential provider which allows Cargo to authenticate to registries without sending secrets over the network.
+`-Z asymmetric-token` 会启用 `cargo:paseto` 凭据提供器，使 Cargo 可在不通过网络发送密钥明文的情况下对注册表认证。
 
-In [`config.toml`](config.md) and `credentials.toml` files there is a field called `private-key`, which is a private key formatted in the secret [subset of `PASERK`](https://github.com/paseto-standard/paserk/blob/master/types/secret.md) and is used to sign asymmetric tokens
+[`config.toml`](config.md) 与 `credentials.toml` 中有 `private-key` 字段，
+它是使用 [`PASERK` secret 子集格式](https://github.com/paseto-standard/paserk/blob/master/types/secret.md) 的私钥，用于签名非对称令牌。
 
-A keypair can be generated with `cargo login --generate-keypair` which will:
-- generate a public/private keypair in the currently recommended fashion.
-- save the private key in `credentials.toml`.
-- print the public key in [PASERK public](https://github.com/paseto-standard/paserk/blob/master/types/public.md) format.
+可通过 `cargo login --generate-keypair` 生成密钥对，它会：
+- 按当前推荐方式生成公私钥对。
+- 将私钥保存到 `credentials.toml`。
+- 以 [PASERK public](https://github.com/paseto-standard/paserk/blob/master/types/public.md) 格式输出公钥。
 
-It is recommended that the `private-key` be saved in `credentials.toml`. It is also supported in `config.toml`, primarily so that it can be set using the associated environment variable, which is the recommended way to provide it in CI contexts. This setup is what we have for the `token` field for setting a secret token.
+建议将 `private-key` 存在 `credentials.toml` 中。
+它也支持写在 `config.toml`，主要为了可通过对应环境变量注入；这也是 CI 场景下推荐的提供方式。
+这一模式与 `token` 字段配置密钥令牌的方式一致。
 
-There is also an optional field called `private-key-subject` which is a string chosen by the registry.
-This string will be included as part of an asymmetric token and should not be secret.
-It is intended for the rare use cases like "cryptographic proof that the central CA server authorized this action". Cargo requires it to be non-whitespace printable ASCII. Registries that need non-ASCII data should base64 encode it.
+还有一个可选字段 `private-key-subject`，是由注册表选择的字符串。
+该字符串会被包含进非对称令牌中，因此不应视为密钥。
+它适用于少见场景，例如“用密码学方式证明中央 CA 服务器授权了此次操作”。
+Cargo 要求它必须是非空白可打印 ASCII；若注册表需要非 ASCII 数据，应先做 base64 编码。
 
-Both fields can be set with `cargo login --registry=name --private-key --private-key-subject="subject"` which will prompt you to put in the key value.
+这两个字段都可通过 `cargo login --registry=name --private-key --private-key-subject="subject"` 设置，命令会提示你输入密钥值。
 
-A registry can have at most one of `private-key` or `token` set.
+一个注册表最多只能设置 `private-key` 或 `token` 其中之一。
 
-All PASETOs will include `iat`, the current time in ISO 8601 format. Cargo will include the following where appropriate:
-- `sub` an optional, non-secret string chosen by the registry that is expected to be claimed with every request. The value will be the `private-key-subject` from the `config.toml` file.
-- `mutation` if present, indicates that this request is a mutating operation (or a read-only operation if not present), must be one of the strings `publish`, `yank`, or `unyank`.
-  - `name` name of the crate related to this request.
-  - `vers` version string of the crate related to this request.
-  - `cksum` the SHA256 hash of the crate contents, as a string of 64 lowercase hexadecimal digits, must be present only when `mutation` is equal to `publish`
-- `challenge` the challenge string received from a 401/403 from this server this session. Registries that issue challenges must track which challenges have been issued/used and never accept a given challenge more than once within the same validity period (avoiding the need to track every challenge ever issued).
+所有 PASETO 都会包含 `iat`（ISO 8601 格式的当前时间）。
+Cargo 还会在适用时包含以下 claim：
+- `sub`：可选、非密钥字符串，由注册表选择，预期每次请求都携带。其值来自 `config.toml` 的 `private-key-subject`。
+- `mutation`：若存在，表示此次请求为写操作（若不存在则视为只读）；取值必须是 `publish`、`yank`、`unyank` 之一。
+  - `name`：本次请求关联的 crate 名称。
+  - `vers`：本次请求关联的 crate 版本字符串。
+  - `cksum`：crate 内容的 SHA256（64 位小写十六进制字符串），仅当 `mutation = publish` 时必须出现。
+- `challenge`：本会话中从该服务器 401/403 响应收到的 challenge 字符串。
+  发行 challenge 的注册表必须跟踪 challenge 的签发/使用状态，并且在同一有效期内同一个 challenge 只能接受一次（避免记录历史所有 challenge）。
 
-The "footer" (which is part of the signature) will be a JSON string in UTF-8 and include:
-- `url` the RFC 3986 compliant URL where cargo got the config.json file,
-  - If this is a registry with an HTTP index, then this is the base URL that all index queries are relative to.
-  - If this is a registry with a GIT index, it is the URL Cargo used to clone the index.
-- `kid` the identifier of the private key used to sign the request, using the [PASERK IDs](https://github.com/paseto-standard/paserk/blob/master/operations/ID.md) standard.
+“footer”（签名的一部分）是 UTF-8 JSON 字符串，包含：
+- `url`：Cargo 获取 `config.json` 文件的 RFC 3986 合规 URL。
+  - 若注册表使用 HTTP 索引，这里是所有索引查询的基准 URL。
+  - 若注册表使用 GIT 索引，这里是 Cargo 克隆索引所用 URL。
+- `kid`：用于签名请求的私钥标识，遵循 [PASERK IDs](https://github.com/paseto-standard/paserk/blob/master/operations/ID.md) 标准。
 
-PASETO includes the message that was signed, so the server does not have to reconstruct the exact string from the request in order to check the signature. The server does need to check that the signature is valid for the string in the PASETO and that the contents of that string matches the request.
-If a claim should be expected for the request but is missing in the PASETO then the request must be rejected.
+PASETO 会包含被签名的消息本体，因此服务器无需从请求重建原始字符串再验签。
+服务器仍需校验：签名对 PASETO 中字符串有效，且该字符串内容与请求一致。
+若某请求理应包含某 claim，但 PASETO 中缺失，则必须拒绝该请求。
 
 ## `cargo config`
 
 * Original Issue: [#2362](https://github.com/rust-lang/cargo/issues/2362)
 * Tracking Issue: [#9301](https://github.com/rust-lang/cargo/issues/9301)
 
-The `cargo config` subcommand provides a way to display the configuration
-files that cargo loads. It currently includes the `get` subcommand which
-can take an optional config value to display.
+`cargo config` 子命令用于显示 Cargo 加载的配置文件内容。
+当前提供 `get` 子命令，可选择指定某个配置值进行展示。
 
 ```console
 cargo +nightly -Zunstable-options config get build.rustflags
 ```
 
-If no config value is included, it will display all config values. See the
-`--help` output for more options available.
+若未指定配置值，则会显示所有配置项。
+更多可用选项见 `--help`。
 
 ## rustc `--print`
 
 * Tracking Issue: [#9357](https://github.com/rust-lang/cargo/issues/9357)
 
-`cargo rustc --print=VAL` forwards the `--print` flag to `rustc` in order to
-extract information from `rustc`. This runs `rustc` with the corresponding
+`cargo rustc --print=VAL` 会把 `--print` 转发给 `rustc` 以提取其信息。
+它会带对应的
 [`--print`](https://doc.rust-lang.org/rustc/command-line-arguments.html#--print-print-compiler-information)
-flag, and then immediately exits without compiling. Exposing this as a cargo
-flag allows cargo to inject the correct target and RUSTFLAGS based on the
-current configuration.
+参数运行 rustc，并立即退出而不执行编译。
+将其暴露为 Cargo 参数后，Cargo 可基于当前配置注入正确的 target 与 RUSTFLAGS。
 
-The primary use case is to run `cargo rustc --print=cfg` to get config values
-for the appropriate target and influenced by any other RUSTFLAGS.
+主要用例是执行 `cargo rustc --print=cfg`，
+以获取“针对正确目标且受当前 RUSTFLAGS 影响”的配置值。
 
 
 ## Different binary name
@@ -1238,14 +1158,12 @@ for the appropriate target and influenced by any other RUSTFLAGS.
 * Tracking Issue: [#9778](https://github.com/rust-lang/cargo/issues/9778)
 * PR: [#9627](https://github.com/rust-lang/cargo/pull/9627)
 
-The `different-binary-name` feature allows setting the filename of the binary without having to obey the
-restrictions placed on crate names. For example, the crate name must use only `alphanumeric` characters
-or `-` or `_`, and cannot be empty.
+`different-binary-name` 特性允许设置二进制文件名，而无需遵守 crate 名称限制。
+例如 crate 名必须仅由字母数字、`-`、`_` 组成且不能为空。
 
-The `filename` parameter should **not** include the binary extension, `cargo` will figure out the appropriate
-extension and use that for the binary on its own.
+`filename` 参数**不应**包含二进制扩展名，`cargo` 会自行选择并附加合适扩展名。
 
-The `filename` parameter is only available in the `[[bin]]` section of the manifest.
+`filename` 参数仅在 manifest 的 `[[bin]]` 段可用。
 
 ```toml
 cargo-features = ["different-binary-name"]
@@ -1265,16 +1183,15 @@ path = "src/main.rs"
 * RFC: [#3123](https://github.com/rust-lang/rfcs/pull/3123)
 * Tracking Issue: [#9910](https://github.com/rust-lang/cargo/issues/9910)
 
-The `-Z rustdoc-scrape-examples` flag tells Rustdoc to search crates in the current workspace
-for calls to functions. Those call-sites are then included as documentation. You can use the flag
-like this:
+`-Z rustdoc-scrape-examples` 会让 Rustdoc 在当前工作区 crate 中搜索函数调用点，
+并把这些调用点纳入文档。可这样使用：
 
 ```
 cargo doc -Z unstable-options -Z rustdoc-scrape-examples
 ```
 
-By default, Cargo will scrape examples from the example targets of packages being documented.
-You can individually enable or disable targets from being scraped with the `doc-scrape-examples` flag, such as:
+默认情况下，Cargo 会从被文档化包的 example targets 抓取示例。
+你可以通过 `doc-scrape-examples` 为每个 target 单独启用或禁用抓取，例如：
 
 ```toml
 # Enable scraping examples from a library
@@ -1287,29 +1204,28 @@ name = "my-example"
 doc-scrape-examples = false
 ```
 
-**Note on tests:** enabling `doc-scrape-examples` on test targets will not currently have any effect. Scraping
-examples from tests is a work-in-progress.
+**关于 tests 的说明：** 目前在 test targets 上启用 `doc-scrape-examples` 不会生效。
+从测试中抓取示例仍在开发中。
 
-**Note on dev-dependencies:** documenting a library does not normally require the crate's dev-dependencies. However,
-example targets require dev-deps. For backwards compatibility, `-Z rustdoc-scrape-examples` will *not* introduce a
-dev-deps requirement for `cargo doc`. Therefore examples will *not* be scraped from example targets under the
-following conditions:
+**关于 dev-dependencies 的说明：** 给库生成文档通常不需要该 crate 的 dev-dependencies。
+但 example targets 需要 dev-deps。为保持向后兼容，`-Z rustdoc-scrape-examples` *不会* 给 `cargo doc` 引入 dev-deps 要求。
+因此在以下条件下，不会从 example targets 抓取示例：
 
 1. No target being documented requires dev-deps, AND
 2. At least one crate with targets being documented has dev-deps, AND
 3. The `doc-scrape-examples` parameter is unset or false for all `[[example]]` targets.
 
-If you want examples to be scraped from example targets, then you must not satisfy one of the above conditions.
-For example, you can set `doc-scrape-examples` to true for one example target, and that signals to Cargo that
-you are ok with dev-deps being build for `cargo doc`.
+如果你希望从 example targets 抓取示例，就必须不满足上述条件之一。
+例如，你可以把某个 example target 的 `doc-scrape-examples` 设为 true，以告知 Cargo：你接受 `cargo doc` 构建 dev-deps。
 
 ## output-format for rustdoc
 
 * Tracking Issue: [#13283](https://github.com/rust-lang/cargo/issues/13283)
 
-This flag determines the output format of `cargo rustdoc`, accepting `html` or `json`, providing tools with a way to lean on [rustdoc's experimental JSON format](https://doc.rust-lang.org/nightly/nightly-rustc/rustdoc_json_types/).
+该参数用于决定 `cargo rustdoc` 的输出格式，可选 `html` 或 `json`，
+为工具链提供利用 [rustdoc 实验性 JSON 格式](https://doc.rust-lang.org/nightly/nightly-rustc/rustdoc_json_types/) 的方式。
 
-You can use the flag like this:
+可这样使用该标志：
 
 ```
 cargo rustdoc -Z unstable-options --output-format json
@@ -1317,9 +1233,9 @@ cargo rustdoc -Z unstable-options --output-format json
 
 ## codegen-backend
 
-The `codegen-backend` feature makes it possible to select the codegen backend used by rustc using a profile.
+`codegen-backend` 特性允许通过 profile 选择 rustc 使用的代码生成后端。
 
-Example:
+示例：
 
 ```toml
 [package]
@@ -1332,8 +1248,7 @@ serde = "1.0.117"
 codegen-backend = "cranelift"
 ```
 
-To set this in a profile in Cargo configuration, you need to use either
-`-Z codegen-backend` or `[unstable]` table to enable it. For example,
+若要在 Cargo 配置里的 profile 中设置它，需要通过 `-Z codegen-backend` 或 `[unstable]` 表启用。例如：
 
 ```toml
 # .cargo/config.toml
@@ -1348,56 +1263,52 @@ codegen-backend = "cranelift"
 
 * Tracking Issue: [#11813](https://github.com/rust-lang/cargo/issues/11813)
 
-With the 'gitoxide' unstable feature, all or the specified git operations will be performed by
-the `gitoxide` crate instead of `git2`.
+启用 `gitoxide` 不稳定特性后，全部或指定的 git 操作会由 `gitoxide` crate 执行，而不是 `git2`。
 
-While `-Zgitoxide` enables all currently implemented features, one can individually select git operations
-to run with `gitoxide` with the `-Zgitoxide=operation[,operationN]` syntax.
+`-Zgitoxide` 会启用当前所有已实现功能；你也可以使用 `-Zgitoxide=operation[,operationN]` 单独选择由 `gitoxide` 执行的操作。
 
-Valid operations are the following:
+可用操作如下：
 
-* `fetch` - All fetches are done with `gitoxide`, which includes git dependencies as well as the crates index.
-* `checkout` *(planned)* - checkout the worktree, with support for filters and submodules.
+* `fetch` - 所有 fetch 都由 `gitoxide` 完成，包括 git 依赖和 crates 索引。
+* `checkout` *(planned)* - 检出工作树，支持过滤器和子模块。
 
 ## git
 
 * Tracking Issue: [#13285](https://github.com/rust-lang/cargo/issues/13285)
 
-With the 'git' unstable feature, both `gitoxide` and `git2` will perform shallow fetches of the crate
-index and git dependencies.
+启用 `git` 不稳定特性后，`gitoxide` 与 `git2` 都会对 crate 索引和 git 依赖执行浅抓取（shallow fetch）。
 
-While `-Zgit` enables all currently implemented features, one can individually select when to perform
-shallow fetches with the `-Zgit=operation[,operationN]` syntax.
+`-Zgit` 会启用当前所有已实现功能；你也可以通过 `-Zgit=operation[,operationN]` 单独选择何时执行浅抓取。
 
-Valid operations are the following:
+可用操作如下：
 
-* `shallow-index` - perform a shallow clone of the index.
-* `shallow-deps` - perform a shallow clone of git dependencies.
+* `shallow-index` - 对索引执行浅克隆。
+* `shallow-deps` - 对 git 依赖执行浅克隆。
 
-**Details on shallow clones**
+**浅克隆细节**
 
-* To enable shallow clones, add `-Zgit=shallow-deps` for fetching git dependencies or `-Zgit=shallow-index` for fetching registry index.
-* Shallow-cloned and shallow-checked-out git repositories reside at their own `-shallow` suffixed directories, i.e,
+* 启用浅克隆：拉取 git 依赖用 `-Zgit=shallow-deps`，拉取注册表索引用 `-Zgit=shallow-index`。
+* 浅克隆与浅检出的 git 仓库会放在带 `-shallow` 后缀的独立目录中，即：
   - `~/.cargo/registry/index/*-shallow`
   - `~/.cargo/git/db/*-shallow`
   - `~/.cargo/git/checkouts/*-shallow`
-* When the unstable feature is on, fetching/cloning a git repository is always a shallow fetch. This roughly equals to `git fetch --depth 1` everywhere.
-* Even with the presence of `Cargo.lock` or specifying a commit `{ rev = "…" }`, gitoxide and libgit2 are still smart enough to shallow fetch without unshallowing the existing repository.
+* 启用该不稳定特性后，抓取/克隆 git 仓库始终采用浅抓取，近似等价于处处执行 `git fetch --depth 1`。
+* 即便存在 `Cargo.lock` 或指定提交 `{ rev = "…" }`，gitoxide 与 libgit2 仍会尽量浅抓取，而不会把已有仓库“去浅化”（unshallow）。
 
 ## script
 
 * Tracking Issue: [#12207](https://github.com/rust-lang/cargo/issues/12207)
 
-Cargo can directly run `.rs` files as:
+Cargo 可直接运行 `.rs` 文件：
 ```console
 $ cargo +nightly -Zscript file.rs
 ```
-where `file.rs` can be as simple as:
+其中 `file.rs` 可以简单到：
 ```rust
 fn main() {}
 ```
 
-A user may optionally specify a manifest in a `cargo` code fence in a module-level comment, like:
+用户还可以选择在模块级注释中，通过 `cargo` 代码围栏嵌入 manifest，例如：
 ````rust
 #!/usr/bin/env -S cargo +nightly -Zscript
 ---cargo
@@ -1422,60 +1333,55 @@ fn main() {
 
 ### Single-file packages
 
-In addition to today's multi-file packages (`Cargo.toml` file with other `.rs`
-files), we are adding the concept of single-file packages which may contain an
-embedded manifest.  There is no required distinguishment for a single-file
-`.rs` package from any other `.rs` file.
+除现有多文件包（`Cargo.toml` + 其他 `.rs` 文件）外，我们新增“单文件包”概念，它可以包含嵌入式 manifest。
+单文件 `.rs` 包与普通 `.rs` 文件在文件形式上没有强制区分。
 
-Single-file packages may be selected via `--manifest-path`, like
-`cargo test --manifest-path foo.rs`. Unlike `Cargo.toml`, these files cannot be auto-discovered.
+可通过 `--manifest-path` 指定单文件包，例如 `cargo test --manifest-path foo.rs`。
+与 `Cargo.toml` 不同，这类文件不会被自动发现。
 
-A single-file package may contain an embedded manifest.  An embedded manifest
-is stored using `TOML` in rust "frontmatter", a markdown code-fence with `cargo`
-at the start of the infostring at the top of the file.
+单文件包可包含嵌入式 manifest。
+嵌入式 manifest 以 `TOML` 存放在 Rust “frontmatter” 中，也就是文件顶部 info string 以 `cargo` 开头的 Markdown 代码围栏。
 
-Inferred / defaulted manifest fields:
+推断/默认 manifest 字段：
 - `package.name = <slugified file stem>`
 - `package.edition = <current>` to avoid always having to add an embedded
-  manifest at the cost of potentially breaking scripts on rust upgrades
-  - Warn when `edition` is unspecified to raise awareness of this
+  这样可避免总是写嵌入式 manifest，但代价是 Rust 升级时脚本可能受影响
+  - 当 `edition` 未指定时给出 warning，以提醒这一点
 
-Disallowed manifest fields:
+不允许的 manifest 字段：
 - `[workspace]`, `[lib]`, `[[bin]]`, `[[example]]`, `[[test]]`, `[[bench]]`
 - `package.workspace`, `package.build`, `package.links`, `package.autolib`, `package.autobins`, `package.autoexamples`, `package.autotests`, `package.autobenches`
 
-The default `CARGO_TARGET_DIR` for single-file packages is at `$CARGO_HOME/target/<hash>`:
+单文件包默认 `CARGO_TARGET_DIR` 位于 `$CARGO_HOME/target/<hash>`：
 - Avoid conflicts from multiple single-file packages being in the same directory
 - Avoid problems with the single-file package's parent directory being read-only
 - Avoid cluttering the user's directory
 
-The lockfile for single-file packages will be placed in `CARGO_TARGET_DIR`.  In
-the future, when workspaces are supported, that will allow a user to have a
-persistent lockfile.
+单文件包的 lockfile 会放在 `CARGO_TARGET_DIR`。
+未来支持 workspace 后，这将允许用户获得持久化 lockfile。
 
 ### Manifest-commands
 
-You may pass a manifest directly to the `cargo` command, without a subcommand,
-like `foo/Cargo.toml` or a single-file package like `foo.rs`.  This is mostly
-intended for being put in `#!` lines.
+你可以不带子命令，直接把 manifest 传给 `cargo`，例如 `foo/Cargo.toml` 或 `foo.rs` 这类单文件包。
+这主要用于写在 `#!` 行中。
 
-The precedence for how to interpret `cargo <subcommand>` is
+`cargo <subcommand>` 的解释优先级为：
 1. Built-in xor single-file packages
 2. Aliases
 3. External subcommands
 
-A parameter is identified as a manifest-command if it has one of:
+若参数满足以下任一条件，会被识别为 manifest-command：
 - Path separators
 - A `.rs` extension
 - The file name is `Cargo.toml`
 
-Differences between `cargo run --manifest-path <path>` and `cargo <path>`
-- `cargo <path>` runs with the config for `<path>` and not the current dir, more like `cargo install --path <path>`
-- `cargo <path>` is at a verbosity level below the normal default.  Pass `-v` to get normal output.
+`cargo run --manifest-path <path>` 与 `cargo <path>` 的区别：
+- `cargo <path>` 使用 `<path>` 对应配置而非当前目录配置，行为更接近 `cargo install --path <path>`。
+- `cargo <path>` 的默认日志级别低于常规默认值；传 `-v` 可恢复常规输出。
 
-When running a package with an embedded manifest,
-[`arg0`](https://doc.rust-lang.org/std/os/unix/process/trait.CommandExt.html#tymethod.arg0) will be the scripts path.
-To get the executable's path, see [`current_exe`](https://doc.rust-lang.org/std/env/fn.current_exe.html).
+运行带嵌入式 manifest 的包时，
+[`arg0`](https://doc.rust-lang.org/std/os/unix/process/trait.CommandExt.html#tymethod.arg0) 将是脚本路径。
+若要获取可执行文件路径，见 [`current_exe`](https://doc.rust-lang.org/std/env/fn.current_exe.html)。
 
 ### Documentation Updates
 
@@ -1484,8 +1390,8 @@ To get the executable's path, see [`current_exe`](https://doc.rust-lang.org/std/
 * Tracking Issue: [rust-lang/cargo#12137](https://github.com/rust-lang/cargo/issues/12137)
 * Tracking Rustc Issue: [rust-lang/rust#111540](https://github.com/rust-lang/rust/issues/111540)
 
-This adds a new profile setting to control how paths are sanitized in the resulting binary.
-This can be enabled like so:
+该特性新增了 profile 配置，用于控制生成二进制中路径的清理方式。
+可按如下方式启用：
 
 ```toml
 cargo-features = ["trim-paths"]
@@ -1497,9 +1403,9 @@ cargo-features = ["trim-paths"]
 trim-paths = ["diagnostics", "object"]
 ```
 
-To set this in a profile in Cargo configuration,
-you need to use either `-Z trim-paths` or `[unstable]` table to enable it.
-For example,
+若要在 Cargo 配置中的 profile 里设置它，
+需要使用 `-Z trim-paths` 或 `[unstable]` 表启用。
+例如：
 
 ```toml
 # .cargo/config.toml
@@ -1517,7 +1423,7 @@ trim-paths = ["diagnostics", "object"]
 *as a new ["Profiles settings" entry](./profiles.html#profile-settings)*
 
 `trim-paths` is a profile setting which enables and controls the sanitization of file paths in build outputs.
-It takes the following values:
+它支持以下取值：
 
 - `"none"` and `false` --- disable path sanitization
 - `"macro"` --- sanitize paths in the expansion of `std::file!()` macro.
@@ -1526,10 +1432,10 @@ It takes the following values:
 - `"object"` --- sanitize paths in compiled executables or libraries
 - `"all"` and `true` --- sanitize paths in all possible locations
 
-It also takes an array with the combinations of `"macro"`, `"diagnostics"`, and `"object"`.
+它也接受由 `"macro"`、`"diagnostics"`、`"object"` 组合而成的数组值。
 
-It is defaulted to `none` for the `dev` profile, and `object` for the `release` profile.
-You can manually override it by specifying this option in `Cargo.toml`:
+`dev` profile 默认是 `none`，`release` profile 默认是 `object`。
+你可以在 `Cargo.toml` 中手动覆盖：
 
 ```toml
 [profile.dev]
@@ -1539,13 +1445,14 @@ trim-paths = "all"
 trim-paths = ["object", "diagnostics"]
 ```
 
-The default `release` profile setting (`object`) sanitizes only the paths in emitted executable or library files.
-It always affects paths from macros such as panic messages, and in debug information only if they will be embedded together with the binary
-(the default on platforms with ELF binaries, such as Linux and windows-gnu),
-but will not touch them if they are in separate files (the default on Windows MSVC and macOS).
-But the paths to these separate files are sanitized.
+默认 `release` 配置（`object`）只会清理输出的可执行/库文件中的路径。
+它总会影响来自宏（如 panic 消息）的路径；
+对于调试信息，仅在其与二进制一并嵌入时生效
+（ELF 平台默认如此，如 Linux 和 windows-gnu）；
+若调试信息在独立文件中（Windows MSVC 与 macOS 默认），则不会改写其内容，
+但指向这些独立文件的路径会被清理。
 
-If `trim-paths` is not `none` or `false`, then the following paths are sanitized if they appear in a selected scope:
+如果 `trim-paths` 不是 `none` 或 `false`，则在被选中的作用域中出现以下路径时会被清理：
 
 1. Path to the source files of the standard and core library (sysroot) will begin with `/rustc/[rustc commit hash]`,
    e.g. `/home/username/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs` ->
@@ -1553,14 +1460,14 @@ If `trim-paths` is not `none` or `false`, then the following paths are sanitized
 2. Path to the current package will be stripped, relatively to the current workspace root, e.g. `/home/username/crate/src/lib.rs` -> `src/lib.rs`.
 3. Path to dependency packages will be replaced with `[package name]-[version]`. E.g. `/home/username/deps/foo/src/lib.rs` -> `foo-0.1.0/src/lib.rs`
 
-When a path to the source files of the standard and core library is *not* in scope for sanitization,
-the emitted path will depend on if `rust-src` component is present.
-If it is, then some paths will point to the copy of the source files on your file system;
-if it isn't, then they will show up as `/rustc/[rustc commit hash]/library/...`
-(just like when it is selected for sanitization).
-Paths to all other source files will not be affected.
+当标准库和 core 库源码路径*不在*清理范围内时，
+输出路径是否指向本地文件取决于 `rust-src` 组件是否存在。
+若存在，一些路径会指向你文件系统中的源码副本；
+若不存在，则会显示为 `/rustc/[rustc commit hash]/library/...`
+（与被选中清理时的表现一致）。
+其他源码文件路径不受影响。
 
-This will not affect any hard-coded paths in the source code, such as in strings.
+这不会影响源码中硬编码的路径（例如字符串字面量中的路径）。
 
 #### Environment variable
 
@@ -1579,12 +1486,12 @@ This will not affect any hard-coded paths in the source code, such as in strings
 
 * Tracking Issue: [#12633](https://github.com/rust-lang/cargo/issues/12633)
 
-The `-Zgc` flag is used to enable certain features related to garbage-collection of cargo's global cache within the cargo home directory.
+`-Zgc` 用于启用与 Cargo home 目录内全局缓存垃圾回收相关的功能。
 
 #### Automatic gc configuration
 
-The `-Zgc` flag will enable Cargo to read extra configuration options related to garbage collection.
-The settings available are:
+`-Zgc` 会让 Cargo 读取与垃圾回收相关的额外配置项。
+可用设置如下：
 
 ```toml
 # Example config.toml file.
@@ -1623,9 +1530,9 @@ Deletion of cache contents can be performed by passing one of the cache options:
 - `--max-git-size=SIZE` --- Deletes the oldest git dependency caches until the cache is under the given size.
 - `--max-download-size=SIZE` --- Deletes the oldest downloaded cache data until the cache is under the given size.
 
-A DURATION is specified in the form "N seconds/minutes/days/weeks/months" where N is an integer.
+DURATION 采用 `"N seconds/minutes/days/weeks/months"` 形式，其中 N 为整数。
 
-A SIZE is specified in the form "N *suffix*" where *suffix* is B, kB, MB, GB, kiB, MiB, or GiB, and N is an integer or floating point number. If no suffix is specified, the number is the number of bytes.
+SIZE 采用 `"N *suffix*"` 形式，其中 *suffix* 可为 B、kB、MB、GB、kiB、MiB、GiB，N 可为整数或浮点数。若无后缀则按字节计。
 
 ```sh
 cargo clean gc -Zgc
@@ -1637,9 +1544,9 @@ cargo clean gc -Zgc --max-git-size=0 --max-download-size=100MB
 
 * Tracking Issue: [#13576](https://github.com/rust-lang/cargo/issues/13576)
 
-Allow multiple packages to participate in the same API namespace
+允许多个包参与同一个 API 命名空间。
 
-This can be enabled like so:
+可按如下方式启用：
 ```toml
 cargo-features = ["open-namespaces"]
 
@@ -1652,9 +1559,9 @@ cargo-features = ["open-namespaces"]
 * Tracking Issue: [#16042](https://github.com/rust-lang/cargo/issues/16042)
 * Upstream Tracking Issue: [rust-lang/rust#147286](https://github.com/rust-lang/rust/issues/147286)
 
-Extends the `panic` profile setting to support the
-[`immediate-abort`](../../rustc/codegen-options/index.html#panic) panic strategy.
-This can be enabled like so:
+扩展 `panic` profile 设置，支持
+[`immediate-abort`](../../rustc/codegen-options/index.html#panic) panic 策略。
+可按如下方式启用：
 
 ```toml
 # Cargo.toml
@@ -1667,10 +1574,10 @@ cargo-features = ["panic-immediate-abort"]
 panic = "immediate-abort"
 ```
 
-To set this in a profile in Cargo configuration,
-you need to use either `-Z panic-immediate-abort` CLI flag
-or the `[unstable]` table to enable it.
-For example,
+若要在 Cargo 配置的 profile 中设置该项，
+需要通过 `-Z panic-immediate-abort` CLI 标志
+或 `[unstable]` 表启用。
+例如：
 
 ```toml
 # .cargo/config.toml
@@ -1685,22 +1592,21 @@ panic = "immediate-abort"
 
 * Tracking Issue: [#4282](https://github.com/rust-lang/cargo/issues/4282)
 
-Use fine grain locking instead of locking the entire build cache.
+使用细粒度锁，而不是锁住整个构建缓存。
 
-Note: Fine grain locking implicitly enables [build-dir-new-layout](#build-dir-new-layout) as fine grain locking builds on that directory reoganization.
+注意：Fine grain locking 会隐式启用 [build-dir-new-layout](#build-dir-new-layout)，因为它构建于该目录重组之上。
 
 ## `[lints.cargo]`
 
 * Tracking Issue: [#12235](https://github.com/rust-lang/cargo/issues/12235)
 
-A new `lints` tool table for `cargo` that can be used to configure lints emitted
-by `cargo` itself when `-Zcargo-lints` is used
+新增 `cargo` 的 `lints` 工具表，可在使用 `-Zcargo-lints` 时配置 Cargo 自身发出的 lint。
 ```toml
 [lints.cargo]
 implicit-features = "warn"
 ```
 
-This will work with
+可与下述机制配合使用：
 [RFC 2906 `workspace-deduplicate`](https://rust-lang.github.io/rfcs/2906-cargo-workspace-deduplicate.html):
 ```toml
 [workspace.lints.cargo]
@@ -1714,14 +1620,11 @@ workspace = true
 
 * Tracking Issue: [#14355](https://github.com/rust-lang/cargo/issues/14355)
 
-A `path` dependency may optionally specify a base by setting the `base` key to
-the name of a path base from the `[path-bases]` table in either the
-[configuration](config.md) or one of the [built-in path bases](#built-in-path-bases).
-The value of that path base is prepended to the `path` value (along with a path
-separator if necessary) to produce the actual location where Cargo will look for
-the dependency.
+`path` 依赖可通过设置 `base` 键来指定基路径；
+其值可来自[配置](config.md)中的 `[path-bases]` 表，或[内置 path base](#built-in-path-bases)。
+该 base 的值会拼接到 `path` 值前面（必要时加路径分隔符），形成 Cargo 实际查找依赖的位置。
 
-For example, if the `Cargo.toml` contains:
+例如，如果 `Cargo.toml` 包含：
 
 ```toml
 cargo-features = ["path-bases"]
@@ -1730,56 +1633,51 @@ cargo-features = ["path-bases"]
 foo = { base = "dev", path = "foo" }
 ```
 
-Given a `[path-bases]` table in the configuration that contains:
+若配置中的 `[path-bases]` 表包含：
 
 ```toml
 [path-bases]
 dev = "/home/user/dev/rust/libraries/"
 ```
 
-This will produce a `path` dependency `foo` located at
+则会生成位于下列位置的 `path` 依赖 `foo`：
 `/home/user/dev/rust/libraries/foo`.
 
 Path bases can be either absolute or relative. Relative path bases are relative
 to the parent directory of the configuration file that declared that path base.
 
-The name of a path base must use only [alphanumeric](https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric)
-characters or `-` or `_`, must start with an [alphabetic](https://doc.rust-lang.org/std/primitive.char.html#method.is_alphabetic)
-character, and must not be empty.
+path base 名称只能使用 [alphanumeric](https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric) 字符、`-` 或 `_`，
+必须以 [alphabetic](https://doc.rust-lang.org/std/primitive.char.html#method.is_alphabetic) 字符开头，且不能为空。
 
-If the name of path base used in a dependency is neither in the configuration
-nor one of the built-in path base, then Cargo will raise an error.
+如果依赖中使用的 path base 名既不在配置中，也不是内置 path base，Cargo 会报错。
 
 #### Built-in path bases
 
-Cargo provides implicit path bases that can be used without the need to specify
-them in a `[path-bases]` table.
+Cargo 提供了隐式 path base，可无需在 `[path-bases]` 中显式声明直接使用。
 
 * `workspace` - If a project is [a workspace or workspace member](workspaces.md)
-then this path base is defined as the parent directory of the root `Cargo.toml`
-of the workspace.
+则该 path base 定义为该 workspace 根 `Cargo.toml` 的父目录。
 
-If a built-in path base name is also declared in the configuration, then Cargo
-will prefer the value in the configuration. The allows Cargo to add new built-in
-path bases without compatibility issues (as existing uses will shadow the
-built-in name).
+如果配置中声明了与内置同名的 path base，Cargo 会优先使用配置值。
+这使得 Cargo 可以在不引发兼容性问题的情况下新增内置 path base
+（因为已有同名配置会覆盖内置值）。
 
 ## native-completions
 * Original Issue: [#6645](https://github.com/rust-lang/cargo/issues/6645)
 * Tracking Issue: [#14520](https://github.com/rust-lang/cargo/issues/14520)
 
-This feature moves the handwritten completion scripts to Rust native, making it
-easier for us to add, extend and test new completions. This feature is enabled with the
-nightly channel, without requiring additional `-Z` options.
+该特性将手写补全脚本迁移为 Rust 原生实现，
+让我们更容易新增、扩展和测试补全功能。
+该特性在 nightly 下可直接使用，无需额外 `-Z` 选项。
 
-Areas of particular interest for feedback
+特别希望收到反馈的方面：
 - Arguments that need escaping or quoting that aren't handled correctly
 - Inaccuracies in the information
 - Bugs in parsing of the command-line
 - Arguments that don't report their completions
 - If a known issue is being problematic
 
-Feedback can be broken down into
+反馈可分为：
 - What completion candidates are reported
   - Known issues: [#14520](https://github.com/rust-lang/cargo/issues/14520), [`A-completions`](https://github.com/rust-lang/cargo/labels/A-completions)
   - [Report an issue](https://github.com/rust-lang/cargo/issues/new) or [discuss the behavior](https://github.com/rust-lang/cargo/issues/14520)
@@ -1787,7 +1685,7 @@ Feedback can be broken down into
   - Known issues: [clap#3166](https://github.com/clap-rs/clap/issues/3166), [clap's `A-completions`](https://github.com/clap-rs/clap/labels/A-completion)
   - [Report an issue](https://github.com/clap-rs/clap/issues/new/choose) or [discuss the behavior](https://github.com/clap-rs/clap/discussions/new/choose)
 
-When in doubt, you can discuss this in [#14520](https://github.com/rust-lang/cargo/issues/14520) or on [zulip](https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo)
+如有疑问，可在 [#14520](https://github.com/rust-lang/cargo/issues/14520) 或 [zulip](https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo) 讨论。
 
 ### How to use native-completions feature:
 - bash:
@@ -1810,10 +1708,9 @@ When in doubt, you can discuss this in [#14520](https://github.com/rust-lang/car
 * RFC: [#3692](https://github.com/rust-lang/rfcs/blob/master/text/3692-feature-unification.md)
 * Tracking Issue: [#14774](https://github.com/rust-lang/cargo/issues/14774)
 
-The `-Z feature-unification` enables the `resolver.feature-unification`
-configuration option to control how features are unified across a workspace.
-If the `-Z feature-unification` unstable flag is not enabled,
-then the `resolver.feature-unification` configuration will be ignored.
+`-Z feature-unification` 会启用 `resolver.feature-unification` 配置项，
+用于控制工作区内 feature 的统一方式。
+如果未启用该不稳定标志，则 `resolver.feature-unification` 配置会被忽略。
 
 ### `resolver.feature-unification`
 
@@ -1821,7 +1718,7 @@ then the `resolver.feature-unification` configuration will be ignored.
 * Default: `"selected"`
 * Environment: `CARGO_RESOLVER_FEATURE_UNIFICATION`
 
-Specify which packages participate in [feature unification](../reference/features.html#feature-unification).
+指定哪些包参与 [feature unification](../reference/features.html#feature-unification)。
 
 * `selected`: Merge dependency features from all packages specified for the current build.
 * `workspace`: Merge dependency features across all workspace members,
@@ -1834,41 +1731,38 @@ Specify which packages participate in [feature unification](../reference/feature
 * Original Issue: [#5221](https://github.com/rust-lang/cargo/issues/5221)
 * Tracking Issue: [#16271](https://github.com/rust-lang/cargo/issues/16271)
 
-With `cargo generate-lockfile -Zunstable-options --publish-time <time>`,
-package resolution will not consider any package newer than the specified time.
+使用 `cargo generate-lockfile -Zunstable-options --publish-time <time>` 时，
+依赖解析不会考虑晚于指定时间发布的包。
 
 ## Package message format
 
 * Original Issue: [#11666](https://github.com/rust-lang/cargo/issues/11666)
 * Tracking Issue: [#15353](https://github.com/rust-lang/cargo/issues/15353)
 
-The `--message-format` flag in `cargo package` controls the output message format.
-Currently, it only works with the `--list` flag and affects the file listing format,
-Requires `-Zunstable-options`.
-See [`cargo package --message-format`](../commands/cargo-package.md#option-cargo-package---message-format)
-for more information.
+`cargo package` 中的 `--message-format` 用于控制输出消息格式。
+当前仅与 `--list` 一起生效，并影响文件列表格式。
+需要 `-Zunstable-options`。
+更多信息见 [`cargo package --message-format`](../commands/cargo-package.md#option-cargo-package---message-format)。
 
 ## rustdoc depinfo
 
 * Original Issue: [#12266](https://github.com/rust-lang/cargo/issues/12266)
 * Tracking Issue: [#15370](https://github.com/rust-lang/cargo/issues/15370)
 
-The `-Z rustdoc-depinfo` flag leverages rustdoc's dep-info files to determine
-whether documentations are required to re-generate. This can be combined with
-`-Z checksum-freshness` to detect checksum changes rather than file mtime.
+`-Z rustdoc-depinfo` 会利用 rustdoc 的 dep-info 文件来判断文档是否需要重新生成。
+它可以与 `-Z checksum-freshness` 结合使用，以通过校验和变化而不是文件 mtime 来检测变更。
 
 ## no-embed-metadata
 * Original Pull Request: [#15378](https://github.com/rust-lang/cargo/pull/15378)
 * Tracking Issue: [#15495](https://github.com/rust-lang/cargo/issues/15495)
 
-The default behavior of Rust is to embed crate metadata into `rlib` and `dylib` artifacts.
-Since Cargo also passes `--emit=metadata` to these intermediate artifacts to enable pipelined
-compilation, this means that a lot of metadata ends up being duplicated on disk, which wastes
-disk space in the target directory.
+Rust 的默认行为是将 crate 元数据嵌入到 `rlib` 与 `dylib` 产物中。
+由于 Cargo 也会对这些中间产物传入 `--emit=metadata` 以支持流水线编译，
+这会导致大量元数据在磁盘上重复，占用 target 目录空间。
 
-This feature tells Cargo to pass the `-Zembed-metadata=no` flag to the compiler, which instructs
-it not to embed metadata within rlib and dylib artifacts. In this case, the metadata will only
-be stored in `.rmeta` files.
+该特性会让 Cargo 向编译器传入 `-Zembed-metadata=no`，
+从而指示其不要在 rlib/dylib 产物中嵌入元数据。
+此时元数据只会保存在 `.rmeta` 文件中。
 
 ```console
 cargo +nightly -Zno-embed-metadata build
@@ -1876,7 +1770,7 @@ cargo +nightly -Zno-embed-metadata build
 
 ## `unstable-editions`
 
-The `unstable-editions` value in the `cargo-features` list allows a `Cargo.toml` manifest to specify an edition that is not yet stable.
+`cargo-features` 列表中的 `unstable-editions` 值允许 `Cargo.toml` 声明尚未稳定的 edition。
 
 ```toml
 cargo-features = ["unstable-editions"]
@@ -1886,18 +1780,20 @@ name = "my-package"
 edition = "future"
 ```
 
-When new editions are introduced, the `unstable-editions` feature is required until the edition is stabilized.
+当引入新的 edition 时，在该 edition 稳定前都需要 `unstable-editions` 特性。
 
-The special "future" edition is a home for new features that are under development, and is permanently unstable. The "future" edition also has no new behavior by itself. Each change in the future edition requires an opt-in such as a `#![feature(...)]` attribute.
+特殊的 `"future"` edition 是为开发中的新功能准备的永久不稳定占位版。
+`future` edition 本身不会引入新行为；其中的每项变更都需要显式 opt-in，例如使用 `#![feature(...)]` 属性。
 
 ## `fix-edition`
 
-`-Zfix-edition` is a permanently unstable flag to assist with testing edition migrations, particularly with the use of crater. It only works with the `cargo fix` subcommand. It takes two different forms:
+`-Zfix-edition` 是一个永久不稳定 flag，用于辅助测试 edition 迁移，尤其适合配合 crater 使用。
+它只对 `cargo fix` 子命令生效，并有两种形式：
 
-- `-Zfix-edition=start=$INITIAL` --- This form checks if the current edition is equal to the given number. If not, it exits with success (because we want to ignore older editions). If it is, then it runs the equivalent of `cargo check`. This is intended to be used with crater's "start" toolchain to set a baseline for the "before" toolchain.
-- `-Zfix-edition=end=$INITIAL,$NEXT` --- This form checks if the current edition is equal to the given `$INITIAL` value. If not, it exits with success. If it is, then it performs an edition migration to the edition specified in `$NEXT`. Afterwards, it will modify `Cargo.toml` to add the appropriate `cargo-features = ["unstable-edition"]`, update the `edition` field, and run the equivalent of `cargo check` to verify that the migration works on the new edition.
+- `-Zfix-edition=start=$INITIAL` --- 该形式会检查当前 edition 是否等于给定编号；若不是，则直接成功退出（因为我们想忽略更旧的 edition）；若相等，则运行等价于 `cargo check` 的操作。它用于配合 crater 的 “start” 工具链，为 “before” 工具链建立基线。
+- `-Zfix-edition=end=$INITIAL,$NEXT` --- 该形式会检查当前 edition 是否等于给定的 `$INITIAL`；若不是，则直接成功退出；若相等，则执行迁移到 `$NEXT` 指定 edition。随后它会修改 `Cargo.toml`，加入相应的 `cargo-features = ["unstable-edition"]`，更新 `edition` 字段，并运行等价于 `cargo check` 的操作，验证迁移在新 edition 上可用。
 
-For example:
+例如：
 
 ```console
 cargo +nightly fix -Zfix-edition=end=2024,future
@@ -1907,9 +1803,8 @@ cargo +nightly fix -Zfix-edition=end=2024,future
 * Original Pull Request: [#15780](https://github.com/rust-lang/cargo/pull/15780)
 * Tracking Issue: [#15817](https://github.com/rust-lang/cargo/issues/15817)
 
-This feature can be used to extend the output of `cargo build --timings`. It will tell rustc
-to produce timings of individual compilation sections, which will be then displayed in the timings
-HTML/JSON output.
+该特性可用于扩展 `cargo build --timings` 的输出。
+它会让 rustc 产出各个编译阶段的耗时，随后显示在 timings 的 HTML/JSON 输出中。
 
 ```console
 cargo +nightly -Zsection-timings build --timings
@@ -1920,16 +1815,14 @@ cargo +nightly -Zsection-timings build --timings
 * Original Issue: [rust-lang/rust-project-goals#332](https://github.com/rust-lang/rust-project-goals/pull/332)
 * Tracking Issue: [#15844](https://github.com/rust-lang/cargo/issues/15844)
 
-The `-Zbuild-analysis` feature records and persists detailed build metrics on disk,
-with new commands to query past builds.
+`-Zbuild-analysis` 会把详细构建指标记录并持久化到磁盘，
+并提供新命令查询历史构建。
 
-When enabled,
-Cargo writes build logs in JSONL format to the `$CARGO_HOME/log/` directory 
-Each cargo invocation produces a log file named with a unique session ID.
-These logs contain timing information, rebuild reasons, and other build metadata
-that can be analyzed with the `cargo report` subcommands.
+启用后，Cargo 会将构建日志以 JSONL 格式写入 `$CARGO_HOME/log/` 目录。
+每次 cargo 调用都会生成一个带唯一 session ID 的日志文件。
+这些日志包含耗时信息、重建原因以及其他构建元数据，可通过 `cargo report` 子命令分析。
 
-To enable build analysis, add the following [Cargo configuration](config.md):
+要启用 build analysis，可添加如下 [Cargo configuration](config.md)：
 
 ```toml
 # Example config.toml file.
@@ -1942,36 +1835,35 @@ build-analysis = true
 enabled = true
 ```
 
-Setting it on a stable toolchain only emits an unknown config warning,
-so it's safe to keep enabled in your Cargo configuration.
+在 stable 工具链上设置它只会产生 unknown config warning，
+因此可以安全保留在 Cargo 配置中。
 
 ### `cargo report` commands
 
-The following commands are available under `-Zbuild-analysis`:
+`-Zbuild-analysis` 下提供以下命令：
 
-- `cargo report sessions` --- Lists previous build sessions.
-  Use this to find session IDs for other report commands.
-- `cargo report timings` --- Generates an HTML timing report from a previous session,
-  similar to `cargo build --timings` but without rebuilding.
-- `cargo report rebuilds` --- Reports why crates were rebuilt,
-  helping diagnose unexpected recompilations.
+- `cargo report sessions` --- 列出历史构建会话。
+  可用来查找其他 report 命令所需的 session ID。
+- `cargo report timings` --- 基于历史会话生成 HTML timing 报告，
+  类似 `cargo build --timings`，但不会重新构建。
+- `cargo report rebuilds` --- 报告 crate 被重新构建的原因，
+  用于诊断意外的重复编译。
 
 ## build-dir-new-layout
 
 * Tracking Issue: [#15010](https://github.com/rust-lang/cargo/issues/15010)
 
-Enables the new build-dir filesystem layout.
-This layout change unblocks work towards caching and locking improvements.
+启用新的 build-dir 文件系统布局。
+这一布局调整为缓存和锁改进工作扫清障碍。
 
 
 ## compile-time-deps
 
-This permanently-unstable flag to only build proc-macros and build scripts (and their required dependencies),
-as well as run the build scripts.
+这个永久不稳定 flag 仅构建 proc-macro 与 build script（及其所需依赖），并执行 build script。
 
-It is intended for use by tools like rust-analyzer and will never be stabilized.
+它面向 rust-analyzer 之类工具，且永不稳定化。
 
-Example:
+示例：
 
 ```console
 cargo +nightly build --compile-time-deps -Z unstable-options
@@ -1981,7 +1873,7 @@ cargo +nightly check --compile-time-deps --all-targets -Z unstable-options
 ## `rustc-unicode`
 * Tracking Issue: [rust#148607](https://github.com/rust-lang/rust/issues/148607)
 
-Enable `rustc`'s unicode error format in Cargo's error messages
+在 Cargo 错误消息中启用 `rustc` 的 Unicode 错误格式。
 
 ## rustdoc mergeable info
 
@@ -1989,245 +1881,212 @@ Enable `rustc`'s unicode error format in Cargo's error messages
 * Tracking issue: [#16306](https://github.com/rust-lang/cargo/issues/16306)
 * Tracking rustc issue: [rust-lang/rust#130676](https://github.com/rust-lang/rust/issues/130676)
 
-The `-Z rustdoc-mergeable-info` leverage rustdoc's mergeable crate info,
-so that `cargo doc` can merge cross-crate information
-(like the search index, source files index, etc.)
-from separate output directories,
-and run `rustdoc` in parallel.
+`-Z rustdoc-mergeable-info` 利用 rustdoc 的可合并 crate 信息，
+使 `cargo doc` 能从多个输出目录合并跨 crate 信息（如搜索索引、源码索引等），
+并支持并行运行 rustdoc。
 
 ## json-target-spec
 * Tracking Issue: [rust-lang/rust#151528](https://github.com/rust-lang/rust/issues/151528)
 
-The `-Z json-target-spec` CLI flag enables the ability to use [custom target spec JSON files](https://doc.rust-lang.org/nightly/rustc/targets/custom.html) as a target.
+`-Z json-target-spec` CLI flag 允许使用 [自定义 target spec JSON 文件](https://doc.rust-lang.org/nightly/rustc/targets/custom.html) 作为目标。
 
 ```console
 cargo +nightly build --target my-target.json -Z json-target-spec
 ```
 
-This usually must be combined with [build-std](#build-std).
+这通常需要与 [build-std](#build-std) 结合使用。
 
 # Stabilized and removed features
 
 ## Compile progress
 
-The compile-progress feature has been stabilized in the 1.30 release.
-Progress bars are now enabled by default.
-See [`term.progress`](config.md#termprogresswhen) for more information about
-controlling this feature.
+compile-progress 特性已在 1.30 版本稳定。
+进度条现已默认启用。
+关于控制该特性的更多信息，见 [`term.progress`](config.md#termprogresswhen)。
 
 ## Edition
 
-Specifying the `edition` in `Cargo.toml` has been stabilized in the 1.31 release.
-See [the edition field](manifest.md#the-edition-field) for more information
-about specifying this field.
+在 `Cargo.toml` 中指定 `edition` 已在 1.31 版本稳定。
+关于该字段的更多说明，见 [the edition field](manifest.md#the-edition-field)。
 
 ## rename-dependency
 
-Specifying renamed dependencies in `Cargo.toml` has been stabilized in the 1.31 release.
-See [renaming dependencies](specifying-dependencies.md#renaming-dependencies-in-cargotoml)
-for more information about renaming dependencies.
+在 `Cargo.toml` 中指定重命名依赖已在 1.31 版本稳定。
+关于依赖重命名的更多信息，见 [renaming dependencies](specifying-dependencies.md#renaming-dependencies-in-cargotoml)。
 
 ## Alternate Registries
 
-Support for alternate registries has been stabilized in the 1.34 release.
-See the [Registries chapter](registries.md) for more information about alternate registries.
+对替代注册表的支持已在 1.34 版本稳定。
+更多信息见 [Registries chapter](registries.md)。
 
 ## Offline Mode
 
-The offline feature has been stabilized in the 1.36 release.
-See the [`--offline` flag](../commands/cargo.md#option-cargo---offline) for
-more information on using the offline mode.
+offline 特性已在 1.36 版本稳定。
+关于离线模式使用方式，见 [`--offline` flag](../commands/cargo.md#option-cargo---offline)。
 
 ## publish-lockfile
 
-The `publish-lockfile` feature has been removed in the 1.37 release.
-The `Cargo.lock` file is always included when a package is published if the
-package contains a binary target. `cargo install` requires the `--locked` flag
-to use the `Cargo.lock` file.
-See [`cargo package`](../commands/cargo-package.md) and
-[`cargo install`](../commands/cargo-install.md) for more information.
+`publish-lockfile` 特性已在 1.37 版本移除。
+若包包含二进制 target，发布时始终会包含 `Cargo.lock`。
+`cargo install` 需要 `--locked` 才会使用 `Cargo.lock` 文件。
+更多信息见 [`cargo package`](../commands/cargo-package.md) 与 [`cargo install`](../commands/cargo-install.md)。
 
 ## default-run
 
-The `default-run` feature has been stabilized in the 1.37 release.
-See [the `default-run` field](manifest.md#the-default-run-field) for more
-information about specifying the default target to run.
+`default-run` 特性已在 1.37 版本稳定。
+关于指定默认运行目标的更多信息，见 [the `default-run` field](manifest.md#the-default-run-field)。
 
 ## cache-messages
 
-Compiler message caching has been stabilized in the 1.40 release.
-Compiler warnings are now cached by default and will be replayed automatically
-when re-running Cargo.
+编译器消息缓存已在 1.40 版本稳定。
+编译器 warning 现在默认会被缓存，并在重新运行 Cargo 时自动回放。
 
 ## install-upgrade
 
-The `install-upgrade` feature has been stabilized in the 1.41 release.
-[`cargo install`] will now automatically upgrade packages if they appear to be
-out-of-date. See the [`cargo install`] documentation for more information.
+`install-upgrade` 特性已在 1.41 版本稳定。
+[`cargo install`] 现在会在包看起来过期时自动升级。
+更多信息见 [`cargo install`] 文档。
 
 [`cargo install`]: ../commands/cargo-install.md
 
 ## Profile Overrides
 
-Profile overrides have been stabilized in the 1.41 release.
-See [Profile Overrides](profiles.md#overrides) for more information on using
-overrides.
+Profile overrides 已在 1.41 版本稳定。
+关于 override 的使用，见 [Profile Overrides](profiles.md#overrides)。
 
 ## Config Profiles
 
-Specifying profiles in Cargo config files and environment variables has been
-stabilized in the 1.43 release.
-See the [config `[profile]` table](config.md#profile) for more information
-about specifying [profiles](profiles.md) in config files.
+在 Cargo 配置文件和环境变量中指定 profile 已在 1.43 版本稳定。
+关于在配置文件中指定 [profiles](profiles.md) 的更多信息，见 [config `[profile]` table](config.md#profile)。
 
 ## crate-versions
 
-The `-Z crate-versions` flag has been stabilized in the 1.47 release.
-The crate version is now automatically included in the
-[`cargo doc`](../commands/cargo-doc.md) documentation sidebar.
+`-Z crate-versions` 已在 1.47 版本稳定。
+crate 版本现在会自动显示在 [`cargo doc`](../commands/cargo-doc.md) 文档侧边栏中。
 
 ## Features
 
-The `-Z features` flag has been stabilized in the 1.51 release.
-See [feature resolver version 2](features.md#feature-resolver-version-2)
-for more information on using the new feature resolver.
+`-Z features` 已在 1.51 版本稳定。
+关于使用新 feature resolver 的更多信息，见 [feature resolver version 2](features.md#feature-resolver-version-2)。
 
 ## package-features
 
-The `-Z package-features` flag has been stabilized in the 1.51 release.
-See the [resolver version 2 command-line flags](features.md#resolver-version-2-command-line-flags)
-for more information on using the features CLI options.
+`-Z package-features` 已在 1.51 版本稳定。
+关于 features CLI 选项的更多信息，见 [resolver version 2 command-line flags](features.md#resolver-version-2-command-line-flags)。
 
 ## Resolver
 
-The `resolver` feature in `Cargo.toml` has been stabilized in the 1.51 release.
-See the [resolver versions](resolver.md#resolver-versions) for more
-information about specifying resolvers.
+`Cargo.toml` 中的 `resolver` 特性已在 1.51 版本稳定。
+关于 resolver 指定方式的更多信息，见 [resolver versions](resolver.md#resolver-versions)。
 
 ## extra-link-arg
 
-The `extra-link-arg` feature to specify additional linker arguments in build
-scripts has been stabilized in the 1.56 release. See the [build script
-documentation](build-scripts.md#outputs-of-the-build-script) for more
-information on specifying extra linker arguments.
+用于在构建脚本中指定额外链接器参数的 `extra-link-arg` 特性已在 1.56 版本稳定。
+更多信息见 [build script documentation](build-scripts.md#outputs-of-the-build-script)。
 
 ## configurable-env
 
-The `configurable-env` feature to specify environment variables in Cargo
-configuration has been stabilized in the 1.56 release. See the [config
-documentation](config.html#env) for more information about configuring
-environment variables.
+用于在 Cargo 配置中指定环境变量的 `configurable-env` 特性已在 1.56 版本稳定。
+更多信息见 [config documentation](config.html#env)。
 
 ## rust-version
 
-The `rust-version` field in `Cargo.toml` has been stabilized in the 1.56 release.
-See the [rust-version field](manifest.html#the-rust-version-field) for more
-information on using the `rust-version` field and the `--ignore-rust-version` option.
+`Cargo.toml` 中的 `rust-version` 字段已在 1.56 版本稳定。
+关于 `rust-version` 字段及 `--ignore-rust-version` 选项的更多信息，见 [rust-version field](manifest.html#the-rust-version-field)。
 
 ## patch-in-config
 
-The `-Z patch-in-config` flag, and the corresponding support for
-`[patch]` section in Cargo configuration files has been stabilized in
-the 1.56 release. See the [patch field](config.html#patch) for more
-information.
+`-Z patch-in-config` 标志以及 Cargo 配置文件中 `[patch]` 段支持已在 1.56 版本稳定。
+更多信息见 [patch field](config.html#patch)。
 
 ## edition 2021
 
-The 2021 edition has been stabilized in the 1.56 release.
-See the [`edition` field](manifest.md#the-edition-field) for more information on setting the edition.
-See [`cargo fix --edition`](../commands/cargo-fix.md) and [The Edition Guide](../../edition-guide/index.html) for more information on migrating existing projects.
+2021 edition 已在 1.56 版本稳定。
+关于 edition 设置，见 [`edition` field](manifest.md#the-edition-field)。
+关于现有项目迁移，见 [`cargo fix --edition`](../commands/cargo-fix.md) 与 [The Edition Guide](../../edition-guide/index.html)。
 
 
 ## Custom named profiles
 
-Custom named profiles have been stabilized in the 1.57 release. See the
-[profiles chapter](profiles.md#custom-profiles) for more information.
+自定义命名 profile 已在 1.57 版本稳定。
+更多信息见 [profiles chapter](profiles.md#custom-profiles)。
 
 ## Profile `strip` option
 
-The profile `strip` option has been stabilized in the 1.59 release. See the
-[profiles chapter](profiles.md#strip) for more information.
+profile `strip` 选项已在 1.59 版本稳定。
+更多信息见 [profiles chapter](profiles.md#strip)。
 
 ## Future incompat report
 
-Support for generating a future-incompat report has been stabilized
-in the 1.59 release. See the [future incompat report chapter](future-incompat-report.md)
-for more information.
+生成 future-incompat 报告的支持已在 1.59 版本稳定。
+更多信息见 [future incompat report chapter](future-incompat-report.md)。
 
 ## Namespaced features
 
-Namespaced features has been stabilized in the 1.60 release.
-See the [Features chapter](features.md#optional-dependencies) for more information.
+Namespaced features 已在 1.60 版本稳定。
+更多信息见 [Features chapter](features.md#optional-dependencies)。
 
 ## Weak dependency features
 
-Weak dependency features has been stabilized in the 1.60 release.
-See the [Features chapter](features.md#dependency-features) for more information.
+Weak dependency features 已在 1.60 版本稳定。
+更多信息见 [Features chapter](features.md#dependency-features)。
 
 ## timings
 
-The `-Ztimings` option has been stabilized as `--timings` in the 1.60 release.
-The timings output format option
-(e.g., the `--timings=html` and the machine-readable `--timings=json` output)
-has been removed in 1.94.0-nightly.
+`-Ztimings` 已在 1.60 版本稳定为 `--timings`。
+timings 输出格式选项
+（例如 `--timings=html` 与机器可读的 `--timings=json`）
+已在 1.94.0-nightly 中移除。
 
 ## config-cli
 
-The `--config` CLI option has been stabilized in the 1.63 release. See
-the [config documentation](config.html#command-line-overrides) for more
-information.
+`--config` CLI 选项已在 1.63 版本稳定。
+更多信息见 [config documentation](config.html#command-line-overrides)。
 
 ## multitarget
 
-The `-Z multitarget` option has been stabilized in the 1.64 release.
-See [`build.target`](config.md#buildtarget) for more information about
-setting the default [target platform triples][target triple].
+`-Z multitarget` 选项已在 1.64 版本稳定。
+关于设置默认[目标平台三元组][target triple]，见 [`build.target`](config.md#buildtarget)。
 
 ## crate-type
 
-The `--crate-type` flag for `cargo rustc` has been stabilized in the 1.64
-release. See the [`cargo rustc` documentation](../commands/cargo-rustc.md)
-for more information.
+`cargo rustc` 的 `--crate-type` 标志已在 1.64 版本稳定。
+更多信息见 [`cargo rustc` documentation](../commands/cargo-rustc.md)。
 
 
 ## Workspace Inheritance
 
-Workspace Inheritance has been stabilized in the 1.64 release.
-See [workspace.package](workspaces.md#the-package-table),
-[workspace.dependencies](workspaces.md#the-dependencies-table),
-and [inheriting-a-dependency-from-a-workspace](specifying-dependencies.md#inheriting-a-dependency-from-a-workspace)
-for more information.
+Workspace Inheritance 已在 1.64 版本稳定。
+更多信息见 [workspace.package](workspaces.md#the-package-table)、
+[workspace.dependencies](workspaces.md#the-dependencies-table)、
+[inheriting-a-dependency-from-a-workspace](specifying-dependencies.md#inheriting-a-dependency-from-a-workspace)。
 
 ## terminal-width
 
-The `-Z terminal-width` option has been stabilized in the 1.68 release.
-The terminal width is always passed to the compiler when running from a
-terminal where Cargo can automatically detect the width.
+`-Z terminal-width` 选项已在 1.68 版本稳定。
+当在 Cargo 可自动检测终端宽度的终端中运行时，终端宽度会始终传给编译器。
 
 ## sparse-registry
 
-Sparse registry support has been stabilized in the 1.68 release.
-See [Registry Protocols](registries.md#registry-protocols) for more information.
+Sparse registry 支持已在 1.68 版本稳定。
+更多信息见 [Registry Protocols](registries.md#registry-protocols)。
 
 ### `cargo logout`
 
-The [`cargo logout`] command has been stabilized in the 1.70 release.
+[`cargo logout`] 命令已在 1.70 版本稳定。
 
 [target triple]: ../appendix/glossary.md#target '"target" (glossary)'
 [`cargo logout`]: ../commands/cargo-logout.md
 
 ## `doctest-in-workspace`
 
-The `-Z doctest-in-workspace` option for `cargo test` has been stabilized and
-enabled by default in the 1.72 release. See the
-[`cargo test` documentation](../commands/cargo-test.md#working-directory-of-tests)
-for more information about the working directory for compiling and running tests.
+`cargo test` 的 `-Z doctest-in-workspace` 选项已在 1.72 版本稳定并默认启用。
+关于编译和运行测试时的工作目录，见 [`cargo test` documentation](../commands/cargo-test.md#working-directory-of-tests)。
 
 ## keep-going
 
-The `--keep-going` option has been stabilized in the 1.74 release. See the
-[`--keep-going` flag](../commands/cargo-build.html#option-cargo-build---keep-going)
-in `cargo build` as an example for more details.
+`--keep-going` 选项已在 1.74 版本稳定。
+更多细节可参考 `cargo build` 中的 [`--keep-going` flag](../commands/cargo-build.html#option-cargo-build---keep-going)。
 
 ## `[lints]`
 
@@ -2235,68 +2094,65 @@ in `cargo build` as an example for more details.
 
 ## credential-process
 
-The `-Z credential-process` feature has been stabilized in the 1.74 release.
+`-Z credential-process` 特性已在 1.74 版本稳定。
 
-See [Registry Authentication](registry-authentication.md) documentation for details.
+详情见 [Registry Authentication](registry-authentication.md) 文档。
 
 ## registry-auth
 
-The `-Z registry-auth` feature has been stabilized in the 1.74 release with the additional
-requirement that a credential-provider is configured.
+`-Z registry-auth` 特性已在 1.74 版本稳定，额外要求是必须配置 credential-provider。
 
-See [Registry Authentication](registry-authentication.md) documentation for details.
+详情见 [Registry Authentication](registry-authentication.md) 文档。
 
 ## check-cfg
 
-The `-Z check-cfg` feature has been stabilized in the 1.80 release by making it the
-default behavior.
+`-Z check-cfg` 特性已在 1.80 版本通过“设为默认行为”方式稳定。
 
-See the [build script documentation](build-scripts.md#rustc-check-cfg) for information
-about specifying custom cfgs.
+关于自定义 cfg 指定方式，见 [build script documentation](build-scripts.md#rustc-check-cfg)。
 
 ## Edition 2024
 
-The 2024 edition has been stabilized in the 1.85 release.
-See the [`edition` field](manifest.md#the-edition-field) for more information on setting the edition.
-See [`cargo fix --edition`](../commands/cargo-fix.md) and [The Edition Guide](../../edition-guide/index.html) for more information on migrating existing projects.
+2024 edition 已在 1.85 版本稳定。
+关于 edition 设置，见 [`edition` field](manifest.md#the-edition-field)。
+关于现有项目迁移，见 [`cargo fix --edition`](../commands/cargo-fix.md) 与 [The Edition Guide](../../edition-guide/index.html)。
 
 ## Automatic garbage collection
 
-Support for automatically deleting old files was stabilized in Rust 1.88.
-More information can be found in the [config chapter](config.md#cache).
+自动删除旧文件支持已在 Rust 1.88 稳定。
+更多信息见 [config chapter](config.md#cache)。
 
 ## doctest-xcompile
 
-Doctest cross-compiling is now unconditionally enabled starting in Rust 1.89. Running doctests with `cargo test` will now honor the `--target` flag.
+从 Rust 1.89 开始，doctest 交叉编译已无条件启用。
+现在使用 `cargo test` 运行 doctest 会遵循 `--target` 标志。
 
 ## package-workspace
 
-Multi-package publishing has been stabilized in Rust 1.90.0.
+多包发布已在 Rust 1.90.0 稳定。
 
 ## build-dir
 
-Support for `build.build-dir` was stabilized in the 1.91 release.
-See the [config documentation](config.md#buildbuild-dir) for information about changing the build-dir
+`build.build-dir` 支持已在 1.91 版本稳定。
+关于修改 build-dir，见 [config documentation](config.md#buildbuild-dir)。
 
 ## Build-plan
 
-The `--build-plan` argument for the `build` command has been removed in 1.93.0-nightly.
-See <https://github.com/rust-lang/cargo/issues/7614> for the reason for its removal.
+`build` 命令的 `--build-plan` 参数已在 1.93.0-nightly 移除。
+移除原因见 <https://github.com/rust-lang/cargo/issues/7614>。
 
 ## config-include
 
-Support for including extra configuration files via the `include` config key
-has been stabilized in 1.93.0.
-See the [`include` config documentation](config.md#include) for more.
+通过 `include` 配置键包含额外配置文件的支持已在 1.93.0 稳定。
+更多信息见 [`include` config documentation](config.md#include)。
 
 ## pubtime
 
-The `pubtime` index field  has been stabilized in Rust 1.94.0.
+`pubtime` 索引字段已在 Rust 1.94.0 稳定。
 
 ## lockfile-path
 
-Support for `resolver.lockfile-path` config field has been stabilized in Rust 1.97.0.
+`resolver.lockfile-path` 配置字段支持已在 Rust 1.97.0 稳定。
 
 ## warnings
 
-The `build.warnings` config field has been stabilized in Rust 1.97.
+`build.warnings` 配置字段已在 Rust 1.97 稳定。

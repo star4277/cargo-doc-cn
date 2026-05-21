@@ -1,4 +1,4 @@
-﻿# Publishing on crates.io
+﻿# 在 crates.io 上发布
 
 当你有了想分享给大家的库，就可以把它发布到 [crates.io]。
 发布 crate 指的是把某个特定版本上传并托管到 [crates.io]。
@@ -7,7 +7,7 @@
 该版本不能被覆盖，代码也不能删除。
 不过可发布的版本数量没有上限。
 
-## Before your first publish
+## 首次发布前
 
 首先，你需要一个 [crates.io] 账号来获取 API token。
 前往[首页][crates.io]，使用 GitHub 账号登录（目前仍要求）。
@@ -35,7 +35,7 @@ abcdefghijklmnopqrstuvwxyz012345
 > **注意**：可使用 [`cargo logout`] 从 `credentials.toml` 删除 token。
 > 如果你不再需要本机保存该 token，这会很有用。
 
-## Before publishing a new crate
+## 发布新 crate 前
 
 请记住， [crates.io] 上的 crate 名遵循先到先得。
 一旦名称被占用，其他 crate 不能再使用该名称。
@@ -55,7 +55,7 @@ abcdefghijklmnopqrstuvwxyz012345
 如果你发布的是库，也建议参考 [Rust API
 Guidelines]。
 
-### Packaging a crate
+### 打包 crate
 
 下一步是打包并上传到 [crates.io]。
 可使用 [`cargo publish`] 子命令。它会执行：
@@ -109,7 +109,7 @@ include = [
 ]
 ```
 
-## Uploading the crate
+## 上传 crate
 
 准备就绪后，执行 [`cargo publish`] 上传到 [crates.io]：
 
@@ -119,7 +119,7 @@ $ cargo publish
 
 就这样，你的第一个 crate 已经发布。
 
-## Publishing a new version of an existing crate
+## 发布已有 crate 的新版本
 
 要发布新版本，请修改 `Cargo.toml` 中[ `version` 字段](manifest.md#the-version-field)。
 同时注意 [SemVer 规则](semver.md) 对兼容性变更的建议。
@@ -139,7 +139,7 @@ $ cargo publish
 >
 > 更多可见 [crates.io](https://crates.io/search?q=cargo%20release)。
 
-## Managing a crates.io-based crate
+## 管理 crates.io 上的 crate
 
 crate 的管理主要通过命令行 `cargo`，而不是 [crates.io] 网页界面。
 可用的管理子命令有以下几个。
@@ -196,7 +196,7 @@ $ cargo owner --remove github:rust-lang:owners
 邀请团队为 owner 时，你必须是该团队成员。
 移除团队 owner 则没有这个限制。
 
-## GitHub permissions
+## GitHub 权限
 
 GitHub 对“团队成员关系”并未提供简单公开访问，
 因此你在相关操作时很可能看到如下信息：
@@ -244,7 +244,7 @@ https://github.com/organizations/:org/settings/oauth_application_policy
 
 ![Authentication Access Control](../images/auth-level-acl.png)
 
-### Troubleshooting GitHub team access errors
+### 排查 GitHub 团队访问错误
 
 当你尝试把 GitHub 团队添加为 crate owner 时，可能会看到：
 

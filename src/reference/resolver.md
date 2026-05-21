@@ -1,4 +1,4 @@
-﻿# Dependency Resolution
+﻿# 依赖解析
 
 Cargo 的核心任务之一，是根据各 package 指定的版本要求，
 决定实际应使用哪些依赖版本。
@@ -12,7 +12,7 @@ Cargo 的核心任务之一，是根据各 package 指定的版本要求，
 [dependency specification]: specifying-dependencies.md
 [`cargo tree`]: ../commands/cargo-tree.md
 
-## Constraints and Heuristics
+## 约束与启发式规则
 
 很多情况下并不存在唯一“最佳”的依赖解析结果。
 resolver 会在多种约束与启发式规则下，寻找一个普遍可用的解。
@@ -71,7 +71,7 @@ fn resolve_next(dep_queue: Queue, resolved: ResolveGraph, policy: Policy) -> Opt
   Cargo 可能优先尝试某个版本，
   回溯时再退到下一个版本。
 
-### Version numbers
+### 版本号
 
 通常 Cargo 会优先选择当前可用的最高版本。
 
@@ -85,7 +85,7 @@ bitflags = "*"
 
 可能的例外见 [Rust version](#rust-version)。
 
-### Version requirements
+### 版本要求
 
 package 通过[版本要求][version requirements]声明可接受版本并拒绝其他版本。
 
@@ -100,7 +100,7 @@ bitflags = "1.0"  # meaning `>=1.0.0,<2.0.0`
 
 [version requirements]: specifying-dependencies.md#version-requirement-syntax
 
-### SemVer compatibility
+### SemVer 兼容性
 
 Cargo 假设 package 遵循 [SemVer]，
 并按 [Caret version requirements] 判定“可兼容”时进行版本统一。
@@ -166,7 +166,7 @@ rand = "0.6"  # meaning `>=0.6.0,<0.7.0`
 [Caret version requirements]: specifying-dependencies.md#default-requirements
 [Version-incompatibility hazards]: #version-incompatibility-hazards
 
-#### Version-incompatibility hazards
+#### 版本不兼容风险
 
 当解析图中出现同一 crate 的多个版本时，
 如果这些 crate 暴露的类型在上层交叉使用，就可能出问题。
@@ -195,7 +195,7 @@ rand = "0.6"  # meaning `>=0.6.0,<0.7.0`
 [semver trick]: https://github.com/dtolnay/semver-trick
 [`downcast_ref`]: ../../std/any/trait.Any.html#method.downcast_ref
 
-### Lock file
+### 锁文件
 
 在使用 [`Cargo.lock` file] 时，Cargo 会优先采用其中记录的版本。
 这用于平衡“可复现构建”与“manifest 变化带来的调整”。
@@ -220,7 +220,7 @@ bitflags = "1.3.0"
 `Cargo.lock` 中该条目会被忽略，
 最终会选并记录 `1.3.5`。
 
-### Rust version
+### Rust 版本
 
 为了支持“按最低 [Rust version] 开发软件”，
 resolver 可把“依赖版本对 Rust 版本的兼容性”纳入考虑。
@@ -303,7 +303,7 @@ resolver 必须选一个两边都共用的版本，最终会选类似 4.5.20。
 [Rust version]: rust-version.md
 [`resolver.incompatible-rust-versions`]: config.md#resolverincompatible-rust-versions
 
-### Features
+### 特性
 
 为了生成 `Cargo.lock`，resolver 会按“启用所有 [workspace] 成员的所有 [features]”来构建依赖图。
 这可确保在通过[`--features` 参数](features.md#command-line-feature-options)
@@ -343,7 +343,7 @@ resolver 会跳过“缺少必需 feature”的包版本。
 [removing an optional dependency]: semver.md#cargo-remove-opt-dep
 [workspace]: workspaces.md
 
-#### Feature resolver version 2
+#### 特性解析器版本 2
 
 当在 `Cargo.toml` 指定 `resolver = "2"`（见下文 [resolver
 versions](#resolver-versions)）时，
@@ -402,7 +402,7 @@ versions](#resolver-versions)）时，
 [dev-dependencies]: specifying-dependencies.md#development-dependencies
 [resolver-field]: features.md#resolver-versions
 
-### `links`
+### `links` 字段
 
 [`links` field] 用于确保二进制中同一本地库只链接一份。
 resolver 会尝试找到满足“每个 `links` 名只出现一次”的图。
@@ -418,7 +418,7 @@ resolver 会尝试找到满足“每个 `links` 名只出现一次”的图。
 [`links` field]: manifest.md#the-links-field
 [`libgit2-sys`]: https://crates.io/crates/libgit2-sys
 
-### Yanked versions
+### 已 yank 的版本
 
 [Yanked releases][yank] 是被标记为“不应继续使用”的发布版本。
 resolver 构图时会忽略所有 yank 版本，
@@ -428,7 +428,7 @@ resolver 构图时会忽略所有 yank 版本，
 [yank]: publishing.md#cargo-yank
 [`--precise`]: ../commands/cargo-update.md#option-cargo-update---precise
 
-## Dependency updates
+## 依赖更新
 
 所有需要依赖图信息的 Cargo 命令都会自动执行依赖解析。
 例如 [`cargo build`] 会先运行 resolver，找出需要构建的依赖。
@@ -451,7 +451,7 @@ resolver 会选择满足新要求的新版本。
 [`cargo build`]: ../commands/cargo-build.md
 [`cargo update`]: ../commands/cargo-update.md
 
-## Overrides
+## 覆盖机制
 
 Cargo 提供多种机制在依赖图内覆盖依赖。
 具体用法见 [Overriding Dependencies] 章节。
@@ -460,7 +460,7 @@ Cargo 提供多种机制在依赖图内覆盖依赖。
 
 [Overriding Dependencies]: overriding-dependencies.md
 
-## Dependency kinds
+## 依赖类型
 
 package 里有三类依赖：普通依赖、[build] 依赖、[dev][dev-dependencies] 依赖。
 从 resolver 角度看，大多数行为一致。
@@ -473,7 +473,7 @@ package 里有三类依赖：普通依赖、[build] 依赖、[dev][dev-dependenc
 [dev-dependencies]: specifying-dependencies.md#development-dependencies
 [Platform-specific dependencies]: specifying-dependencies.md#platform-specific-dependencies
 
-### dev-dependency cycles
+### dev-dependency 循环
 
 通常 resolver 不允许图中有环，
 但对 [dev-dependencies] 允许。
@@ -493,7 +493,7 @@ package 里有三类依赖：普通依赖、[build] 依赖、[dev][dev-dependenc
 
 如果可能，尽量把 package 拆分重构，保持严格无环。
 
-## Resolver versions
+## 解析器版本
 
 可在 `Cargo.toml` 通过 resolver 版本指定不同行为：
 
@@ -525,7 +525,7 @@ resolver = "2"
 [virtual workspace]: workspaces.md#virtual-workspace
 [features-2]: features.md#feature-resolver-version-2
 
-## Recommendations
+## 建议
 
 下面是关于“设置包版本”与“编写依赖要求”的建议。
 这些是适用于常见场景的通用指导，但特殊场景可能需要非常规要求。
@@ -563,11 +563,11 @@ resolver = "2"
 [SemVer guidelines]: semver.md
 [crates.io]: https://crates.io/
 
-## Troubleshooting
+## 故障排查
 
 下面给出一些常见问题与可能解决办法。
 
-### Why was a dependency included?
+### 为什么会包含这个依赖？
 
 假设你在 `cargo check` 输出看到依赖 `rand`，
 但觉得不该出现，想查它为什么被引入。
@@ -582,7 +582,7 @@ rand v0.8.5
 ├── ...
 ```
 
-### Why was that feature on this dependency enabled?
+### 为什么该依赖上的这个 Feature 会被启用？
 
 你可能发现是某个 feature 被启用才导致 `rand` 出现。
 **要定位是哪个 package 启用了该 feature，可加 `--edges features`：**
@@ -595,7 +595,7 @@ rand v0.8.5
 ├── ...
 ```
 
-### Unexpected dependency duplication
+### 非预期的依赖重复
 
 当你运行：
 ```console
@@ -634,7 +634,7 @@ Cargo 不鼓励使用 `>=0.6` 这种开放式版本要求。
 
 [`cargo update`]: ../commands/cargo-update.md
 
-### Why wasn't a newer version selected?
+### 为什么没有选择更新版本？
 
 如果你执行：
 ```console
@@ -647,7 +647,7 @@ $ env CARGO_LOG=cargo::core::resolver=trace cargo update
 ```
 **注意：**Cargo 日志 target 与级别可能随时间变化。
 
-### SemVer-breaking patch release breaks the build
+### 破坏 SemVer 的补丁发布导致构建失败
 
 有时项目会误发布包含 SemVer breaking 变更的补丁版本。
 用户执行 `cargo update` 后会拉到该版本，导致构建失败。

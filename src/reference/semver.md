@@ -1,120 +1,120 @@
-# SemVer Compatibility
+﻿# 语义版本兼容性
 
-This chapter provides details on what is conventionally considered a
-compatible or breaking SemVer change for new releases of a package. See the
-[SemVer compatibility] section for details on what SemVer is, and how Cargo
-uses it to ensure compatibility of libraries.
+本章详细介绍了传统上被认为是
+软件包新版本的兼容或破坏性 SemVer 更改。请参阅
+[SemVer 兼容性] 部分详细了解 SemVer 是什么以及 Cargo 如何使用
+使用它来确保库的兼容性。
 
-These are only *guidelines*, and not necessarily hard-and-fast rules that all
-projects will obey. The [Change categories] section details how this guide
-classifies the level and severity of a change. Most of this guide focuses on
-changes that will cause `cargo` and `rustc` to fail to build something that
-previously worked. Almost every change carries some risk that it will
-negatively affect the runtime behavior, and for those cases it is usually a
-judgment call by the project maintainers whether or not it is a
-SemVer-incompatible change.
+这些只是*指导方针*，并不一定是所有人都必须遵循的硬性规则。
+项目会服从。 [更改类别] 部分详细介绍了本指南如何
+对变更的级别和严重性进行分类。本指南的大部分内容侧重于
+会导致“cargo”和“rustc”无法构建某些内容的更改
+以前工作过。几乎每一次改变都会带来一定的风险
+对运行时行为产生负面影响，对于这些情况，它通常是
+项目维护者的判断是否是一个
+SemVer 不兼容的更改。
 
 [Change categories]: #change-categories
 [SemVer compatibility]: resolver.md#semver-compatibility
 
-## Change categories
+## 更改类别
 
-All of the policies listed below are categorized by the level of change:
+下面列出的所有政策均按变化程度分类：
 
-* **Major change**: a change that requires a major SemVer bump.
-* **Minor change**: a change that requires only a minor SemVer bump.
-* **Possibly-breaking change**: a change that some projects may consider major
-  and others consider minor.
+* **重大变更**：需要重大 SemVer 提升的变更。
+* **较小的更改**：仅需要较小的 SemVer 提升的更改。
+* **可能发生重大变化**：一些项目可能认为重大的变化
+  和其他人认为次要的。
 
-The "Possibly-breaking" category covers changes that have the *potential* to
-break during an update, but may not necessarily cause a breakage. The impact
-of these changes should be considered carefully. The exact nature will depend
-on the change and the principles of the project maintainers.
+“可能造成破坏”类别涵盖有“潜力”的变化
+更新期间中断，但不一定会导致损坏。影响
+应仔细考虑这些变化。确切的性质将取决于
+关于项目维护者的变更和原则。
 
-Some projects may choose to only bump the patch number on a minor change. It
-is encouraged to follow the SemVer spec, and only apply bug fixes in patch
-releases. However, a bug fix may require an API change that is marked as a
-"minor change", and shouldn't affect compatibility. This guide does not take a
-stance on how each individual "minor change" should be treated, as the
-difference between minor and patch changes are conventions that depend on the
-nature of the change.
+有些项目可能会选择仅在较小的更改上增加补丁号。它
+鼓励遵循 SemVer 规范，并且仅在补丁中应用错误修复
+发布。但是，错误修复可能需要 API 更改，该更改被标记为
+“微小的改变”，并且不应该影响兼容性。本指南不需
+应该如何对待每个人的“微小变化”的立场
+次要更改和补丁更改之间的区别是取决于
+变化的性质。
 
-Some changes are marked as "minor", even though they carry the potential risk
-of breaking a build. This is for situations where the potential is extremely
-low, and the potentially breaking code is unlikely to be written in idiomatic
-Rust, or is specifically discouraged from use.
+有些更改被标记为“次要”，即使它们具有潜在风险
+破坏构建。这是针对潜力极其巨大的情况
+低，并且潜在的破坏代码不太可能用惯用语编写
+Rust 或特别不鼓励使用。
 
-This guide uses the terms "major" and "minor" assuming this relates to a
-"1.0.0" release or later. Initial development releases starting with "0.y.z"
-can treat changes in "y" as a major release, and "z" as a minor release.
-"0.0.z" releases are always major changes. This is because Cargo uses the
-convention that only changes in the left-most non-zero component are
-considered incompatible.
+本指南使用术语“主要”和“次要”，假设这与
+“1.0.0”版本或更高版本。以“0.y.z”开头的初始开发版本
+可以将“y”中的更改视为主要版本，将“z”中的更改视为次要版本。
+“0.0.z”版本始终是重大更改。这是因为 Cargo 使用
+约定仅最左边的非零分量发生变化
+被认为不兼容。
 
-* API compatibility
-    * Items
-        * [Major: renaming/moving/removing any public items](#item-remove)
-        * [Minor: adding new public items](#item-new)
-    * Types
-        * [Major: Changing the alignment, layout, or size of a well-defined type](#type-layout)
-    * Structs
-        * [Major: adding a private struct field when all current fields are public](#struct-add-private-field-when-public)
-        * [Major: adding a public field when no private field exists](#struct-add-public-field-when-no-private)
-        * [Minor: adding or removing private fields when at least one already exists](#struct-private-fields-with-private)
-        * [Minor: going from a tuple struct with all private fields (with at least one field) to a normal struct, or vice versa](#struct-tuple-normal-with-private)
-    * Enums
-        * [Major: adding new enum variants (without `non_exhaustive`)](#enum-variant-new)
-        * [Major: adding new fields to an enum variant](#enum-fields-new)
-    * Traits
-        * [Major: adding a non-defaulted trait item](#trait-new-item-no-default)
-        * [Major: any change to trait item signatures](#trait-item-signature)
-        * [Possibly-breaking: adding a defaulted trait item](#trait-new-default-item)
-        * [Major: adding a trait item that makes the trait non-object safe](#trait-object-safety)
-        * [Major: adding a type parameter without a default](#trait-new-parameter-no-default)
-        * [Minor: adding a defaulted trait type parameter](#trait-new-parameter-default)
-    * Implementations
-        * [Possibly-breaking change: adding any inherent items](#impl-item-new)
-    * Generics
-        * [Major: tightening generic bounds](#generic-bounds-tighten)
-        * [Minor: loosening generic bounds](#generic-bounds-loosen)
-        * [Minor: adding defaulted type parameters](#generic-new-default)
-        * [Minor: generalizing a type to use generics (with identical types)](#generic-generalize-identical)
-        * [Major: generalizing a type to use generics (with possibly different types)](#generic-generalize-different)
-        * [Minor: changing a generic type to a more generic type](#generic-more-generic)
-        * [Major: capturing more generic parameters in RPIT](#generic-rpit-capture)
-    * Functions
-        * [Major: adding/removing function parameters](#fn-change-arity)
-        * [Possibly-breaking: introducing a new function type parameter](#fn-generic-new)
-        * [Minor: generalizing a function to use generics (supporting original type)](#fn-generalize-compatible)
-        * [Major: generalizing a function to use generics with type mismatch](#fn-generalize-mismatch)
-        * [Minor: making an `unsafe` function safe](#fn-unsafe-safe)
-    * Attributes
-        * [Major: switching from `no_std` support to requiring `std`](#attr-no-std-to-std)
-        * [Major: adding `non_exhaustive` to an existing enum, variant, or struct with no private fields](#attr-adding-non-exhaustive)
+* API兼容性
+    * 项目
+        * [主要：重命名/移动/删除任何公共项目](#item-remove)
+        * [次要：添加新的公共项目](#item-new)
+    * 类型
+        * [主要：更改定义良好的类型的对齐方式、布局或大小](#type-layout)
+    * 结构体
+        * [主要：当当前所有字段都是公共字段时添加私有结构字段](#struct-add-private-field-when-public)
+        * [主要：当不存在私有字段时添加公共字段](#struct-add-public-field-when-no-private)
+        * [次要：当至少一个已经存在时添加或删除私有字段](#struct-private-fields-with-private)
+        * [次要：从具有所有私有字段（至少一个字段）的元组结构到普通结构，反之亦然](#struct-tuple-normal-with-private)
+    * 枚举
+        * [主要：添加新的枚举变体（没有 `non_exhaustive`）](#enum-variant-new)
+        * [主要：向枚举变体添加新字段](#enum-fields-new)
+    * 特质
+        * [主要：添加非默认特征项](#trait-new-item-no-default)
+        * [主要：对特质项目签名的任何更改](#trait-item-signature)
+        * [可能破坏：添加默认特征项](#trait-new-default-item)
+        * [主要：添加一个特征项，使特征成为非对象安全](#trait-object-safety)
+        * [主要：添加没有默认值的类型参数](#trait-new-parameter-no-default)
+        * [次要：添加默认的特征类型参数](#trait-new-parameter-default)
+    * 实施
+        * [可能的重大更改：添加任何固有项目](#impl-item-new)
+    * 泛型
+        * [主要：收紧通用边界](#generic-bounds-tighten)
+        * [次要：放宽通用边界](#generic-bounds-loose)
+        * [次要：添加默认类型参数](#generic-new-default)
+        * [次要：泛化类型以使用泛型（具有相同类型）](#generic-generalize-identical)
+        * [主要：泛化类型以使用泛型（可能具有不同的类型）](#generic-generalize- different)
+        * [次要：将泛型类型更改为更泛型的类型](#generic-more-generic)
+        * [主要：在RPIT中捕获更多通用参数](#generic-rpit-capture)
+    * 功能
+        * [主要：添加/删除函数参数](#fn-change-arity)
+        * [可能破坏：引入新的函数类型参数](#fn-generic-new)
+        * [次要：泛化函数以使用泛型（支持原始类型）](#fn-generalize-兼容)
+        * [主要：泛化一个函数以使用类型不匹配的泛型](#fn-generalize-mismatch)
+        * [次要：使“不安全”函数变得安全](#fn-unsafe-safe)
+    * 属性
+        * [主要：从`no_std`支持切换到需要`std`](#attr-no-std-to-std)
+        * [主要：将 `non_exhaustive` 添加到现有的没有私有字段的枚举、变体或结构中](#attr-adding-non-exhaustive)
 * Tooling and environment compatibility
-    * [Possibly-breaking: changing the minimum version of Rust required](#env-new-rust)
-    * [Possibly-breaking: changing the platform and environment requirements](#env-change-requirements)
-    * [Minor: introducing new lints](#new-lints)
-    * Cargo
-        * [Minor: adding a new Cargo feature](#cargo-feature-add)
-        * [Major: removing a Cargo feature](#cargo-feature-remove)
-        * [Major: removing a feature from a feature list if that changes functionality or public items](#cargo-feature-remove-another)
-        * [Possibly-breaking: removing an optional dependency](#cargo-remove-opt-dep)
-        * [Minor: changing dependency features](#cargo-change-dep-feature)
-        * [Minor: adding dependencies](#cargo-dep-add)
-* [Application compatibility](#application-compatibility)
+    * [可能破坏：更改所需的 Rust 最低版本](#env-new-rust)
+    * [可能破坏：改变平台和环境要求](#env-change-requirements)
+    * [次要：引入新的 l​​ints](#new-lints)
+    * 货物
+        * [次要：添加新的 Cargo 功能](#cargo-feature-add)
+        * [主要：删除 Cargo 功能](#cargo-feature-remove)
+        * [主要：如果更改功能或公共项目，则从功能列表中删除功能](#cargo-feature-remove-another)
+        * [可能破坏：删除可选依赖项](#cargo-remove-opt-dep)
+        * [次要：改变依赖特性](#cargo-change-dep-feature)
+        * [次要：添加依赖项](#cargo-dep-add)
+* [应用程序兼容性](#application-compatibility)
 
-## API compatibility
+## API 兼容性
 
-All of the examples below contain three parts: the original code, the code
-after it has been modified, and an example usage of the code that could appear
-in another project. In a minor change, the example usage should successfully
-build with both the before and after versions.
+下面所有的例子都包含三部分：原始代码、代码
+修改后，以及可能出现的代码示例用法
+在另一个项目中。经过一个小改动，示例用法应该成功
+使用之前和之后的版本进行构建。
 
-### Major: renaming/moving/removing any public items {#item-remove}
+### 主要：重命名/移动/删除任何公共项目{#item-remove}
 
-The absence of a publicly exposed [item][items] will cause any uses of that item to
-fail to compile.
+缺乏公开暴露的[物品][物品]将导致对该物品的任何使用
+编译失败。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -134,18 +134,18 @@ fn main() {
 }
 ```
 
-This includes adding any sort of [`cfg` attribute] which can change which
-items or behavior is available based on [conditional compilation].
+这包括添加任何类型的 [`cfg` 属性]，它可以更改
+项目或行为基于[条件编译]可用。
 
-Mitigating strategies:
-* Mark items to be removed as [deprecated], and then remove them at a later
-  date in a SemVer-breaking release.
-* Mark renamed items as [deprecated], and use a [`pub use`] item to re-export
-  to the old name.
+缓解策略：
+* 将要删除的项目标记为[已弃用]，然后稍后删除它们
+  破坏 SemVer 的版本中的日期。
+* 将重命名的项目标记为[已弃用]，并使用[`pub use`]项目重新导出
+  到旧名字。
 
-### Minor: adding new public items {#item-new}
+### 次要：添加新的公共项目 {#item-new}
 
-Adding new, public [items] is a minor change.
+添加新的公共[项目]是一个微小的变化。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -163,11 +163,11 @@ pub fn foo() {}
 // `foo` is not used since it didn't previously exist.
 ```
 
-Note that in some rare cases this can be a **breaking change** due to glob
-imports. For example, if you add a new trait, and a project has used a glob
-import that brings that trait into scope, and the new trait introduces an
-associated item that conflicts with any types it is implemented on, this can
-cause a compile-time error due to the ambiguity. Example:
+请注意，在极少数情况下，这可能是由于 glob 导致的 **重大更改**
+进口。例如，如果您添加一个新特征，并且项目已使用 glob
+import 将该特征带入范围，并且新特征引入了
+与它所实现的任何类型冲突的关联项，这可以
+由于歧义而导致编译时错误。例子：
 
 ```rust,ignore
 // Breaking change example
@@ -199,72 +199,72 @@ fn main() {
 }
 ```
 
-This is not considered a major change because conventionally glob imports are
-a known forwards-compatibility hazard. Glob imports of items from external
-crates should be avoided.
+这不被认为是重大变化，因为传统上全局导入是
+已知的向前兼容性危险。从外部全局导入项目
+应避免使用板条箱。
 
-### Major: Changing the alignment, layout, or size of a well-defined type {#type-layout}
+### 主要：更改明确定义的类型 {#type-layout} 的对齐方式、布局或大小
 
-It is a breaking change to change the alignment, layout, or size of a type that was previously well-defined.
+更改以前定义良好的类型的对齐方式、布局或大小是一项重大更改。
 
-In general, types that use the [the default representation] do not have a well-defined alignment, layout, or size.
-The compiler is free to alter the alignment, layout, or size, so code should not make any assumptions about it.
+一般来说，使用[默认表示]的类型没有明确定义的对齐方式、布局或大小。
+编译器可以自由更改对齐方式、布局或大小，因此代码不应对此做出任何假设。
 
-> **Note**: It may be possible for external crates to break if they make assumptions about the alignment, layout, or size of a type even if it is not well-defined.
-> This is not considered a SemVer breaking change since those assumptions should not be made.
+> **注意**：如果外部包对类型的对齐、布局或大小做出假设，即使没有明确定义，外部包也可能会损坏。
+> 这不被视为 SemVer 重大更改，因为不应做出这些假设。
 
-Some examples of changes that are not a breaking change are (assuming no other rules in this guide are violated):
+一些不属于重大更改的更改示例如下（假设不违反本指南中的其他规则）：
 
-* Adding, removing, reordering, or changing fields of a default representation struct, union, or enum in such a way that the change follows the other rules in this guide (for example, using `non_exhaustive` to allow those changes, or changes to private fields that are already private).
-  See [struct-add-private-field-when-public](#struct-add-private-field-when-public), [struct-add-public-field-when-no-private](#struct-add-public-field-when-no-private), [struct-private-fields-with-private](#struct-private-fields-with-private), [enum-fields-new](#enum-fields-new).
-* Adding variants to a default representation enum, if the enum uses `non_exhaustive`.
-  This may change the alignment or size of the enumeration, but those are not well-defined.
-  See [enum-variant-new](#enum-variant-new).
-* Adding, removing, reordering, or changing private fields of a `repr(C)` struct, union, or enum, following the other rules in this guide (for example, using `non_exhaustive`, or adding private fields when other private fields already exist).
-  See [repr-c-private-change](#repr-c-private-change).
-* Adding variants to a `repr(C)` enum, if the enum uses `non_exhaustive`.
-  See [repr-c-enum-variant-new](#repr-c-enum-variant-new).
-* Adding `repr(C)` to a default representation struct, union, or enum.
-  See [repr-c-add](#repr-c-add).
-* Adding `repr(<int>)` [primitive representation] to an enum.
-  See [repr-int-enum-add](#repr-int-enum-add).
-* Adding `repr(transparent)` to a default representation struct or enum.
-  See [repr-transparent-add](#repr-transparent-add).
+* 添加、删除、重新排序或更改默认表示结构、联合或枚举的字段，使更改遵循本指南中的其他规则（例如，使用“non_exhaustive”允许这些更改，或对已经私有的私有字段进行更改）。
+  请参阅[struct-add-private-field-when-public](#struct-add-private-field-when-public)、[struct-add-public-field-when-no-private](#struct-add-public-field-when-no-private)、[struct-private-fields-with-private](#struct-private-fields-with-private)、[enum-fields-new](#enum-fields-new)。
+* 如果枚举使用“non_exhaustive”，则将变体添加到默认表示枚举中。
+  这可能会改变枚举的对齐方式或大小，但这些并没有明确定义。
+  请参阅[enum-variant-new](#enum-variant-new)。
+* 添加、删除、重新排序或更改 `repr(C)` 结构、联合或枚举的私有字段，遵循本指南中的其他规则（例如，使用 `non_exhaustive`，或在其他私有字段已存在时添加私有字段）。
+  请参阅[repr-c-private-change](#repr-c-private-change)。
+* 如果枚举使用“non_exhaustive”，则向“repr(C)”枚举添加变体。
+  请参阅[repr-c-enum-variant-new](#repr-c-enum-variant-new)。
+* 将 `repr(C)` 添加到默认表示结构、联合或枚举。
+  请参阅[repr-c-add](#repr-c-add)。
+* 将 `repr(<int>)` [原始表示] 添加到枚举中。
+  请参阅[repr-int-enum-add](#repr-int-enum-add)。
+* 将 `repr(transparent)` 添加到默认表示结构或枚举。
+  请参阅[repr-transparent-add](#repr-transparent-add)。
 
-Types that use the [`repr` attribute] can be said to have an alignment and layout that is defined in some way that code may make some assumptions about that may break as a result of changing that type.
+使用 [`repr` 属性] 的类型可以说具有以某种方式定义的对齐和布局，代码可能会做出一些假设，因为更改该类型可能会破坏这种假设。
 
-In some cases, types with a `repr` attribute may not have an alignment, layout, or size that is well-defined.
-In these cases, it may be safe to make changes to the types, though care should be exercised.
-For example, types with private fields that do not otherwise document their alignment, layout, or size guarantees cannot be relied upon by external crates since the public API does not fully define the alignment, layout, or size of the type.
+在某些情况下，具有“repr”属性的类型可能没有明确定义的对齐方式、布局或大小。
+在这些情况下，更改类型可能是安全的，但应小心谨慎。
+例如，具有私有字段且未以其他方式记录其对齐、布局或大小保证的类型不能被外部包所依赖，因为公共 API 没有完全定义类型的对齐、布局或大小。
 
-A common example where a type with *private* fields is well-defined is a type with a single private field with a generic type, using `repr(transparent)`,
-and the prose of the documentation discusses that it is transparent to the generic type.
-For example, see [`UnsafeCell`].
+具有*私有*字段的类型被明确定义的一个常见示例是具有通用类型的单个私有字段的类型，使用“repr(transparent)”，
+文档的散文讨论了它对于泛型类型是透明的。
+例如，请参阅[`UnsafeCell`]。
 
-Some examples of breaking changes are:
+重大变更的一些示例包括：
 
-* Adding `repr(packed)` to a struct or union.
-  See [repr-packed-add](#repr-packed-add).
-* Adding `repr(align)` to a struct, union, or enum.
-  See [repr-align-add](#repr-align-add).
-* Removing `repr(packed)` from a struct or union.
-  See [repr-packed-remove](#repr-packed-remove).
-* Changing the value N of `repr(packed(N))` if that changes the alignment or layout.
-  See [repr-packed-n-change](#repr-packed-n-change).
-* Changing the value N of `repr(align(N))` if that changes the alignment.
-  See [repr-align-n-change](#repr-align-n-change).
-* Removing `repr(align)` from a struct, union, or enum.
-  See [repr-align-remove](#repr-align-remove).
-* Changing the order of public fields of a `repr(C)` type.
-  See [repr-c-shuffle](#repr-c-shuffle).
-* Removing `repr(C)` from a struct, union, or enum.
-  See [repr-c-remove](#repr-c-remove).
-* Removing `repr(<int>)` from an enum.
-  See [repr-int-enum-remove](#repr-int-enum-remove).
-* Changing the primitive representation of a `repr(<int>)` enum.
-  See [repr-int-enum-change](#repr-int-enum-change).
-* Removing `repr(transparent)` from a struct or enum.
-  See [repr-transparent-remove](#repr-transparent-remove).
+* 将 `repr(packed)` 添加到结构或联合。
+  请参阅[repr-packed-add](#repr-packed-add)。
+* 将 `repr(align)` 添加到结构、联合或枚举。
+  请参阅[repr-align-add](#repr-align-add)。
+* 从结构或联合中删除 `repr(packed)`。
+  请参阅[repr-packed-remove](#repr-packed-remove)。
+* 如果改变对齐方式或布局，则更改 `repr(packed(N))` 的值 N。
+  请参阅[repr-packed-n-change](#repr-packed-n-change)。
+* 如果改变了对齐方式，则更改 `repr(align(N))` 的值 N。
+  请参阅[repr-align-n-change](#repr-align-n-change)。
+* 从结构、联合或枚举中删除 `repr(align)`。
+  请参阅[repr-align-remove](#repr-align-remove)。
+* 更改 `repr(C)` 类型的公共字段的顺序。
+  请参阅[repr-c-shuffle](#repr-c-shuffle)。
+* 从结构、联合或枚举中删除 `repr(C)`。
+  请参阅[repr-c-remove](#repr-c-remove)。
+* 从枚举中删除 `repr(<int>)`。
+  请参阅[repr-int-enum-remove](#repr-int-enum-remove)。
+* 更改 `repr(<int>)` 枚举的原始表示。
+  请参阅[repr-int-enum-change](#repr-int-enum-change)。
+* 从结构或枚举中删除 `repr(transparent)`。
+  请参阅[repr-transparent-remove](#repr-transparent-remove)。
 
 [the default representation]: ../../reference/type-layout.html#the-default-representation
 [primitive representation]: ../../reference/type-layout.html#primitive-representations
@@ -272,16 +272,16 @@ Some examples of breaking changes are:
 [`std::mem::transmute`]: ../../std/mem/fn.transmute.html
 [`UnsafeCell`]: ../../std/cell/struct.UnsafeCell.html#memory-layout
 
-#### Minor: `repr(C)` add, remove, or change a private field {#repr-c-private-change}
+#### 次要： `repr(C)` 添加、删除或更改私有字段 {#repr-c-private-change}
 
-It is usually safe to add, remove, or change a private field of a `repr(C)` struct, union, or enum, assuming it follows the other guidelines in this guide (see [struct-add-private-field-when-public](#struct-add-private-field-when-public), [struct-add-public-field-when-no-private](#struct-add-public-field-when-no-private), [struct-private-fields-with-private](#struct-private-fields-with-private), [enum-fields-new](#enum-fields-new)).
+添加、删除或更改 `repr(C)` 结构、联合或枚举的私有字段通常是安全的，假设它遵循本指南中的其他准则（请参阅 [struct-add-private-field-when-public](#struct-add-private-field-when-public)、[struct-add-public-field-when-no-private](#struct-add-public-field-when-no-private)， [struct-private-fields-with-private](#struct-private-fields-with-private)、[enum-fields-new](#enum-fields-new))。
 
-For example, adding private fields can only be done if there are already other private fields, or it is `non_exhaustive`.
-Public fields may be added if there are private fields, or it is `non_exhaustive`, and the addition does not alter the layout of the other fields.
+例如，只有在已经存在其他私有字段或者是“non_exhaustive”的情况下才可以添加私有字段。
+如果有私有字段，则可以添加公共字段，或者它是“non_exhaustive”，并且添加不会改变其他字段的布局。
 
-However, this may change the size and alignment of the type.
-Care should be taken if the size or alignment changes.
-Code should not make assumptions about the size or alignment of types with private fields or `non_exhaustive` unless it has a documented size or alignment.
+但是，这可能会改变类型的大小和对齐方式。
+如果尺寸或对齐方式发生变化，则应小心。
+代码不应假设具有私有字段或“non_exhaustive”的类型的大小或对齐方式，除非它有记录的大小或对齐方式。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -314,13 +314,13 @@ fn main() {
 }
 ```
 
-#### Minor: `repr(C)` add enum variant {#repr-c-enum-variant-new}
+#### 次要： `repr(C)` 添加枚举变量 {#repr-c-enum-variant-new}
 
-It is usually safe to add variants to a `repr(C)` enum, if the enum uses `non_exhaustive`.
-See [enum-variant-new](#enum-variant-new) for more discussion.
+如果枚举使用“non_exhaustive”，则向“repr(C)”枚举添加变体通常是安全的。
+有关更多讨论，请参阅 [enum-variant-new](#enum-variant-new)。
 
-Note that this may be a breaking change since it changes the size and alignment of the type.
-See [repr-c-private-change](#repr-c-private-change) for similar concerns.
+请注意，这可能是一个重大更改，因为它改变了类型的大小和对齐方式。
+有关类似问题，请参阅 [repr-c-private-change](#repr-c-private-change)。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -354,10 +354,10 @@ fn main() {
 }
 ```
 
-#### Minor: Adding `repr(C)` to a default representation {#repr-c-add}
+#### 次要：将 `repr(C)` 添加到默认表示 {#repr-c-add}
 
-It is safe to add `repr(C)` to a struct, union, or enum with [the default representation].
-This is safe because users should not make assumptions about the alignment, layout, or size of types with the default representation.
+使用 [默认表示] 将 `repr(C)` 添加到结构、联合或枚举是安全的。
+这是安全的，因为用户不应该对具有默认表示的类型的对齐、布局或大小做出假设。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -384,10 +384,10 @@ fn main() {
 }
 ```
 
-#### Minor: Adding `repr(<int>)` to an enum {#repr-int-enum-add}
+#### 次要：将 `repr(<int>)` 添加到枚举 {#repr-int-enum-add}
 
-It is safe to add `repr(<int>)` [primitive representation] to an enum with [the default representation].
-This is safe because users should not make assumptions about the alignment, layout, or size of an enum with the default representation.
+将 `repr(<int>)` [原始表示] 添加到具有 [默认表示] 的枚举是安全的。
+这是安全的，因为用户不应该对具有默认表示形式的枚举的对齐、布局或大小做出假设。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -416,10 +416,10 @@ fn main() {
 }
 ```
 
-#### Minor: Adding `repr(transparent)` to a default representation struct or enum {#repr-transparent-add}
+#### 次要：将 `repr(transparent)` 添加到默认表示结构或枚举 {#repr-transparent-add}
 
-It is safe to add `repr(transparent)` to a struct or enum with [the default representation].
-This is safe because users should not make assumptions about the alignment, layout, or size of a struct or enum with the default representation.
+使用 [默认表示] 将 `repr(transparent)` 添加到结构或枚举是安全的。
+这是安全的，因为用户不应该使用默认表示来假设结构体或枚举的对齐、布局或大小。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -442,12 +442,12 @@ fn main() {
 }
 ```
 
-#### Major: Adding `repr(packed)` to a struct or union {#repr-packed-add}
+#### 主要：将 `repr(packed)` 添加到结构或联合 {#repr-packed-add}
 
-It is a breaking change to add `repr(packed)` to a struct or union.
-Making a type `repr(packed)` makes changes that can break code, such as being invalid to take a reference to a field, or causing truncation of disjoint closure captures.
+将“repr(packed)”添加到结构或联合是一项重大更改。
+对类型“repr(packed)”进行的更改可能会破坏代码，例如无法获取对字段的引用，或者导致不相交闭包捕获的截断。
 
-<!-- TODO: If all fields are private, should this be safe to do? -->
+<!-- TODO：如果所有字段都是私有的，这样做应该安全吗？ -->
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -501,12 +501,12 @@ fn main() {
 }
 ```
 
-#### Major: Adding `repr(align)` to a struct, union, or enum {#repr-align-add}
+#### 主要：将 `repr(align)` 添加到结构、联合或枚举 {#repr-align-add}
 
-It is a breaking change to add `repr(align)` to a struct, union, or enum.
-Making a type `repr(align)` would break any use of that type in a `repr(packed)` type because that combination is not allowed.
+将“repr(align)”添加到结构、联合或枚举是一项重大更改。
+创建类型“repr(align)”会破坏在“repr(packed)”类型中对该类型的任何使用，因为不允许该组合。
 
-<!-- TODO: This seems like it should be extraordinarily rare. Should there be any exceptions carved out for this? -->
+<!-- TODO: 这看起来应该是非常罕见的。是否应该为此制定任何例外？ -->
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -540,13 +540,13 @@ fn main() {
 }
 ```
 
-#### Major: Removing `repr(packed)` from a struct or union {#repr-packed-remove}
+#### 主要：从结构或联合中删除 `repr(packed)` {#repr-packed-remove}
 
-It is a breaking change to remove `repr(packed)` from a struct or union.
-This may change the alignment or layout that extern crates are relying on.
+从结构或联合中删除“repr(packed)”是一项重大更改。
+这可能会改变外部板条箱所依赖的对齐或布局。
 
-If any fields are public, then removing `repr(packed)` may change the way disjoint closure captures work.
-In some cases, this can cause code to break, similar to those outlined in the [edition guide][edition-closures].
+如果任何字段是公共的，那么删除“repr(packed)”可能会改变不相交闭包捕获工作的方式。
+在某些情况下，这可能会导致代码损坏，类似于[版本指南][版本闭包]中概述的内容。
 
 [edition-closures]: ../../edition-guide/rust-2021/disjoint-capture-in-closures.html
 
@@ -622,14 +622,14 @@ fn main() {
 }
 ```
 
-#### Major: Changing the value N of `repr(packed(N))` if that changes the alignment or layout {#repr-packed-n-change}
+#### 主要：如果改变对齐或布局，则更改`repr(packed(N))`的值N {#repr-packed-n-change}
 
-It is a breaking change to change the value of N of `repr(packed(N))` if that changes the alignment or layout.
-This may change the alignment or layout that external crates are relying on.
+如果改变对齐或布局，则更改“repr(packed(N))”的 N 值是一项重大更改。
+这可能会改变外部板条箱所依赖的对齐或布局。
 
-If the value `N` is lowered below the alignment of a public field, then that would break any code that attempts to take a reference of that field.
+如果值“N”低于公共字段的对齐方式，那么这将破坏任何尝试引用该字段的代码。
 
-Note that some changes to `N` may not change the alignment or layout, for example increasing it when the current value is already equal to the natural alignment of the type.
+请注意，对“N”的某些更改可能不会更改对齐方式或布局，例如，当当前值已经等于类型的自然对齐方式时增加它。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -660,14 +660,14 @@ fn main() {
 }
 ```
 
-#### Major: Changing the value N of `repr(align(N))` if that changes the alignment {#repr-align-n-change}
+#### 主要：如果改变对齐方式，则更改`repr(align(N))`的值N {#repr-align-n-change}
 
-It is a breaking change to change the value `N` of `repr(align(N))` if that changes the alignment.
-This may change the alignment that external crates are relying on.
+如果改变了对齐方式，则更改 repr(align(N)) 的值 N 是一项重大更改。
+这可能会改变外部板条箱所依赖的对齐方式。
 
-This change should be safe to make if the type is not well-defined as discussed in [type layout](#type-layout) (such as having any private fields and having an undocumented alignment or layout).
+如果类型没有像[类型布局](#type-layout)中讨论的那样明确定义（例如具有任何私有字段以及具有未记录的对齐或布局），则进行此更改应该是安全的。
 
-Note that some changes to `N` may not change the alignment or layout, for example decreasing it when the current value is already equal to or less than the natural alignment of the type.
+请注意，对“N”的某些更改可能不会更改对齐方式或布局，例如，当当前值已经等于或小于类型的自然对齐方式时减少它。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -700,12 +700,12 @@ fn main() {
 }
 ```
 
-#### Major: Removing `repr(align)` from a struct, union, or enum {#repr-align-remove}
+#### 主要：从结构、联合或枚举中删除 `repr(align)` {#repr-align-remove}
 
-It is a breaking change to remove `repr(align)` from a struct, union, or enum, if their layout was well-defined.
-This may change the alignment or layout that external crates are relying on.
+如果结构、联合或枚举的布局定义良好，则从结构、联合或枚举中删除“repr(align)”是一项重大更改。
+这可能会改变外部板条箱所依赖的对齐或布局。
 
-This change should be safe to make if the type is not well-defined as discussed in [type layout](#type-layout) (such as having any private fields and having an undocumented alignment).
+如果类型没有像[类型布局](#type-layout)中讨论的那样明确定义（例如具有任何私有字段和具有未记录的对齐方式），则进行此更改应该是安全的。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -738,10 +738,10 @@ fn main() {
 }
 ```
 
-#### Major: Changing the order of public fields of a `repr(C)` type {#repr-c-shuffle}
+#### 主要：更改 `repr(C)` 类型的公共字段的顺序 {#repr-c-shuffle}
 
-It is a breaking change to change the order of public fields of a `repr(C)` type.
-External crates may be relying on the specific ordering of the fields.
+更改“repr(C)”类型的公共字段的顺序是一项重大更改。
+外部板条箱可能依赖于字段的特定顺序。
 
 ```rust,ignore,run-fail
 // MAJOR CHANGE
@@ -792,10 +792,10 @@ fn main() {
 # }
 ```
 
-#### Major: Removing `repr(C)` from a struct, union, or enum {#repr-c-remove}
+#### 主要：从结构、联合或枚举中删除 `repr(C)` {#repr-c-remove}
 
-It is a breaking change to remove `repr(C)` from a struct, union, or enum.
-External crates may be relying on the specific layout of the type.
+从结构、联合或枚举中删除“repr(C)”是一项重大更改。
+外部板条箱可能依赖于类型的具体布局。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -846,11 +846,11 @@ fn main() {
 # }
 ```
 
-#### Major: Removing `repr(<int>)` from an enum {#repr-int-enum-remove}
+#### 主要：从枚举 {#repr-int-enum-remove} 中删除 `repr(<int>)`
 
-It is a breaking change to remove `repr(<int>)` from an enum.
-External crates may be assuming that the discriminant is a specific size.
-For example, [`std::mem::transmute`] of an enum may fail.
+从枚举中删除 `repr(<int>)` 是一项重大更改。
+外部板条箱可能假设判别式是特定大小。
+例如，枚举的 [`std::mem::transmute`] 可能会失败。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -882,11 +882,11 @@ fn main() {
 }
 ```
 
-#### Major: Changing the primitive representation of a `repr(<int>)` enum {#repr-int-enum-change}
+#### 主要：更改 `repr(<int>)` 枚举的原始表示形式 {#repr-int-enum-change}
 
-It is a breaking change to change the primitive representation of a `repr(<int>)` enum.
-External crates may be assuming that the discriminant is a specific size.
-For example, [`std::mem::transmute`] of an enum may fail.
+更改 `repr(<int>)` 枚举的原始表示是一个重大更改。
+外部板条箱可能假设判别式是特定大小。
+例如，枚举的 [`std::mem::transmute`] 可能会失败。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -918,10 +918,10 @@ fn main() {
 }
 ```
 
-#### Major: Removing `repr(transparent)` from a struct or enum {#repr-transparent-remove}
+#### 主要：从结构或枚举中删除 `repr(transparent)` {#repr-transparent-remove}
 
-It is a breaking change to remove `repr(transparent)` from a struct or enum.
-External crates may be relying on the type having the alignment, layout, or size of the transparent field.
+从结构或枚举中删除“repr(transparent)”是一项重大更改。
+外部板条箱可能依赖于具有透明字段的对齐、布局或大小的类型。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -948,10 +948,10 @@ unsafe extern "C" {
 fn main() {}
 ```
 
-### Major: adding a private struct field when all current fields are public {#struct-add-private-field-when-public}
+### 主要：当所有当前字段都是公共字段时添加私有结构字段 {#struct-add-private-field-when-public}
 
-When a private field is added to a struct that previously had all public fields,
-this will break any code that attempts to construct it with a [struct literal].
+当将私有字段添加到先前具有所有公共字段的结构时，
+这将破坏任何尝试使用[结构文字]构造它的代码。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -976,16 +976,16 @@ fn main() {
 }
 ```
 
-Mitigation strategies:
-* Do not add new fields to all-public field structs.
-* Mark structs as [`#[non_exhaustive]`][non_exhaustive] when first introducing
-  a struct to prevent users from using struct literal syntax, and instead
-  provide a constructor method and/or [Default] implementation.
+缓解策略：
+* 不要向全公共字段结构添加新字段。
+* 首次引入时将结构体标记为 [`#[non_exhaustive]`][non_exhaustive]
+  一个结构体，以防止用户使用结构体文字语法，而是
+  提供构造函数方法和/或[默认]实现。
 
-### Major: adding a public field when no private field exists {#struct-add-public-field-when-no-private}
+### 主要：当不存在私有字段时添加公共字段 {#struct-add-public-field-when-no-private}
 
-When a public field is added to a struct that has all public fields, this will
-break any code that attempts to construct it with a [struct literal].
+当公共字段添加到具有所有公共字段的结构体时，这将
+破坏任何尝试使用[结构文字]构造它的代码。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1010,16 +1010,16 @@ fn main() {
 }
 ```
 
-Mitigation strategies:
-* Do not add new fields to all-public field structs.
-* Mark structs as [`#[non_exhaustive]`][non_exhaustive] when first introducing
-  a struct to prevent users from using struct literal syntax, and instead
-  provide a constructor method and/or [Default] implementation.
+缓解策略：
+* 不要向全公共字段结构添加新字段。
+* 首次引入时将结构体标记为 [`#[non_exhaustive]`][non_exhaustive]
+  一个结构体，以防止用户使用结构体文字语法，而是
+  提供构造函数方法和/或[默认]实现。
 
-### Minor: adding or removing private fields when at least one already exists {#struct-private-fields-with-private}
+### 次要：当至少一个已存在时添加或删除私有字段 {#struct-private-fields-with-private}
 
-It is safe to add or remove private fields from a struct when the struct
-already has at least one private field.
+当结构体中添加或删除私有字段时，这是安全的
+已经拥有至少一个私有字段。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1046,12 +1046,12 @@ fn main() {
 }
 ```
 
-This is safe because existing code cannot use a [struct literal] to construct
-it, nor exhaustively match its contents.
+这是安全的，因为现有代码无法使用 [structliteral] 来构造
+它，也没有详尽地匹配其内容。
 
-Note that for tuple structs, this is a **major change** if the tuple contains
-public fields, and the addition or removal of a private field changes the
-index of any public field.
+请注意，对于元组结构，如果元组包含，则这是一个**重大更改**
+公共字段，并且添加或删除私有字段会更改
+任何公共字段的索引。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1074,10 +1074,10 @@ fn main() {
 }
 ```
 
-### Minor: going from a tuple struct with all private fields (with at least one field) to a normal struct, or vice versa {#struct-tuple-normal-with-private}
+### 次要：从包含所有私有字段（至少有一个字段）的元组结构到普通结构，反之亦然 {#struct-tuple-normal-with-private}
 
-Changing a tuple struct to a normal struct (or vice-versa) is safe if all
-fields are private.
+如果满足以下条件，将元组结构更改为普通结构（反之亦然）是安全的
+字段是私有的。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1102,13 +1102,13 @@ fn main() {
 }
 ```
 
-This is safe because existing code cannot use a [struct literal] to construct
-it, nor match its contents.
+这是安全的，因为现有代码无法使用 [structliteral] 来构造
+它，也不匹配其内容。
 
-### Major: adding new enum variants (without `non_exhaustive`) {#enum-variant-new}
+### 主要：添加新的枚举变体（不带 `non_exhaustive`）{#enum-variant-new}
 
-It is a breaking change to add a new enum variant if the enum does not use the
-[`#[non_exhaustive]`][non_exhaustive] attribute.
+如果枚举不使用
+[`#[non_exhaustive]`][non_exhaustive] 属性。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1137,14 +1137,14 @@ fn main() {
 }
 ```
 
-Mitigation strategies:
-* When introducing the enum, mark it as [`#[non_exhaustive]`][non_exhaustive]
-  to force users to use [wildcard patterns] to catch new variants.
+缓解策略：
+* 引入enum时，标记为[`#[non_exhaustive]`][non_exhaustive]
+  强制用户使用[通配符模式]来捕获新变体。
 
-### Major: adding new fields to an enum variant {#enum-fields-new}
+### 主要：向枚举变量添加新字段 {#enum-fields-new}
 
-It is a breaking change to add new fields to an enum variant because all
-fields are public, and constructors and matching will fail to compile.
+将新字段添加到枚举变体是一个重大更改，因为所有
+字段是公共的，构造函数和匹配将无法编译。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1172,17 +1172,17 @@ fn main() {
 }
 ```
 
-Mitigation strategies:
-* When introducing the enum, mark the variant as [`non_exhaustive`][non_exhaustive]
-  so that it cannot be constructed or matched without wildcards.
+缓解策略：
+* 引入枚举时，将变体标记为[`non_exhaustive`][non_exhaustive]
+  以便在没有通配符的情况下无法构造或匹配它。
   ```rust,ignore,skip
   pub enum E {
       #[non_exhaustive]
       Variant1{f1: i32}
   }
   ```
-* When introducing the enum, use an explicit struct as a value, where you can
-  have control over the field visibility.
+* 引入enum时，使用显式结构体作为值，在这里你可以
+  控制现场可见性。
   ```rust,ignore,skip
   pub struct Foo {
      f1: i32,
@@ -1193,10 +1193,10 @@ Mitigation strategies:
   }
   ```
 
-### Major: adding a non-defaulted trait item {#trait-new-item-no-default}
+### 主要：添加非默认特征项 {#trait-new-item-no-default}
 
-It is a breaking change to add a non-defaulted item to a trait. This will
-break any implementors of the trait.
+将非默认项添加到特征中是一项重大更改。这将
+破坏该特征的任何实现者。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1219,16 +1219,16 @@ struct Foo;
 impl Trait for Foo {}  // Error: not all trait items implemented
 ```
 
-Mitigation strategies:
-* Always provide a default implementation or value for new associated trait
-  items.
-* When introducing the trait, use the [sealed trait] technique to prevent
-  users outside of the crate from implementing the trait.
+缓解策略：
+* 始终为新的关联特征提供默认实现或值
+  项目。
+* 引入特质时，使用【密封特质】技巧来防止
+  箱外的用户无法实现该特征。
 
-### Major: any change to trait item signatures {#trait-item-signature}
+### 主要：对特征项签名的任何更改{#trait-item-signature}
 
-It is a breaking change to make any change to a trait item signature. This can
-break external implementors of the trait.
+对特征项签名进行任何更改都是重大更改。这个可以
+打破该特征的外部实现者。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1258,17 +1258,17 @@ impl Trait for Foo {
 }
 ```
 
-Mitigation strategies:
-* Introduce new items with default implementations to cover the new
-  functionality instead of modifying existing items.
-* When introducing the trait, use the [sealed trait] technique to prevent
-  users outside of the crate from implementing the trait.
+缓解策略：
+* 引入具有默认实现的新项目以覆盖新的
+  功能而不是修改现有项目。
+* 引入特质时，使用【密封特质】技巧来防止
+  箱外的用户无法实现该特征。
 
-### Possibly-breaking: adding a defaulted trait item {#trait-new-default-item}
+### 可能破坏：添加默认特征项 {#trait-new-default-item}
 
-It is usually safe to add a defaulted trait item. However, this can sometimes
-cause a compile error. For example, this can introduce an ambiguity if a
-method of the same name exists in another trait.
+添加默认特征项通常是安全的。然而，这有时可以
+导致编译错误。例如，如果
+另一个特征中存在同名的方法。
 
 ```rust,ignore
 // Breaking change example
@@ -1301,23 +1301,23 @@ fn main() {
 }
 ```
 
-Note that this ambiguity does *not* exist for name collisions on [inherent
-implementations], as they take priority over trait items.
+请注意，对于 [固有的] 上的名称冲突，*不*存在这种歧义。
+实现]，因为它们优先于特征项。
 
-See [trait-object-safety](#trait-object-safety) for a special case to consider
-when adding trait items.
+请参阅 [trait-object-safety](#trait-object-safety) 了解要考虑的特殊情况
+添加特质物品时。
 
-Mitigation strategies:
-* Some projects may deem this acceptable breakage, particularly if the new
-  item name is unlikely to collide with any existing code. Choose names
-  carefully to help avoid these collisions. Additionally, it may be acceptable
-  to require downstream users to add [disambiguation syntax] to select the
-  correct function when updating the dependency.
+缓解策略：
+* 一些项目可能认为这种破损是可以接受的，特别是如果新的
+  项目名称不太可能与任何现有代码冲突。选择名字
+  小心以帮助避免这些碰撞。另外，也许可以接受
+  要求下游用户添加[消歧语法]来选择
+  更新依赖项时的正确功能。
 
-### Major: adding a trait item that makes the trait non-object safe {#trait-object-safety}
+### 主要：添加一个特征项，使特征非对象安全{#trait-object-safety}
 
-It is a breaking change to add a trait item that changes the trait to not be
-[object safe].
+添加一个特质项目是一项重大更改，该项目将特质更改为不存在
+[对象安全]。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1345,12 +1345,12 @@ fn main() {
 }
 ```
 
-It is safe to do the converse (making a non-object safe trait into a safe
-one).
+做相反的事情是安全的（将非对象安全特征变成安全特征）
+一）。
 
-### Major: adding a type parameter without a default {#trait-new-parameter-no-default}
+### 主要：添加没有默认值的类型参数 {#trait-new-parameter-no-default}
 
-It is a breaking change to add a type parameter without a default to a trait.
+在特征中添加没有默认值的类型参数是一项重大更改。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1371,14 +1371,14 @@ struct Foo;
 impl Trait for Foo {}  // Error: missing generics
 ```
 
-Mitigating strategies:
-* See [adding a defaulted trait type parameter](#trait-new-parameter-default).
+缓解策略：
+* 请参阅[添加默认特征类型参数](#trait-new-parameter-default)。
 
-### Minor: adding a defaulted trait type parameter {#trait-new-parameter-default}
+### 次要：添加默认特征类型参数 {#trait-new-parameter-default}
 
-It is safe to add a type parameter to a trait as long as it has a default.
-External implementors will use the default without needing to specify the
-parameter.
+只要特征有默认值，就可以安全地将类型参数添加到特征中。
+外部实现者将使用默认值，无需指定
+范围。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1399,12 +1399,12 @@ struct Foo;
 impl Trait for Foo {}
 ```
 
-### Possibly-breaking change: adding any inherent items {#impl-item-new}
+### 可能的重大更改：添加任何固有项目 {#impl-item-new}
 
-Usually adding inherent items to an implementation should be safe because
-inherent items take priority over trait items. However, in some cases the
-collision can cause problems if the name is the same as an implemented trait
-item with a different signature.
+通常向实现添加固有项目应该是安全的，因为
+固有项目优先于特质项目。然而，在某些情况下
+如果名称与已实现的特征相同，则冲突可能会导致问题
+具有不同签名的项目。
 
 ```rust,ignore
 // Breaking change example
@@ -1437,21 +1437,21 @@ fn main() {
 }
 ```
 
-Note that if the signatures match, there would not be a compile-time error,
-but possibly a silent change in runtime behavior (because it is now executing
-a different function).
+请注意，如果签名匹配，则不会出现编译时错误，
+但运行时行为可能会发生无声变化（因为它现在正在执行
+不同的功能）。
 
-Mitigation strategies:
-* Some projects may deem this acceptable breakage, particularly if the new
-  item name is unlikely to collide with any existing code. Choose names
-  carefully to help avoid these collisions. Additionally, it may be acceptable
-  to require downstream users to add [disambiguation syntax] to select the
-  correct function when updating the dependency.
+缓解策略：
+* 一些项目可能认为这种破损是可以接受的，特别是如果新的
+  项目名称不太可能与任何现有代码冲突。选择名字
+  小心以帮助避免这些碰撞。另外，也许可以接受
+  要求下游用户添加[消歧语法]来选择
+  更新依赖项时的正确功能。
 
-### Major: tightening generic bounds {#generic-bounds-tighten}
+### 主要：收紧通用边界{#generic-bounds-tighten}
 
-It is a breaking change to tighten generic bounds on a type since this can
-break users expecting the looser bounds.
+收紧类型的通用界限是一项重大更改，因为这可以
+打破用户对更宽松界限的期待。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1477,10 +1477,10 @@ fn main() {
 }
 ```
 
-### Minor: loosening generic bounds {#generic-bounds-loosen}
+### 次要：放宽通用边界{#generic-bounds-loose}
 
-It is safe to loosen the generic bounds on a type, as it only expands what is
-allowed.
+放宽类型的通用界限是安全的，因为它只扩展了类型的范围
+允许。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1506,11 +1506,11 @@ fn main() {
 }
 ```
 
-### Minor: adding defaulted type parameters {#generic-new-default}
+### 次要：添加默认类型参数 {#generic-new-default}
 
-It is safe to add a type parameter to a type as long as it has a default. All
-existing references will use the default without needing to specify the
-parameter.
+只要类型有默认值，向类型添加类型参数就是安全的。全部
+现有引用将使用默认值，无需指定
+范围。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1536,11 +1536,11 @@ fn main() {
 }
 ```
 
-### Minor: generalizing a type to use generics (with identical types) {#generic-generalize-identical}
+### 次要：泛化类型以使用泛型（具有相同类型）{#generic-generalize-identical}
 
-A struct or enum field can change from a concrete type to a generic type
-parameter, provided that the change results in an identical type for all
-existing use cases. For example, the following change is permitted:
+结构体或枚举字段可以从具体类型更改为泛型类型
+参数，前提是更改会导致所有参数的类型相同
+现有用例。例如，允许进行以下更改：
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1562,13 +1562,13 @@ fn main() {
 }
 ```
 
-because existing uses of `Foo` are shorthand for `Foo<u8>` which yields the
-identical field type.
+因为 `Foo` 的现有用法是 `Foo<u8>` 的简写，它会产生
+相同的字段类型。
 
-### Major: generalizing a type to use generics (with possibly different types) {#generic-generalize-different}
+### 主要：泛化类型以使用泛型（可能具有不同的类型）{#generic-generalize- Different}
 
-Changing a struct or enum field from a concrete type to a generic type
-parameter can break if the type can change.
+将结构体或枚举字段从具体类型更改为泛型类型
+如果类型可以更改，则参数可能会中断。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1590,12 +1590,12 @@ fn main() {
 }
 ```
 
-### Minor: changing a generic type to a more generic type {#generic-more-generic}
+### 次要：将泛型类型更改为更泛型类型 {#generic-more-generic}
 
-It is safe to change a generic type to a more generic one. For example, the
-following adds a generic parameter that defaults to the original type, which
-is safe because all existing users will be using the same type for both
-fields, the defaulted parameter does not need to be specified.
+将泛型类型更改为更泛型的类型是安全的。例如，
+下面添加了一个默认为原始类型的泛型参数，即
+是安全的，因为所有现有用户都将使用相同的类型
+字段，默认参数不需要指定。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1617,9 +1617,9 @@ fn main() {
 }
 ```
 
-### Major: capturing more generic parameters in RPIT {#generic-rpit-capture}
+### 主要：在 RPIT 中捕获更多通用参数 {#generic-rpit-capture}
 
-It is a breaking change to capture additional generic parameters in an [RPIT] (return-position impl trait).
+在 [RPIT]（返回位置 impl 特征）中捕获其他通用参数是一项重大更改。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1646,23 +1646,23 @@ fn main() {
 }
 ```
 
-Adding generic parameters to an RPIT places additional constraints on how the resulting type may be used.
+将通用参数添加到 RPIT 对如何使用结果类型施加了额外的限制。
 
-Note that there are implicit captures when the `use<>` syntax is not specified. In Rust 2021 and earlier editions, the lifetime parameters are only captured if they appear syntactically within a bound in the RPIT type signature. Starting in Rust 2024, all lifetime parameters are unconditionally captured. This means that starting in Rust 2024, the default is maximally compatible, requiring you to be explicit when you want to capture less, which is a SemVer commitment.
+请注意，当未指定“use<>”语法时，会存在隐式捕获。在 Rust 2021 及更早版本中，仅当生命周期参数在语法上出现在 RPIT 类型签名的边界内时才会被捕获。从 Rust 2024 开始，所有生命周期参数都会被无条件捕获。这意味着从 Rust 2024 开始，默认是最大兼容的，要求你在想要捕获 less 时明确，这是 SemVer 的承诺。
 
-See the [edition guide][rpit-capture-guide] and the [reference][rpit-reference] for more information on RPIT capturing.
+有关 RPIT 捕获的更多信息，请参阅[版本指南][rpit-capture-guide]和[参考][rpit-reference]。
 
-It is a minor change to capture fewer generic parameters in an RPIT.
+这是一个小改动，可以在 RPIT 中捕获更少的通用参数。
 
-> Note: All in-scope type and const generic parameters must be either implicitly captured (no `+ use<…>` specified) or explicitly captured (must be listed in `+ use<…>`), and thus currently it is not allowed to change what is captured of those kinds of generics.
+> 注意：所有作用域内类型和 const 泛型参数必须隐式捕获（未指定 `+ use<...>`）或显式捕获（必须在 `+ use<...>` 中列出），因此目前不允许更改此类泛型的捕获内容。
 
 [RPIT]: ../../reference/types/impl-trait.md#abstract-return-types
 [rpit-capture-guide]: ../../edition-guide/rust-2024/rpit-lifetime-capture.html
 [rpit-reference]: ../../reference/types/impl-trait.md#capturing
 
-### Major: adding/removing function parameters {#fn-change-arity}
+### 主要：添加/删除函数参数 {#fn-change-arity}
 
-Changing the arity of a function is a breaking change.
+改变函数的数量是一个重大改变。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1682,17 +1682,17 @@ fn main() {
 }
 ```
 
-Mitigating strategies:
-* Introduce a new function with the new signature and possibly
-  [deprecate][deprecated] the old one.
-* Introduce functions that take a struct argument, where the struct is built
-  with the builder pattern. This allows new fields to be added to the struct
-  in the future.
+缓解策略：
+* 引入具有新签名的新函数，并且可能
+  [弃用][弃用]旧的。
+* 引入采用结构体参数的函数，结构体是在其中构建的
+  与构建器模式。这允许将新字段添加到结构中
+  将来。
 
-### Possibly-breaking: introducing a new function type parameter {#fn-generic-new}
+### 可能具有破坏性：引入新的函数类型参数 {#fn-generic-new}
 
-Usually, adding a non-defaulted type parameter is safe, but in some
-cases it can be a breaking change:
+通常，添加非默认类型参数是安全的，但在某些情况下
+在某些情况下，这可能是一个重大变化：
 
 ```rust,ignore
 // Breaking change example
@@ -1714,17 +1714,17 @@ fn main() {
 }
 ```
 
-However, such explicit calls are rare enough (and can usually be written in
-other ways) that this breakage is usually acceptable. One should take into
-account how likely it is that the function in question is being called with
-explicit type arguments.
+然而，这种显式调用非常罕见（通常可以写成
+其他方式）这种破损通常是可以接受的。一个人应该考虑到
+考虑有问题的函数被调用的可能性有多大
+显式类型参数。
 
-### Minor: generalizing a function to use generics (supporting original type) {#fn-generalize-compatible}
+### 次要：泛化函数以使用泛型（支持原始类型）{#fn-generalize-兼容}
 
-The type of a parameter to a function, or its return value, can be
-*generalized* to use generics, including by introducing a new type parameter,
-as long as it can be instantiated to the original type. For example, the
-following changes are allowed:
+函数参数的类型或其返回值可以是
+*通用化*使用泛型，包括引入新的类型参数，
+只要可以实例化为原始类型即可。例如，
+允许进行以下更改：
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1754,10 +1754,10 @@ fn main() {
 }
 ```
 
-because all existing uses are instantiations of the new signature.
+因为所有现有的用途都是新签名的实例。
 
-Perhaps somewhat surprisingly, generalization applies to trait objects as
-well, given that every trait implements itself:
+也许有些令人惊讶的是，泛化适用于特征对象，如
+好吧，考虑到每个特质都会实现自身：
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1785,12 +1785,12 @@ fn main() {
 }
 ```
 
-(The use of `?Sized` is essential; otherwise you couldn't recover the original
-signature.)
+（使用“？Sized”是必不可少的；否则你无法恢复原始的
+签名。）
 
-Introducing generics in this way can potentially create type inference
-failures. These are usually rare, and may be acceptable breakage for some
-projects, as this can be fixed with additional type annotations.
+以这种方式引入泛型可能会创建类型推断
+失败。这些通常很少见，对于某些人来说可能是可以接受的破损
+项目，因为这可以通过附加类型注释来修复。
 
 ```rust,ignore
 // Breaking change example
@@ -1816,12 +1816,12 @@ fn main() {
 }
 ```
 
-### Major: generalizing a function to use generics with type mismatch {#fn-generalize-mismatch}
+### 主要：泛化函数以使用类型不匹配的泛型 {#fn-generalize-mismatch}
 
-It is a breaking change to change a function parameter or return type if the
-generic type constrains or changes the types previously allowed. For example,
-the following adds a generic constraint that may not be satisfied by existing
-code:
+更改函数参数或返回类型是一个重大更改，如果
+泛型类型限制或更改以前允许的类型。例如，
+下面添加了一个现有的可能无法满足的通用约束
+代码：
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1843,16 +1843,16 @@ fn main() {
 }
 ```
 
-### Minor: making an `unsafe` function safe {#fn-unsafe-safe}
+### 次要：使“不安全”函数安全 {#fn-unsafe-safe}
 
-A previously `unsafe` function can be made safe without breaking code.
+以前“不安全”的函数可以在不破坏代码的情况下变得安全。
 
-Note however that it may cause the [`unused_unsafe`][unused_unsafe] lint to
-trigger as in the example below, which will cause local crates that have
-specified `#![deny(warnings)]` to stop compiling. Per [introducing new
-lints](#new-lints), it is allowed for updates to introduce new warnings.
+但请注意，它可能会导致 [`unused_unsafe`][unused_unsafe] lint
+如下例所示触发，这将导致本地 crates
+指定 `#![deny(warnings)]` 来停止编译。每[介绍新的
+lints](#new-lints)，允许更新引入新的警告。
 
-Going the other way (making a safe function `unsafe`) is a breaking change.
+反其道而行之（使安全函数变得“不安全”）是一个重大改变。
 
 ```rust,ignore
 // MINOR CHANGE
@@ -1879,14 +1879,14 @@ fn main() {
 }
 ```
 
-Making a previously `unsafe` associated function or method on structs / enums
-safe is also a minor change, while the same is not true for associated
-function on traits (see [any change to trait item signatures](#trait-item-signature)).
+在结构/枚举上创建以前“不安全”的关联函数或方法
+safe 也是一个小改动，而关联的情况则不然
+特征上的函数（请参阅[特征项签名的任何更改](#trait-item-signature)）。
 
-### Major: switching from `no_std` support to requiring `std` {#attr-no-std-to-std}
+### 主要：从 `no_std` 支持切换到需要 `std` {#attr-no-std-to-std}
 
-If your library specifically supports a [`no_std`] environment, it is a
-breaking change to make a new release that requires `std`.
+如果您的库特别支持 [`no_std`] 环境，那么它是一个
+进行重大更改以制作需要“std”的新版本。
 
 ```rust,ignore,skip
 // MAJOR CHANGE
@@ -1913,26 +1913,26 @@ fn example() {
 }
 ```
 
-Mitigation strategies:
-* A common idiom to avoid this is to include a `std` [Cargo feature] that
-  optionally enables `std` support, and when the feature is off, the library
-  can be used in a `no_std` environment.
+缓解策略：
+* 避免这种情况的常见习惯用法是包含一个 `std` [货物功能]
+  可选择启用“std”支持，当该功能关闭时，库
+  可以在“no_std”环境中使用。
 
-### Major: adding `non_exhaustive` to an existing enum, variant, or struct with no private fields {#attr-adding-non-exhaustive}
+### 主要：将 `non_exhaustive` 添加到没有私有字段的现有枚举、变体或结构中 {#attr-adding-non-exhaustive}
 
-Making items [`#[non_exhaustive]`][non_exhaustive] changes how they may
-be used outside the crate where they are defined:
+制作物品[`#[non_exhaustive]`][non_exhaustive]会改变它们的方式
+在定义它们的板条箱外部使用：
 
-- Non-exhaustive structs and enum variants cannot be constructed
-  using [struct literal] syntax, including [functional update syntax].
-- Pattern matching on non-exhaustive structs requires `..` and
-  matching on enums does not count towards exhaustiveness.
-- Casting enum variants to their discriminant with `as` is not allowed.
+- 无法构造非详尽的结构和枚举变体
+  使用[结构文字]语法，包括[功能更新语法]。
+- 非详尽结构上的模式匹配需要 `..` 和
+  枚举上的匹配并不意味着详尽。
+- 不允许使用“as”将枚举变体转换为其判别式。
 
-Structs with private fields cannot be constructed using [struct literal] syntax
-regardless of whether [`#[non_exhaustive]`][non_exhaustive] is used.
-Adding [`#[non_exhaustive]`][non_exhaustive] to such a struct is not
-a breaking change.
+无法使用 [structliteral] 语法构造具有私有字段的结构
+无论是否使用 [`#[non_exhaustive]`][non_exhaustive]。
+将 [`#[non_exhaustive]`][non_exhaustive] 添加到这样的结构中不是
+一个突破性的改变。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1995,71 +1995,71 @@ fn main() {
 }
 ```
 
-Mitigation strategies:
-* Mark structs, enums, and enum variants as
-  [`#[non_exhaustive]`][non_exhaustive] when first introducing them,
-  rather than adding [`#[non_exhaustive]`][non_exhaustive] later on.
+缓解策略：
+* 将结构体、枚举和枚举变体标记为
+  [`#[non_exhaustive]`][non_exhaustive] 第一次介绍它们时，
+  而不是稍后添加 [`#[non_exhaustive]`][non_exhaustive]。
 
-## Tooling and environment compatibility
+## 工具和环境兼容性
 
-### Possibly-breaking: changing the minimum version of Rust required {#env-new-rust}
+### 可能破坏：更改所需的 Rust 最低版本 {#env-new-rust}
 
-Introducing the use of new features in a new release of Rust can break
-projects that are using older versions of Rust. This also includes using new
-features in a new release of Cargo, and requiring the use of a nightly-only
-feature in a crate that previously worked on stable.
+在 Rust 新版本中引入新功能的使用可能会破坏
+使用旧版本 Rust 的项目。这还包括使用新的
+Cargo 新版本中的功能，并且需要使用仅限夜间的
+功能位于以前在稳定版上运行的板条箱中。
 
-It is generally recommended to treat this as a minor change, rather than as
-a major change, for [various reasons][msrv-is-minor]. It
-is usually relatively easy to update to a newer version of Rust. Rust also has
-a rapid 6-week release cycle, and some projects will provide compatibility
-within a window of releases (such as the current stable release plus N
-previous releases). Just keep in mind that some large projects may not be able
-to update their Rust toolchain rapidly.
+通常建议将此视为较小的更改，而不是视为
+由于[各种原因][msrv-is-minor]，这是一个重大变化。它
+通常相对容易更新到较新版本的 Rust。铁锈也有
+6周的快速发布周期，并且一些项目将提供兼容性
+在发布窗口内（例如当前的稳定版本加上 N
+以前的版本）。请记住，一些大型项目可能无法
+快速更新他们的 Rust 工具链。
 
-Mitigation strategies:
-* Document your package’s minimum-supported Rust version by setting
-  [`package.rust-version`], allowing Cargo’s dependency resolution to
-  attempt to [select older versions of your package] when needed.
-  Be sure to consider the [support expectations] when doing so.
-* Use [Cargo features] to make the new features opt-in.
-* Provide a large window of support for older releases.
-* Copy the source of new standard library items if possible so that you
-  can continue to use an older version but take advantage of the new feature.
-* Provide a separate branch of older minor releases that can receive backports
-  of important bugfixes.
-* Keep an eye out for the [`[cfg(version(..))]`][cfg-version] and
-  [`#[cfg(accessible(..))]`][cfg-accessible] features which provide an opt-in
-  mechanism for new features. These are currently unstable and only available
-  in the nightly channel.
+缓解策略：
+* 通过设置记录你的包的最低支持的 Rust 版本
+  [`package.rust-version`]，允许 Cargo 的依赖解析
+  需要时尝试[选择软件包的旧版本]。
+  这样做时请务必考虑[支持期望]。
+* 使用[Cargo features] 来选择加入新功能。
+* 为旧版本提供广泛的支持。
+* 如果可能的话，复制新标准库项目的源代码，以便您
+  可以继续使用旧版本但利用新功能。
+* 提供可以接收向后移植的较旧次要版本的单独分支
+  重要的错误修复。
+* 留意 [`[cfg(version(..))]`][cfg-version] 和
+  [`#[cfg(accessible(..))]`][cfg-accessible] 提供选择加入的功能
+  新功能的机制。这些目前不稳定，仅可用
+  在夜间频道中。
 
 [select older versions of your package]: resolver.md#rust-version
 [support expectations]: rust-version.md#support-expectations
 
-### Possibly-breaking: changing the platform and environment requirements {#env-change-requirements}
+### 可能会造成破坏：更改平台和环境要求 {#env-change-requirements}
 
-There is a very wide range of assumptions a library makes about the
-environment that it runs in, such as the host platform, operating system
-version, available services, filesystem support, etc. It can be a breaking
-change if you make a new release that restricts what was previously supported,
-for example requiring a newer version of an operating system. These changes
-can be difficult to track, since you may not always know if a change breaks in
-an environment that is not automatically tested.
+图书馆对图书馆做出了各种各样的假设
+运行环境，例如主机平台、操作系统
+版本、可用服务、文件系统支持等。它可能是一个突破性的
+如果您发布的新版本限制了以前支持的内容，则进行更改，
+例如需要更新版本的操作系统。这些变化
+可能很难跟踪，因为您可能并不总是知道更改是否会发生
+未自动测试的环境。
 
-Some projects may deem this acceptable breakage, particularly if the breakage
-is unlikely for most users, or the project doesn't have the resources to
-support all environments. Another notable situation is when a vendor
-discontinues support for some hardware or OS, the project may deem it
-reasonable to also discontinue support.
+有些项目可能认为这种破损是可以接受的，特别是如果破损
+对于大多数用户来说不太可能，或者项目没有资源
+支持所有环境。另一个值得注意的情况是当供应商
+停止对某些硬件或操作系统的支持，该项目可能会认为
+合理地也停止支持。
 
-Mitigation strategies:
-* Document the platforms and environments you specifically support.
-* Test your code on a wide range of environments in CI.
+缓解策略：
+* 记录您特别支持的平台和环境。
+* 在 CI 的各种环境中测试您的代码。
 
-### Minor: introducing new lints {#new-lints}
+### 次要：引入新的 l​​ints {#new-lints}
 
-Some changes to a library may cause new lints to be triggered in users of that library.
-This should generally be considered a compatible change.
+对库的某些更改可能会导致该库的用户触发新的 lint。
+这通常应被视为兼容的更改。
 
 ```rust,ignore,dont-deny
 // MINOR CHANGE
@@ -2081,43 +2081,43 @@ fn main() {
 }
 ```
 
-Beware that it may be possible for this to technically cause a project to fail if they have explicitly denied the warning, and the updated crate is a direct dependency.
-Denying warnings should be done with care and the understanding that new lints may be introduced over time.
-However, library authors should be cautious about introducing new warnings and may want to consider the potential impact on their users.
+请注意，如果他们明确拒绝警告，并且更新的板条箱是直接依赖项，那么从技术上讲，这可能会导致项目失败。
+拒绝警告时应小心谨慎，并了解随着时间的推移可能会引入新的 l​​int。
+但是，库作者应谨慎引入新警告，并可能需要考虑对其用户的潜在影响。
 
-The following lints are examples of those that may be introduced when updating a dependency:
+以下 lint 是更新依赖项时可能引入的示例：
 
-* [`deprecated`][deprecated-lint] --- Introduced when a dependency adds the [`#[deprecated]` attribute][deprecated] to an item you are using.
-* [`unused_must_use`] --- Introduced when a dependency adds the [`#[must_use]` attribute][must-use-attr] to an item where you are not consuming the result.
-* [`unused_unsafe`] --- Introduced when a dependency *removes* the `unsafe` qualifier from a function, and that is the only unsafe function called in an unsafe block.
+* [`deprecated`][deprecated-lint] --- 当依赖项将 [`#[deprecated]` 属性][deprecated] 添加到您正在使用的项目时引入。
+* [`unused_must_use`] --- 当依赖项将 [`#[must_use]` 属性][must-use-attr] 添加到您不使用结果的项目时引入。
+* [`unused_unsafe`] --- 当依赖项从函数中*删除*`unsafe` 限定符时引入，并且这是在不安全块中调用的唯一不安全函数。
 
-Additionally, updating `rustc` to a new version may introduce new lints.
+此外，将 rustc 更新到新版本可能会引入新的 l​​int。
 
-Transitive dependencies which introduce new lints should not usually cause a failure because Cargo uses [`--cap-lints`](../../rustc/lints/levels.html#capping-lints) to suppress all lints in dependencies.
+引入新 lint 的传递依赖项通常不会导致失败，因为 Cargo 使用 [`--cap-lints`](../../rustc/lints/levels.html#capping-lints) 来抑制依赖项中的所有 lints。
 
-Mitigating strategies:
-* If you build with warnings denied, understand you may need to deal with resolving new warnings whenever you update your dependencies.
-  If using RUSTFLAGS to pass `-Dwarnings`, also add the `-A` flag to allow lints that are likely to cause issues, such as `-Adeprecated`.
-* Introduce deprecations behind a [feature][Cargo features].
-  For example `#[cfg_attr(feature = "deprecated", deprecated="use bar instead")]`.
-  Then, when you plan to remove an item in a future SemVer breaking change, you can communicate with your users that they should enable the `deprecated` feature *before* updating to remove the use of the deprecated items.
-  This allows users to choose when to respond to deprecations without needing to immediately respond to them.
-  A downside is that it can be difficult to communicate to users that they need to take these manual steps to prepare for a major update.
+缓解策略：
+* 如果您构建时警告被拒绝，请了解您可能需要在更新依赖项时解决新警告。
+  如果使用 RUSTFLAGS 传递 `-Dwarnings`，还要添加 `-A` 标志以允许可能导致问题的 lint，例如 `-Adeprecated`。
+* 在[功能][货物功能]背后引入弃用。
+  例如 `#[cfg_attr(feature = "deprecated", deprecated="use bar instead")]`。
+  然后，当您计划在未来的 SemVer 重大更改中删除某个项目时，您可以与用户沟通，告知他们应该在更新之前启用“已弃用”功能，以删除已弃用项目的使用。
+  这允许用户选择何时响应弃用，而无需立即响应。
+  缺点是，可能很难向用户传达他们需要采取这些手动步骤来准备重大更新的信息。
 
 [`unused_must_use`]: ../../rustc/lints/listing/warn-by-default.html#unused-must-use
 [deprecated-lint]: ../../rustc/lints/listing/warn-by-default.html#deprecated
 [must-use-attr]: ../../reference/attributes/diagnostics.html#the-must_use-attribute
 [`unused_unsafe`]: ../../rustc/lints/listing/warn-by-default.html#unused-unsafe
 
-### Cargo
+### 货物
 
-#### Minor: adding a new Cargo feature {#cargo-feature-add}
+#### 次要：添加新的 Cargo 功能 {#cargo-feature-add}
 
-It is usually safe to add new [Cargo features]. If the feature introduces new
-changes that cause a breaking change, this can cause difficulties for projects
-that have stricter backwards-compatibility needs. In that scenario, avoid
-adding the feature to the "default" list, and possibly document the
-consequences of enabling the feature.
+添加新的[货物功能]通常是安全的。如果该功能引入新的
+导致重大变更的变更，这可能会给项目带来困难
+具有更严格的向后兼容性需求。在这种情况下，请避免
+将功能添加到“默认”列表中，并可能记录
+启用该功能的后果。
 
 ```toml
 # MINOR CHANGE
@@ -2133,10 +2133,10 @@ consequences of enabling the feature.
 std = []
 ```
 
-#### Major: removing a Cargo feature {#cargo-feature-remove}
+#### 主要：删除 Cargo 功能 {#cargo-feature-remove}
 
-It is usually a breaking change to remove [Cargo features]. This will cause
-an error for any project that enabled the feature.
+删除 [Cargo features] 通常是一个重大更改。这会导致
+任何启用该功能的项目都会出现错误。
 
 ```toml
 # MAJOR CHANGE
@@ -2152,17 +2152,17 @@ logging = []
 # ..logging removed
 ```
 
-Mitigation strategies:
-* Clearly document your features. If there is an internal or experimental
-  feature, mark it as such, so that users know the status of the feature.
-* Leave the old feature in `Cargo.toml`, but otherwise remove its
-  functionality. Document that the feature is deprecated, and remove it in a
-  future major SemVer release.
+缓解策略：
+* 清楚地记录您的功能。如果有内部或实验性的
+  功能，对其进行标记，以便用户了解该功能的状态。
+* 将旧功能保留在“Cargo.toml”中，但删除它
+  功能。记录该功能已弃用，并将其删除
+  未来主要 SemVer 版本。
 
-#### Major: removing a feature from a feature list if that changes functionality or public items {#cargo-feature-remove-another}
+#### 主要：从功能列表中删除某个功能（如果该功能更改了功能或公共项目）{#cargo-feature-remove-another}
 
-If removing a feature from another feature, this can break existing users if
-they are expecting that functionality to be available through that feature.
+如果从另一个功能中删除一个功能，这可能会破坏现有用户，如果
+他们期望通过该功能来提供该功能。
 
 ```toml
 # Breaking change example
@@ -2180,17 +2180,17 @@ default = []  # This may cause packages to fail if they are expecting std to be 
 std = []
 ```
 
-#### Possibly-breaking: removing an optional dependency {#cargo-remove-opt-dep}
+#### 可能破坏：删除可选依赖项 {#cargo-remove-opt-dep}
 
-Removing an [optional dependency][opt-dep] can break a project using your library because
-another project may be enabling that dependency via [Cargo features].
+删除 [可选依赖项][opt-dep] 可能会破坏使用您的库的项目，因为
+另一个项目可能通过 [Cargo features] 启用该依赖关系。
 
-When there is an optional dependency, cargo implicitly defines a feature of
-the same name to provide a mechanism to enable the dependency and to check
-when it is enabled. This problem can be avoided by using the `dep:` syntax in
-the `[features]` table, which disables this implicit feature. Using `dep:`
-makes it possible to hide the existence of optional dependencies under more
-semantically-relevant names which can be more safely modified.
+当存在可选依赖项时，cargo 隐式定义了以下功能
+相同的名称提供一种机制来启用依赖关系并检查
+当它被启用时。这个问题可以通过使用 `dep:` 语法来避免
+`[features]` 表，它禁用此隐式功能。使用“dep:”
+使得可以在 more 下隐藏可选依赖项的存在
+可以更安全地修改语义相关的名称。
 
 ```toml
 # Breaking change example
@@ -2229,29 +2229,29 @@ hyper = { version = "0.14.27", optional = true }
 networking = ["dep:hyper"]
 ```
 
-Mitigation strategies:
-* Use the `dep:` syntax in the `[features]` table to avoid exposing optional
-  dependencies in the first place. See [optional dependencies][opt-dep] for
-  more information.
-* Clearly document your features. If the optional dependency is not included
-  in the documented list of features, then you may decide to consider it safe
-  to change undocumented entries.
-* Leave the optional dependency, and just don't use it within your library.
-* Replace the optional dependency with a [Cargo feature] that does nothing,
-  and document that it is deprecated.
-* Use high-level features which enable optional dependencies, and document
-  those as the preferred way to enable the extended functionality. For
-  example, if your library has optional support for something like
-  "networking", create a generic feature name "networking" that enables the
-  optional dependencies necessary to implement "networking". Then document the
-  "networking" feature.
+缓解策略：
+* 在`[features]`表中使用`dep:`语法以避免暴露可选
+  首先，依赖关系。请参阅[可选依赖项][opt-dep]
+  更多信息。
+* 清楚地记录您的功能。如果不包含可选依赖项
+  在记录的功能列表中，那么您可以决定认为它是安全的
+  更改未记录的条目。
+* 保留可选的依赖项，并且不要在您的库中使用它。
+* 将可选依赖项替换为不执行任何操作的 [Cargo feature]，
+  并记录它已被弃用。
+* 使用启用可选依赖项的高级功能，并记录
+  这些是启用扩展功能的首选方式。为了
+  例如，如果您的库有类似的可选支持
+  “网络”，创建一个通用功能名称“网络”，使
+  实现“网络”所需的可选依赖项。然后记录
+  “网络”功能。
 
 [opt-dep]: features.md#optional-dependencies
 
-#### Minor: changing dependency features {#cargo-change-dep-feature}
+#### 次要：更改依赖项功能 {#cargo-change-dep-feature}
 
-It is usually safe to change the features on a dependency, as long as the
-feature does not introduce a breaking change.
+更改依赖项的功能通常是安全的，只要
+功能不会引入重大更改。
 
 ```toml
 # MINOR CHANGE
@@ -2268,12 +2268,12 @@ rand = { version = "0.7.3", features = ["small_rng"] }
 rand = "0.7.3"
 ```
 
-#### Minor: adding dependencies {#cargo-dep-add}
+#### 次要：添加依赖项 {#cargo-dep-add}
 
-It is usually safe to add new dependencies, as long as the new dependency
-does not introduce new requirements that result in a breaking change.
-For example, adding a new dependency that requires nightly in a project
-that previously worked on stable is a major change.
+添加新的依赖项通常是安全的，只要新的依赖项
+不会引入导致重大变更的新要求。
+例如，在项目中添加需要 nightly 的新依赖项
+以前在稳定版上运行的功能是一个重大变化。
 
 ```toml
 # MINOR CHANGE
@@ -2289,17 +2289,17 @@ that previously worked on stable is a major change.
 log = "0.4.11"
 ```
 
-## Application compatibility
+## 应用程序兼容性
 
-Cargo projects may also include executable binaries which have their own
-interfaces (such as a CLI interface, OS-level interaction, etc.). Since these
-are part of the Cargo package, they often use and share the same version as
-the package. You will need to decide if and how you want to employ a SemVer
-contract with your users in the changes you make to your application. The
-potential breaking and compatible changes to an application are too numerous
-to list, so you are encouraged to use the spirit of the [SemVer] spec to guide
-your decisions on how to apply versioning to your application, or at least
-document what your commitments are.
+Cargo 项目还可能包括可执行的二进制文件，它们有自己的
+接口（例如 CLI 接口、操作系统级交互等）。由于这些
+是 Cargo 包的一部分，它们经常使用和共享相同的版本
+包裹。您需要决定是否以及如何使用 SemVer
+在对应用程序进行更改时与您的用户签订合同。这
+对应用程序的潜在破坏和兼容更改太多
+列出，因此鼓励您使用 [SemVer] 规范的精神来指导
+您关于如何将版本控制应用于您的应用程序的决定，或者至少
+记录您的承诺。
 
 [`cfg` attribute]: ../../reference/conditional-compilation.md#the-cfg-attribute
 [`no_std`]: ../../reference/names/preludes.html#the-no_std-attribute

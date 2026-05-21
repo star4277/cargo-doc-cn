@@ -1,4 +1,4 @@
-﻿# 源替换（Source Replacement）
+﻿# 源替换
 
 本文介绍如何将与 [registries] 或 [git-based dependencies] 仓库的通信重定向到其他数据源，
 例如镜像原始 registry 的服务器，或精确的本地副本。
@@ -74,7 +74,7 @@ git = "https://example.com/path/to/repo"
 
 [config]: config.md
 
-## Registry Sources
+## 注册表源
 
 “registry source” 的工作方式与 crates.io 类似。
 它是一个索引，符合 https://doc.rust-lang.org/cargo/reference/registry-index.html 规范，
@@ -97,7 +97,7 @@ registry = "https://example.com/path/to/index"
 
 [crates.io index]: registry-index.md
 
-## Local Registry Sources
+## 本地注册表源
 
 “local registry source” 设计为另一个 registry source 的子集，
 但可在本地文件系统使用（即 vendoring）。
@@ -115,7 +115,7 @@ local registry 位于单个目录中，包含若干从 crates.io 下载的 `*.cr
 以及一个 `index` 目录。其格式与 crates.io-index 项目一致，
 但只包含当前存在的 crate 条目。
 
-## Directory Sources
+## 目录源
 
 “directory source” 与 local registry source 类似，
 也是本地文件系统上的多个 crate，适合用于 vendor 依赖。
@@ -133,7 +133,7 @@ directory source 中每个 crate 还会带一个关联元数据文件
 `.cargo-checksum.json`，用于防止意外修改。
 它不是安全机制，不能防御恶意修改。
 
-## Git sources
+## Git 源
 
 Git source 表示 [git-based dependencies] 使用的仓库。
 它用于指定哪些 git 依赖应被替换为其他来源。
