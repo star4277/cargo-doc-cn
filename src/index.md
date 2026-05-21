@@ -1,43 +1,42 @@
-# The Cargo Book
+﻿# Cargo 手册
 
 ![Cargo Logo](images/Cargo-Logo-Small.png)
 
-Cargo is the [Rust] [*package manager*][def-package-manager]. Cargo downloads your Rust [package][def-package]'s
-dependencies, compiles your packages, makes distributable packages, and uploads them to
-[crates.io], the Rust community’s [*package registry*][def-package-registry]. You can contribute
-to this book on [GitHub].
+Cargo 是 Rust 的[*包管理器*][def-package-manager]。
+Cargo 会下载你的 Rust [package][def-package] 所依赖的内容，
+编译你的包，生成可分发包，并把它们上传到 [crates.io]
+（Rust 社区的[*包注册表*][def-package-registry]）。
+你可以在 [GitHub] 上为本书贡献内容。
 
-## Sections
+## 章节
 
-**[Getting Started](getting-started/index.md)**
+**[快速开始](getting-started/index.md)**
 
-To get started with Cargo, install Cargo (and Rust) and set up your first
-[*crate*][def-crate].
+开始使用 Cargo：安装 Cargo（和 Rust），并创建你的第一个[*crate*][def-crate]。
 
-**[Cargo Guide](guide/index.md)**
+**[Cargo 指南](guide/index.md)**
 
-The guide will give you all you need to know about how to use Cargo to develop
-Rust packages.
+本指南会告诉你使用 Cargo 开发 Rust 包所需的核心知识。
 
-**[Cargo Reference](reference/index.md)**
+**[Cargo 参考](reference/index.md)**
 
-The reference covers the details of various areas of Cargo.
+参考章节覆盖 Cargo 各个领域的细节。
 
-**[Cargo Commands](commands/index.md)**
+**[Cargo 命令](commands/index.md)**
 
-The commands will let you interact with Cargo using its command-line interface.
+命令章节介绍如何通过命令行接口与 Cargo 交互。
 
-**[Frequently Asked Questions](faq.md)**
+**[常见问题](faq.md)**
 
-**Appendices:**
-* [Glossary](appendix/glossary.md)
-* [Git Authentication](appendix/git-authentication.md)
+**附录：**
+* [术语表](appendix/glossary.md)
+* [Git 认证](appendix/git-authentication.md)
 
-**Other Documentation:**
-* [Changelog](CHANGELOG.md)
-  --- Detailed notes about changes in Cargo in each release.
-* [Rust documentation website](https://doc.rust-lang.org/) --- Links to official
-  Rust documentation and tools.
+**其他文档：**
+* [更新日志](CHANGELOG.md)
+  --- 记录 Cargo 每个版本的详细变更说明。
+* [Rust 文档站点](https://doc.rust-lang.org/)
+  --- Rust 官方文档与工具链接。
 
 [def-crate]:            ./appendix/glossary.md#crate            '"crate" (glossary entry)'
 [def-package]:          ./appendix/glossary.md#package          '"package" (glossary entry)'
