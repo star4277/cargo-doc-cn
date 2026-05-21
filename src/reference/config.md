@@ -414,10 +414,10 @@ token = "…"   # Access token for the named registry
 `<triple>` 部分可以是任何[目标三元组]，例如
 `target.x86_64-pc-windows-msvc`。
 
-### `路径`
-* 类型：字符串数组（路径）
-* 默认值：无
-* 环境：不支持
+### `paths`
+* Type: array of strings (paths)
+* Default: none
+* Environment: not supported
 
 本地包的路径数组，将用作覆盖
 依赖关系。有关详细信息，请参阅[覆盖依赖项
