@@ -178,7 +178,7 @@ crate-type = ["lib"]   # The crate types to generate.
 required-features = [] # Features required to build this target (N/A for lib).
 ```
 
-### The `name` field
+### `name` 字段
 
 `name` 指定 target 名称，对应最终产物文件名。
 对 library 来说，这也是依赖引用它时使用的 crate 名。
@@ -190,13 +190,13 @@ required-features = [] # Features required to build this target (N/A for lib).
 
 除 `[lib]` 外，该字段对所有 target 都必填。
 
-### The `path` field
+### `path` 字段
 
 `path` 指定 crate 源文件位置，相对于 `Cargo.toml`。
 
 若未指定，会根据 target 名使用[推断路径](#target-auto-discovery)。
 
-### The `test` field
+### `test` 字段
 
 `test` 表示该 target 是否默认由 [`cargo test`] 测试。
 对 lib、bin、test，默认 `true`。
@@ -207,35 +207,35 @@ required-features = [] # Features required to build this target (N/A for lib).
 > 它也会作为 test 构建，并运行其中定义的
 > [`#[test]`][test-attribute] 函数。
 
-### The `doctest` field
+### `doctest` 字段
 
 `doctest` 表示是否默认由 [`cargo test`] 测试[文档示例][documentation examples]。
 该字段只对 library 有意义，对其他节无效。
 library 默认值为 `true`。
 
-### The `bench` field
+### `bench` 字段
 
 `bench` 表示该 target 是否默认由 [`cargo bench`] 进行 benchmark。
 对 lib、bin、benchmark，默认值是 `true`。
 
-### The `doc` field
+### `doc` 字段
 
 `doc` 表示该 target 是否默认包含在 [`cargo doc`] 生成的文档中。
 对 library 和 binary，默认值为 `true`。
 
 > **注意**：若 binary 名与 lib target 同名，则该 binary 会被跳过。
 
-### The `plugin` field
+### `plugin` 字段
 
 该选项已弃用且未使用。
 
-### The `proc-macro` field
+### `proc-macro` 字段
 
 `proc-macro` 表示该库是[过程宏][procedural macro]
 （见[参考][proc-macro-reference]）。
 该字段仅对 `[lib]` target 有效。
 
-### The `harness` field
+### `harness` 字段
 
 `harness` 表示是否向 `rustc` 传 [`--test` flag]。
 传入后会自动包含 libtest 库，
@@ -249,7 +249,7 @@ attribute][test-attribute] 标注的测试函数，
 无论 harness 是否启用，测试都会启用
 [`cfg(test)` 条件表达式][cfg-test]。
 
-### The `crate-type` field
+### `crate-type` 字段
 
 `crate-type` 定义 target 将生成的 [crate 类型][crate types]。
 它是字符串数组，因此一个 target 可指定多个 crate 类型。
@@ -266,7 +266,7 @@ Example | `"bin"`
 可选项包括：`bin`、`lib`、`rlib`、`dylib`、`cdylib`、`staticlib`、`proc-macro`。
 不同 crate 类型详见 [Rust Reference Manual][crate types]。
 
-### The `required-features` field
+### `required-features` 字段
 
 `required-features` 指定构建该 target 所需的 [features]。
 若任一必需 feature 未启用，则该 target 会被跳过。
@@ -285,14 +285,14 @@ name = "my-pg-tool"
 required-features = ["postgres", "tools"]
 ```
 
-### The `edition` field
+### `edition` 字段
 
 `edition` 定义该 target 使用的 [Rust edition]。
 若未指定，默认继承 `[package]` 的 [`edition` 字段][package-edition]。
 
 > **注意：**该字段已弃用，并将在未来某个 Edition 中移除。
 
-## Target auto-discovery
+## 目标自动发现
 
 默认情况下，Cargo 会根据文件系统上的[文件布局][package layout]
 自动决定要构建哪些 target。
@@ -366,3 +366,5 @@ autobins = false
 [proc-macro-reference]: ../../reference/procedural-macros.html
 [procedural macro]: ../../book/ch19-06-macros.html
 [test-attribute]: ../../reference/attributes/testing.html#the-test-attribute
+
+

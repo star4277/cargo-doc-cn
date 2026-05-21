@@ -1,4 +1,4 @@
-﻿# Specifying Dependencies
+﻿# 指定依赖
 
 你的 crate 可以依赖来自 [crates.io] 或其他 registry 的库，
 也可以依赖 `git` 仓库，或本地文件系统中的子目录。
@@ -7,7 +7,7 @@
 并配置仅开发阶段使用的依赖。
 下面逐项说明。
 
-## Specifying dependencies from crates.io
+## 从 crates.io 指定依赖
 
 Cargo 默认从 [crates.io] 查找依赖。
 此时只需要依赖名和版本字符串。
@@ -26,9 +26,9 @@ time = "0.1.12"
 若 `0.1.z` 最新是 `0.1.13`，Cargo 会升到 `0.1.13`；
 但不会升到 `0.2.0`。
 
-## Version requirement syntax
+## 版本要求语法
 
-### Default requirements
+### 默认要求
 
 **默认要求（default requirements）**表示“给定最小版本，并允许更新到 [SemVer] 兼容版本”。
 这里的兼容定义是：最左侧非零的 major/minor/patch 分量相同。
@@ -47,7 +47,7 @@ time = "0.1.12"
 0      :=  >=0.0.0, <1.0.0
 ```
 
-### Caret requirements
+### 插入号要求
 
 **插入号要求（caret requirements）**是默认版本策略。
 该策略允许 [SemVer] 兼容更新。
@@ -60,7 +60,7 @@ time = "0.1.12"
 
 `log = "^1.2.3"` 与 `log = "1.2.3"` 完全等价。
 
-### Tilde requirements
+### 波浪号要求
 
 **波浪号要求（tilde requirements）**指定最小版本并允许有限更新。
 如果你给出 major+minor+patch，或只给 major+minor，
@@ -75,7 +75,7 @@ time = "0.1.12"
 ~1      := >=1.0.0, <2.0.0
 ```
 
-### Wildcard requirements
+### 通配符要求
 
 **通配符要求（wildcard requirements）**允许通配符位置上的任意版本。
 
@@ -89,7 +89,7 @@ time = "0.1.12"
 
 > **注意**：[crates.io] 不允许裸 `*` 版本。
 
-### Comparison requirements
+### 比较符要求
 
 **比较符要求（comparison requirements）**允许你手工指定版本区间或精确版本。
 
@@ -103,13 +103,13 @@ time = "0.1.12"
 ```
 
 <span id="multiple-requirements"></span>
-### Multiple version requirements
+### 多个版本要求
 
 如上所示，多个版本要求可用逗号分隔，如 `>= 1.2, < 1.5`。
 所有条件必须同时满足。
 因此像 `<1.2, ^1.2.2` 这种无交集组合会导致无匹配版本。
 
-### Pre-releases
+### 预发布版本
 
 版本要求默认排除[预发布版本](manifest.md#the-version-field)（如 `1.0.0-alpha`），
 除非你显式请求。
@@ -134,7 +134,7 @@ Cargo 还会把预发布自动升级到 semver 兼容的正式版。
 
 [`cargo install`]: ../commands/cargo-install.md
 
-### Version metadata
+### 版本元数据
 
 [版本元数据](manifest.md#the-version-field)（如 `1.0.0+21AF26D3`）
 会被忽略，不应用于版本要求。
@@ -167,7 +167,7 @@ Cargo 还会把预发布自动升级到 semver 兼容的正式版。
 [#9029]: https://github.com/rust-lang/cargo/issues/9029
 [#10599]: https://github.com/rust-lang/cargo/issues/10599
 
-## Specifying dependencies from other registries
+## 从其他 registry 指定依赖
 
 若要从非 [crates.io] registry 指定依赖，
 可设置 `registry` 键为目标 registry 名：
@@ -184,7 +184,7 @@ some-crate = { version = "1.0", registry = "my-registry" }
 
 [registries documentation]: registries.md
 
-## Specifying dependencies from `git` repositories
+## 从 `git` 仓库指定依赖
 
 若依赖位于 `git` 仓库，
 最少只需通过 `git` 键指定仓库地址：
@@ -206,7 +206,7 @@ regex-syntax = { git = "https://github.com/rust-lang/regex.git" }
 
 上面这个“自动遍历”规则不适用于 [`path` dependencies](#specifying-path-dependencies)。
 
-### Choice of commit
+### 提交选择
 
 如果只写仓库 URL（如上），
 Cargo 默认使用默认分支最新提交来构建。
@@ -256,7 +256,7 @@ regex = { git = "https://github.com/rust-lang/regex.git#4c59b70", path = "../reg
 Cargo 会在首次加入 `git` 依赖时，把提交锁定到 `Cargo.lock`。
 之后仅在你执行 `cargo update` 时检查更新。
 
-### The role of the `version` key
+### `version` 键的作用
 
 无论是否同时出现 `git` 或 `path`，
 只要出现 `version` 键，就意味着该 package 可从 registry 获取。
@@ -281,7 +281,7 @@ regex = { version = "1.10.3", git = "https://github.com/rust-lang/regex.git", br
 > `git` 与 `path` 的可发布回退方案见 [Multiple
 > locations](#multiple-locations)。
 
-### Git submodules
+### Git 子模块
 
 克隆 `git` 依赖时，
 Cargo 默认会递归拉取其 submodule，
@@ -294,11 +294,11 @@ Cargo 默认会递归拉取其 submodule，
 
 [submodule-update]: https://git-scm.com/docs/gitmodules#Documentation/gitmodules.txt-submodulenameupdate
 
-### Accessing private Git repositories
+### 访问私有 Git 仓库
 
 私有仓库认证可参考 [Git Authentication](../appendix/git-authentication.md)。
 
-## Specifying path dependencies
+## 指定 path 依赖
 
 随着 [guide](../guide/index.md) 里的 `hello_world` 变大，
 你可能希望拆出独立 crate 供他人复用。
@@ -324,7 +324,7 @@ hello_utils = { path = "hello_utils" }
 
 下一次 `cargo build` 会自动构建 `hello_utils` 及其依赖。
 
-### No local path traversal
+### 不支持本地路径遍历
 
 本地路径必须精准指向“依赖的 `Cargo.toml` 所在目录”。
 与 `git` 依赖不同，Cargo 不会遍历本地路径。
@@ -343,7 +343,7 @@ regex-lite   = { path = "../regex/regex-lite" }
 regex-syntax = { path = "../regex/regex-syntax" }
 ```
 
-### Local paths in published crates
+### 已发布 crate 中的本地路径
 
 只使用 path 指定依赖的 crate 不允许发布到 [crates.io]。
 
@@ -362,7 +362,7 @@ hello_utils = { path = "hello_utils", version = "0.1.0" }
 > 但 [dev-dependencies] 例外。
 > `git` 和 `path` 的可发布回退方案见 [Multiple locations](#multiple-locations)。
 
-## Multiple locations
+## 多个位置来源
 
 可以同时指定 registry 版本与 `git` / `path` 位置。
 本地开发时使用 `git` 或 `path`（并校验 `version` 与本地副本兼容），
@@ -389,7 +389,7 @@ smallvec = { git = "https://github.com/servo/rust-smallvec.git", version = "1.0"
 这与 [override](overriding-dependencies.md) 类似，
 但只作用于这条依赖声明。
 
-## Platform specific dependencies
+## 平台特定依赖
 
 平台特定依赖写法与普通依赖相同，
 只是放在 `target` 段下。
@@ -447,7 +447,7 @@ winhttp = "0.4.0"
 openssl = "1.0.1"
 ```
 
-### Custom target specifications
+### 自定义目标规范
 
 若你使用自定义 target 规范（如 `--target foo/bar.json`），
 请使用去掉 `.json` 后缀的基础文件名：
@@ -463,7 +463,7 @@ native = { path = "native/i686" }
 
 > **注意**：自定义 target 规范在 stable channel 不可用。
 
-## Development dependencies
+## 开发依赖
 
 你可以在 `Cargo.toml` 添加 `[dev-dependencies]`，
 其格式与 `[dependencies]` 等价：
@@ -492,7 +492,7 @@ mio = "0.0.1"
 > 但有些用户（如发行版打包者）可能会在 crate 内运行测试，
 > 因此若可能，给出 `version` 仍有价值。
 
-## Build dependencies
+## 构建依赖
 
 构建脚本可以依赖其他 Cargo crate。
 通过 manifest 的 `build-dependencies` 段声明：
@@ -519,7 +519,7 @@ package 本体和其构建脚本是分别构建的，
 两者依赖不必一致。
 把“不同用途的依赖”拆开可让 Cargo 模型更简洁。
 
-## Choosing features
+## 选择 feature
 
 如果你依赖的 package 提供条件 feature，可指定要启用哪些：
 
@@ -534,7 +534,7 @@ features = ["secure-password", "civet"]
 更多见 [features
 chapter](features.md#dependency-features)。
 
-## Renaming dependencies in `Cargo.toml`
+## 在 `Cargo.toml` 中重命名依赖
 
 在 `Cargo.toml` 的 `[dependencies]` 中，
 依赖键名通常与代码里导入的 crate 名一致。
@@ -592,7 +592,7 @@ bar = { version = "0.1", package = 'foo', optional = true }
 log-debug = ['bar/log-debug'] # using 'foo/log-debug' would be an error!
 ```
 
-## Inheriting a dependency from a workspace
+## 从 workspace 继承依赖
 
 可通过 workspace 继承依赖：
 先在 workspace 的 [`[workspace.dependencies]`][workspace.dependencies] 表里定义依赖，
@@ -630,3 +630,4 @@ rand = { workspace = true, optional = true }
 [workspace.dependencies]: workspaces.md#the-dependencies-table
 [optional]: features.md#optional-dependencies
 [features]: features.md
+

@@ -1,4 +1,4 @@
-﻿# Build Script Examples
+﻿# 构建脚本示例
 
 下面通过一些示例说明如何编写构建脚本。
 
@@ -18,7 +18,7 @@ keyword](https://crates.io/keywords/build-dependencies) 了解可用项。
 
 [^1]: 该列表不代表官方背书。请自行评估依赖是否适合你的项目。
 
-## Code generation
+## 代码生成
 
 有些 Cargo package 在编译前需要先生成代码。
 下面通过一个简单示例演示：在构建脚本里生成库调用代码。
@@ -113,7 +113,7 @@ fn main() {
 [concat-macro]: ../../std/macro.concat.html
 [env-macro]: ../../std/macro.env.html
 
-## Building a native library
+## 构建本地库
 
 有时 package 需要构建一些本地 C/C++ 代码。
 这也是构建脚本的典型用途：先构建本地库，再构建 Rust crate。
@@ -250,7 +250,7 @@ fn main() {
 
 [`cc` crate]: https://crates.io/crates/cc
 
-## Linking to system libraries
+## 链接系统库
 
 这个例子演示如何链接系统库，以及构建脚本在其中的作用。
 
@@ -341,7 +341,7 @@ fn test_crc32() {
 [`pkg-config` crate]: https://crates.io/crates/pkg-config
 [libz-source]: https://github.com/rust-lang/libz-sys
 
-## Using another `sys` crate
+## 使用另一个 `sys` crate
 
 使用 `links` 键时，crate 可以设置元数据供其依赖方读取。
 这提供了 crate 间传递信息的机制。
@@ -401,7 +401,7 @@ C 源码可直接 `#include` zlib 头文件，
 // ... rest of code that makes use of zlib.
 ```
 
-## Reading target configuration
+## 读取目标配置
 
 当构建脚本需要依据目标平台做决策时，
 应读取 `CARGO_CFG_*` 环境变量，
@@ -434,7 +434,7 @@ fn main() {
 
 [`build-rs`]: https://crates.io/crates/build-rs
 
-## Conditional compilation
+## 条件编译
 
 构建脚本可输出 [`rustc-cfg` instructions]，
 从而启用可在编译期检测的条件。
@@ -511,3 +511,4 @@ pub fn sha3_224() -> MessageDigest {
 [`openssl-sys` crate]: https://crates.io/crates/openssl-sys
 
 [crates.io]: https://crates.io/
+

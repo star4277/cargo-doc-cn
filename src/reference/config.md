@@ -414,7 +414,7 @@ token = "…"   # Access token for the named registry
 `<triple>` 部分可以是任何[目标三元组]，例如
 `target.x86_64-pc-windows-msvc`。
 
-### `paths`
+### `[paths]`
 * Type: array of strings (paths)
 * Default: none
 * Environment: not supported
@@ -1153,7 +1153,7 @@ Cargo 附带内置 [github.com][github-keys] 的主机密钥。如果
 > - `allow` is supported on any version
 > - `fallback` is respected as of 1.84
 
-### `[注册表]`
+### `[registries]`
 
 `[registries]` 表用于指定附加的 [registries]。它
 由每个命名注册表的子表组成。
