@@ -1,4 +1,4 @@
-﻿# 在现有 Cargo 包上工作
+﻿# 在现有 Cargo Package 上工作
 
 如果你下载了一个使用 Cargo 的现有 [package][def-package]，上手会非常容易。
 

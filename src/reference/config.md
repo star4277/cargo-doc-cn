@@ -32,7 +32,7 @@ config 目录优先于祖先目录，其中
 with higher precedence items being placed later in the merged array.
 
 目前，当从工作区调用时，Cargo 不会读取配置
-工作区中 crate 中的文件。即，如果工作空间中有两个板条箱
+工作区中 crate 中的文件。即，如果工作空间中有两个 Crate
 它名为“/projects/foo/bar/baz/mylib”和“/projects/foo/bar/baz/mybin”，以及
 `/projects/foo/bar/baz/mylib/.cargo/config.toml` 有 Cargo 配置
 和 `/projects/foo/bar/baz/mybin/.cargo/config.toml`，Cargo 不读取
@@ -763,7 +763,7 @@ OPENSSL_DIR = { value = "vendor/openssl", relative = true }
 
 ### `[cache]`
 
-`[cache]` 表定义了货物缓存的设置。
+`[cache]` 表定义了 Cargo 缓存的设置。
 
 #### 全局缓存
 
@@ -773,7 +773,7 @@ Cargo 会定期删除一段时间未使用的文件。
 
 仅当运行已经执行大量工作的命令时才会自动删除文件，例如所有构建命令（“cargo build”、“cargo test”、“cargo check”等）和“cargo fetch”。
 
-如果货物离线，则禁用自动删除，例如使用“--offline”或“--frozen”，以避免删除长时间离线时可能需要使用的工件。
+如果 Cargo 离线，则禁用自动删除，例如使用“--offline”或“--frozen”，以避免删除长时间离线时可能需要使用的工件。
 
 > **注意**：此跟踪目前仅针对 Cargo 主目录中的全局缓存实现。
 > 这包括注册表索引和从注册表下载的源文件以及 git 依赖项。
@@ -995,20 +995,20 @@ Cargo 附带内置 [github.com][github-keys] 的主机密钥。如果
 
 正如您可以使用 [`[patch]` 覆盖依赖项
 `Cargo.toml`](overriding-dependency.md#the-patch-section)，你可以
-在货物配置文件中覆盖它们以应用这些补丁
+在 Cargo 配置文件中覆盖它们以应用这些补丁
 任何受影响的构建。格式与中使用的格式相同
 `Cargo.toml`。
 
 由于 `.cargo/config.toml` 文件通常不会签入源代码
 控制，您应该尽可能使用“Cargo.toml”进行修补
 确保其他开发人员可以在自己的包中编译您的包
-环境。通过货物配置文件进行修补通常是
+环境。通过 Cargo 配置文件进行修补通常是
 仅当补丁部分由自动生成时才适用
 外部构建工具。
 
-如果给定的依赖项在货物配置文件和
+如果给定的依赖项在 Cargo 配置文件和
 `Cargo.toml` 文件，使用配置文件中的补丁。如果
-多个配置文件修补相同的依赖项，标准货物
+多个配置文件修补相同的依赖项，标准 Cargo
 使用配置合并，优先选择最接近定义的值
 到当前目录，使用 `$HOME/.cargo/config.toml`
 最低优先级。

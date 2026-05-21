@@ -95,7 +95,7 @@ Rust 或特别不鼓励使用。
     * [可能破坏：更改所需的 Rust 最低版本](#env-new-rust)
     * [可能破坏：改变平台和环境要求](#env-change-requirements)
     * [次要：引入新的 l​​ints](#new-lints)
-    * 货物
+    * Cargo
         * [次要：添加新的 Cargo 功能](#cargo-feature-add)
         * [主要：删除 Cargo 功能](#cargo-feature-remove)
         * [主要：如果更改功能或公共项目，则从功能列表中删除功能](#cargo-feature-remove-another)
@@ -201,7 +201,7 @@ fn main() {
 
 这不被认为是重大变化，因为传统上全局导入是
 已知的向前兼容性危险。从外部全局导入项目
-应避免使用板条箱。
+应避免使用 Crate。
 
 ### 主要：更改明确定义的类型 {#type-layout} 的对齐方式、布局或大小
 
@@ -543,7 +543,7 @@ fn main() {
 #### 主要：从结构或联合中删除 `repr(packed)` {#repr-packed-remove}
 
 从结构或联合中删除“repr(packed)”是一项重大更改。
-这可能会改变外部板条箱所依赖的对齐或布局。
+这可能会改变外部 Crate 所依赖的对齐或布局。
 
 如果任何字段是公共的，那么删除“repr(packed)”可能会改变不相交闭包捕获工作的方式。
 在某些情况下，这可能会导致代码损坏，类似于[版本指南][版本闭包]中概述的内容。
@@ -625,7 +625,7 @@ fn main() {
 #### 主要：如果改变对齐或布局，则更改`repr(packed(N))`的值N {#repr-packed-n-change}
 
 如果改变对齐或布局，则更改“repr(packed(N))”的 N 值是一项重大更改。
-这可能会改变外部板条箱所依赖的对齐或布局。
+这可能会改变外部 Crate 所依赖的对齐或布局。
 
 如果值“N”低于公共字段的对齐方式，那么这将破坏任何尝试引用该字段的代码。
 
@@ -663,7 +663,7 @@ fn main() {
 #### 主要：如果改变对齐方式，则更改`repr(align(N))`的值N {#repr-align-n-change}
 
 如果改变了对齐方式，则更改 repr(align(N)) 的值 N 是一项重大更改。
-这可能会改变外部板条箱所依赖的对齐方式。
+这可能会改变外部 Crate 所依赖的对齐方式。
 
 如果类型没有像[类型布局](#type-layout)中讨论的那样明确定义（例如具有任何私有字段以及具有未记录的对齐或布局），则进行此更改应该是安全的。
 
@@ -703,7 +703,7 @@ fn main() {
 #### 主要：从结构、联合或枚举中删除 `repr(align)` {#repr-align-remove}
 
 如果结构、联合或枚举的布局定义良好，则从结构、联合或枚举中删除“repr(align)”是一项重大更改。
-这可能会改变外部板条箱所依赖的对齐或布局。
+这可能会改变外部 Crate 所依赖的对齐或布局。
 
 如果类型没有像[类型布局](#type-layout)中讨论的那样明确定义（例如具有任何私有字段和具有未记录的对齐方式），则进行此更改应该是安全的。
 
@@ -741,7 +741,7 @@ fn main() {
 #### 主要：更改 `repr(C)` 类型的公共字段的顺序 {#repr-c-shuffle}
 
 更改“repr(C)”类型的公共字段的顺序是一项重大更改。
-外部板条箱可能依赖于字段的特定顺序。
+外部 Crate 可能依赖于字段的特定顺序。
 
 ```rust,ignore,run-fail
 // MAJOR CHANGE
@@ -795,7 +795,7 @@ fn main() {
 #### 主要：从结构、联合或枚举中删除 `repr(C)` {#repr-c-remove}
 
 从结构、联合或枚举中删除“repr(C)”是一项重大更改。
-外部板条箱可能依赖于类型的具体布局。
+外部 Crate 可能依赖于类型的具体布局。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -849,7 +849,7 @@ fn main() {
 #### 主要：从枚举 {#repr-int-enum-remove} 中删除 `repr(<int>)`
 
 从枚举中删除 `repr(<int>)` 是一项重大更改。
-外部板条箱可能假设判别式是特定大小。
+外部 Crate 可能假设判别式是特定大小。
 例如，枚举的 [`std::mem::transmute`] 可能会失败。
 
 ```rust,ignore
@@ -885,7 +885,7 @@ fn main() {
 #### 主要：更改 `repr(<int>)` 枚举的原始表示形式 {#repr-int-enum-change}
 
 更改 `repr(<int>)` 枚举的原始表示是一个重大更改。
-外部板条箱可能假设判别式是特定大小。
+外部 Crate 可能假设判别式是特定大小。
 例如，枚举的 [`std::mem::transmute`] 可能会失败。
 
 ```rust,ignore
@@ -921,7 +921,7 @@ fn main() {
 #### 主要：从结构或枚举中删除 `repr(transparent)` {#repr-transparent-remove}
 
 从结构或枚举中删除“repr(transparent)”是一项重大更改。
-外部板条箱可能依赖于具有透明字段的对齐、布局或大小的类型。
+外部 Crate 可能依赖于具有透明字段的对齐、布局或大小的类型。
 
 ```rust,ignore
 // MAJOR CHANGE
@@ -1914,14 +1914,14 @@ fn example() {
 ```
 
 缓解策略：
-* 避免这种情况的常见习惯用法是包含一个 `std` [货物功能]
+* 避免这种情况的常见习惯用法是包含一个 `std` [Cargo feature]
   可选择启用“std”支持，当该功能关闭时，库
   可以在“no_std”环境中使用。
 
 ### 主要：将 `non_exhaustive` 添加到没有私有字段的现有枚举、变体或结构中 {#attr-adding-non-exhaustive}
 
 制作物品[`#[non_exhaustive]`][non_exhaustive]会改变它们的方式
-在定义它们的板条箱外部使用：
+在定义它们的 Crate 外部使用：
 
 - 无法构造非详尽的结构和枚举变体
   使用[结构文字]语法，包括[功能更新语法]。
@@ -2007,7 +2007,7 @@ fn main() {
 在 Rust 新版本中引入新功能的使用可能会破坏
 使用旧版本 Rust 的项目。这还包括使用新的
 Cargo 新版本中的功能，并且需要使用仅限夜间的
-功能位于以前在稳定版上运行的板条箱中。
+功能位于以前在稳定版上运行的 Crate 中。
 
 通常建议将此视为较小的更改，而不是视为
 由于[各种原因][msrv-is-minor]，这是一个重大变化。它
@@ -2081,7 +2081,7 @@ fn main() {
 }
 ```
 
-请注意，如果他们明确拒绝警告，并且更新的板条箱是直接依赖项，那么从技术上讲，这可能会导致项目失败。
+请注意，如果他们明确拒绝警告，并且更新的 Crate 是直接依赖项，那么从技术上讲，这可能会导致项目失败。
 拒绝警告时应小心谨慎，并了解随着时间的推移可能会引入新的 l​​int。
 但是，库作者应谨慎引入新警告，并可能需要考虑对其用户的潜在影响。
 
@@ -2098,7 +2098,7 @@ fn main() {
 缓解策略：
 * 如果您构建时警告被拒绝，请了解您可能需要在更新依赖项时解决新警告。
   如果使用 RUSTFLAGS 传递 `-Dwarnings`，还要添加 `-A` 标志以允许可能导致问题的 lint，例如 `-Adeprecated`。
-* 在[功能][货物功能]背后引入弃用。
+* 在[功能][Cargo features]背后引入弃用。
   例如 `#[cfg_attr(feature = "deprecated", deprecated="use bar instead")]`。
   然后，当您计划在未来的 SemVer 重大更改中删除某个项目时，您可以与用户沟通，告知他们应该在更新之前启用“已弃用”功能，以删除已弃用项目的使用。
   这允许用户选择何时响应弃用，而无需立即响应。
@@ -2109,11 +2109,11 @@ fn main() {
 [must-use-attr]: ../../reference/attributes/diagnostics.html#the-must_use-attribute
 [`unused_unsafe`]: ../../rustc/lints/listing/warn-by-default.html#unused-unsafe
 
-### 货物
+### Cargo
 
 #### 次要：添加新的 Cargo 功能 {#cargo-feature-add}
 
-添加新的[货物功能]通常是安全的。如果该功能引入新的
+添加新的[Cargo features]通常是安全的。如果该功能引入新的
 导致重大变更的变更，这可能会给项目带来困难
 具有更严格的向后兼容性需求。在这种情况下，请避免
 将功能添加到“默认”列表中，并可能记录

@@ -1,4 +1,4 @@
-﻿# 创建新包
+﻿# 创建新 Package
 
 要使用 Cargo 创建一个新的 [package][def-package]，执行 `cargo new`：
 

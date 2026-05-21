@@ -1,4 +1,4 @@
-﻿# 包布局
+﻿# Package 布局
 
 Cargo 通过约定文件放置位置，让你能够快速理解一个新的 Cargo
 [package][def-package]：
