@@ -1,48 +1,45 @@
-# Web API
+﻿# Web API
 
-A registry may host a web API at the location defined in `config.json` to
-support any of the actions listed below.
+registry 可以在 `config.json` 指定的位置提供 Web API，
+以支持下列动作。
 
-Cargo includes the `Authorization` header for requests that require
-authentication. The header value is the API token. The server should respond
-with a 403 response code if the token is not valid. Users are expected to
-visit the registry's website to obtain a token, and Cargo can store the token
-using the [`cargo login`] command, or by passing the token on the
-command-line.
+Cargo 会在需要认证的请求中附带 `Authorization` 头。
+其值为 API token。
+如果 token 无效，服务端应返回 403。
+用户通常通过访问 registry 网站获取 token，
+Cargo 可通过 [`cargo login`] 保存该 token，
+也可通过命令行直接传入。
 
-Responses use a 2xx response code for success.
-Errors should use an appropriate response code, such as 404.
-Failure
-responses should have a JSON object with the following structure:
+成功响应使用 2xx 状态码。
+失败应使用合适状态码（如 404）。
+失败响应应返回如下 JSON 对象结构：
 
 ```javascript
 {
-    // Array of errors to display to the user.
+    // 向用户展示的错误数组。
     "errors": [
         {
-            // The error message as a string.
+            // 错误消息字符串。
             "detail": "error message text"
         }
     ]
 }
 ```
 
-If the response has this structure Cargo will display the detailed message to the user, even if the response code is 200.
-If the response code indicates an error and the content does not have this structure, Cargo will display to the user a
- message intended to help debugging the server error. A server returning an `errors` object allows a registry to provide a more
-detailed or user-centric error message.
+如果响应体是该结构，即便状态码是 200，Cargo 也会向用户显示详细错误信息。
+若状态码表示错误且响应体不是该结构，Cargo 会显示用于帮助排查服务端错误的通用信息。
+返回 `errors` 对象可让 registry 提供更详细、面向用户的错误提示。
 
-For backwards compatibility, servers should ignore any unexpected query
-parameters or JSON fields. If a JSON field is missing, it should be assumed to
-be null. The endpoints are versioned with the `v1` component of the path, and
-Cargo is responsible for handling backwards compatibility fallbacks should any
-be required in the future.
+为保持向后兼容，服务端应忽略未知查询参数或 JSON 字段。
+JSON 字段缺失时应视为 `null`。
+端点路径中的 `v1` 表示版本，
+如果未来需要兼容回退，Cargo 负责处理。
 
-Cargo sets the `User-Agent` header for all requests to the Cargo version such
-as `cargo/1.32.0 (8610973aa 2019-01-02)`. This may be modified by the user in
-a configuration value. Added in 1.29.
+Cargo 会为所有请求设置 `User-Agent`，例如
+`cargo/1.32.0 (8610973aa 2019-01-02)`。
+用户可通过配置修改该值。该行为自 1.29 起添加。
 
-Other headers vary by endpoint and are documented below.
+其他请求头因端点而异，详见下文。
 
 ## Publish
 
@@ -52,27 +49,25 @@ Other headers vary by endpoint and are documented below.
 - Headers:
     - `Content-Type`: `application/octet-stream`
     - `Accept`: `application/json`
-- Body: Included (see below)
+- Body: Included（见下文）
 
-The publish endpoint is used to publish a new version of a crate. The server
-should validate the crate, make it available for download, and add it to the
-index.
+publish 端点用于发布 crate 新版本。
+服务端应校验 crate、使其可下载，并将其加入 index。
 
-It is not required for the index to be updated before the successful response is sent.
-After a successful response, Cargo will poll the index for a short period of time to identify that the new crate has been added.
-If the crate does not appear in the index after a short period of time, then Cargo will display a warning letting the user know that the new crate is not yet available.
+成功响应返回前，不要求 index 已完成更新。
+成功响应后，Cargo 会在短时间内轮询 index，检查新 crate 是否已加入。
+若短时间内仍未出现，Cargo 会提示警告，告知用户新 crate 暂不可用。
 
-The body of the data sent by Cargo is:
+Cargo 发送的数据体结构：
 
-- 32-bit unsigned little-endian integer of the length of JSON data.
-- Metadata of the package as a JSON object.
-- 32-bit unsigned little-endian integer of the length of the `.crate` file.
-- The `.crate` file.
+- 32 位无符号小端整数：JSON 数据长度。
+- package 元数据（JSON 对象）。
+- 32 位无符号小端整数：`.crate` 文件长度。
+- `.crate` 文件内容。
 
-The following is a commented example of the JSON object. Some notes of some
-restrictions imposed by [crates.io] are included only to illustrate some
-suggestions on types of validation that may be done, and should not be
-considered as an exhaustive list of restrictions [crates.io] imposes.
+下面是带注释的 JSON 对象示例。
+其中关于 [crates.io] 的限制仅用于举例说明可做哪些校验，
+并非 [crates.io] 的完整限制列表。
 
 ```javascript
 {
@@ -169,7 +164,7 @@ considered as an exhaustive list of restrictions [crates.io] imposes.
 }
 ```
 
-A successful response includes the JSON object:
+成功响应包含如下 JSON 对象：
 
 ```javascript
 {
@@ -194,10 +189,9 @@ A successful response includes the JSON object:
     - `Accept`: `application/json`
 - Body: None
 
-The yank endpoint will set the `yank` field of the given version of a crate to
-`true` in the index.
+yank 端点会把 index 中该 crate 指定版本的 `yank` 字段设为 `true`。
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -215,10 +209,9 @@ A successful response includes the JSON object:
     - `Accept`: `application/json`
 - Body: None
 
-The unyank endpoint will set the `yank` field of the given version of a crate
-to `false` in the index.
+unyank 端点会把 index 中该 crate 指定版本的 `yank` 字段设为 `false`。
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -229,11 +222,11 @@ A successful response includes the JSON object:
 
 ## Owners
 
-Cargo does not have an inherent notion of users and owners, but it does
-provide the `owner` command to assist managing who has authorization to
-control a crate. It is up to the registry to decide exactly how users and
-owners are handled. See the [publishing documentation] for a description of
-how [crates.io] handles owners via GitHub users and teams.
+Cargo 本身并不内建用户与 owner 概念，
+但提供了 `owner` 命令来协助管理谁有权限控制某个 crate。
+具体如何处理用户与 owner，取决于 registry。
+关于 [crates.io] 如何通过 GitHub 用户与团队处理 owner，
+见[发布文档]。
 
 ### Owners: List
 
@@ -244,9 +237,9 @@ how [crates.io] handles owners via GitHub users and teams.
     - `Accept`: `application/json`
 - Body: None
 
-The owners endpoint returns a list of owners of the crate.
+owners 端点返回该 crate 的 owner 列表。
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -273,14 +266,13 @@ A successful response includes the JSON object:
 - Headers:
     - `Content-Type`: `application/json`
     - `Accept`: `application/json`
-- Body: Included (see below)
+- Body: Included（见下文）
 
-A PUT request will send a request to the registry to add a new owner to a
-crate. It is up to the registry how to handle the request. For example,
-[crates.io] sends an invite to the user that they must accept before being
-added.
+PUT 请求会向 registry 提交“为 crate 添加 owner”的请求。
+具体处理方式由 registry 决定。
+例如 [crates.io] 会向用户发送邀请，用户接受后才会加入。
 
-The request should include the following JSON object:
+请求体应包含：
 
 ```javascript
 {
@@ -289,7 +281,7 @@ The request should include the following JSON object:
 }
 ```
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -308,10 +300,10 @@ A successful response includes the JSON object:
 - Headers:
     - `Content-Type`: `application/json`
     - `Accept`: `application/json`
-- Body: Included (see below)
+- Body: Included（见下文）
 
-A DELETE request will remove an owner from a crate. The request should include
-the following JSON object:
+DELETE 请求会从 crate 中移除 owner。
+请求体应包含：
 
 ```javascript
 {
@@ -320,7 +312,7 @@ the following JSON object:
 }
 ```
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -340,13 +332,12 @@ A successful response includes the JSON object:
     - `Accept`: `application/json`
 - Body: None
 - Query Parameters:
-    - `q`: The search query string.
-    - `per_page`: Number of results, default 10, max 100.
+    - `q`: 搜索查询字符串。
+    - `per_page`: 结果数量，默认 10，最大 100。
 
-The search request will perform a search for crates, using criteria defined on
-the server.
+search 请求会按照服务端定义的条件搜索 crate。
 
-A successful response includes the JSON object:
+成功响应包含：
 
 ```javascript
 {
@@ -372,9 +363,9 @@ A successful response includes the JSON object:
 
 - Endpoint: `/me`
 
-The "login" endpoint is not an actual API request. It exists solely for the
-[`cargo login`] command to display a URL to instruct a user to visit in a web
-browser to log in and retrieve an API token.
+“login” 端点并不是真正的 API 请求。
+它仅用于 [`cargo login`] 命令展示一个 URL，
+引导用户在浏览器中登录并获取 API token。
 
 [`cargo login`]: ../commands/cargo-login.md
 [`cargo package`]: ../commands/cargo-package.md

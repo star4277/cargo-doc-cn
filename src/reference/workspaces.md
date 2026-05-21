@@ -1,67 +1,63 @@
-# Workspaces
+﻿# Workspaces
 
-A *workspace* is a collection of one or more packages, called *workspace
-members*, that are managed together.
+*workspace* 是由一个或多个 package 组成的集合，这些 package 称为
+*workspace members*，并会一起管理。
 
-The key points of workspaces are:
+workspace 的关键点：
 
-* Common commands can run across all workspace members, like `cargo check --workspace`.
-* All packages share a common [`Cargo.lock`] file which resides in the
-  *workspace root*.
-* All packages share a common [output directory], which defaults to a
-  directory named `target` in the *workspace root*.
-* Sharing package metadata, like with [`workspace.package`](#the-package-table).
-* The [`[patch]`][patch], [`[replace]`][replace] and [`[profile.*]`][profiles]
-  sections in `Cargo.toml` are only recognized in the *root* manifest, and
-  ignored in member crates' manifests.
+* 可跨所有成员执行通用命令，例如 `cargo check --workspace`。
+* 所有 package 共享一个 [`Cargo.lock`]，位于 *workspace root*。
+* 所有 package 共享一个[输出目录]，默认是 *workspace root* 下名为 `target` 的目录。
+* 可共享 package 元数据，例如通过 [`workspace.package`](#the-package-table)。
+* `Cargo.toml` 中的 [`[patch]`][patch]、[`[replace]`][replace]、[`[profile.*]`][profiles]
+  仅在 *root* manifest 中生效，成员 crate 的 manifest 里会被忽略。
 
-The root `Cargo.toml` of a workspace supports the following sections:
+workspace 根 `Cargo.toml` 支持以下段：
 
-* [`[workspace]`](#the-workspace-section) --- Defines a workspace.
-  * [`resolver`](resolver.md#resolver-versions) --- Sets the dependency resolver to use.
-  * [`members`](#the-members-and-exclude-fields) --- Packages to include in the workspace.
-  * [`exclude`](#the-members-and-exclude-fields) --- Packages to exclude from the workspace.
-  * [`default-members`](#the-default-members-field) --- Packages to operate on when a specific package wasn't selected.
-  * [`package`](#the-package-table) --- Keys for inheriting in packages.
-  * [`dependencies`](#the-dependencies-table) --- Keys for inheriting in package dependencies.
-  * [`lints`](#the-lints-table) --- Keys for inheriting in package lints.
-  * [`metadata`](#the-metadata-table) --- Extra settings for external tools.
-* [`[patch]`](overriding-dependencies.md#the-patch-section) --- Override dependencies.
-* [`[replace]`](overriding-dependencies.md#the-replace-section) --- Override dependencies (deprecated).
-* [`[profile]`](profiles.md) --- Compiler settings and optimizations.
+* [`[workspace]`](#the-workspace-section) --- 定义 workspace。
+  * [`resolver`](resolver.md#resolver-versions) --- 设置使用的依赖解析器。
+  * [`members`](#the-members-and-exclude-fields) --- 包含到 workspace 的 package。
+  * [`exclude`](#the-members-and-exclude-fields) --- 从 workspace 排除的 package。
+  * [`default-members`](#the-default-members-field) --- 未显式选定 package 时默认操作的 package。
+  * [`package`](#the-package-table) --- 可被 package 继承的键。
+  * [`dependencies`](#the-dependencies-table) --- 可被 package 依赖继承的键。
+  * [`lints`](#the-lints-table) --- 可被 package lint 继承的键。
+  * [`metadata`](#the-metadata-table) --- 供外部工具使用的附加配置。
+* [`[patch]`](overriding-dependencies.md#the-patch-section) --- 覆盖依赖。
+* [`[replace]`](overriding-dependencies.md#the-replace-section) --- 覆盖依赖（已弃用）。
+* [`[profile]`](profiles.md) --- 编译器设置与优化。
 
-## The `[workspace]` section
+## `[workspace]` 段
 
-To create a workspace, you add the `[workspace]` table to a `Cargo.toml`:
+要创建 workspace，可在 `Cargo.toml` 添加 `[workspace]` 表：
 ```toml
 [workspace]
 # ...
 ```
 
-At minimum, a workspace has to have a member, either with a root package or as
-a virtual manifest.
+workspace 至少需要一个成员：
+要么有根 package，要么是虚拟 manifest。
 
 ### Root package
 
-If the [`[workspace]` section](#the-workspace-section) is added to a
-`Cargo.toml` that already defines a `[package]`, the package is
-the *root package* of the workspace. The *workspace root* is the directory
-where the workspace's `Cargo.toml` is located.
+若在已定义 `[package]` 的 `Cargo.toml` 中添加
+[`[workspace]` 段](#the-workspace-section)，
+该 package 就是 workspace 的 *root package*。
+*workspace root* 是 workspace `Cargo.toml` 所在目录。
 
 ```toml
 [workspace]
 
 [package]
-name = "hello_world" # the name of the package
-version = "0.1.0"    # the current version, obeying semver
+name = "hello_world" # package 名称
+version = "0.1.0"    # 当前版本，遵循 semver
 ```
 
 ### Virtual workspace
 
-Alternatively, a `Cargo.toml` file can be created with a `[workspace]` section
-but without a [`[package]` section][package]. This is called a *virtual
-manifest*. This is typically useful when there isn't a "primary" package, or
-you want to keep all the packages organized in separate directories.
+也可以创建仅含 `[workspace]` 而不含 [`[package]` 段][package] 的 `Cargo.toml`。
+这称为 *virtual manifest*。
+当没有“主 package”，或希望将所有 package 放在独立目录中时，这通常很有用。
 
 ```toml
 # [PROJECT_DIR]/Cargo.toml
@@ -73,24 +69,22 @@ resolver = "3"
 ```toml
 # [PROJECT_DIR]/hello_world/Cargo.toml
 [package]
-name = "hello_world" # the name of the package
-version = "0.1.0"    # the current version, obeying semver
-edition = "2024"     # the edition, will have no effect on a resolver used in the workspace
+name = "hello_world" # package 名称
+version = "0.1.0"    # 当前版本，遵循 semver
+edition = "2024"     # edition，不会影响 workspace 使用的 resolver 推断
 ```
 
-By having a workspace without a root package,
+在“无根 package”的 workspace 中：
 
-- [`resolver`](resolver.md#resolver-versions) must be
-  set explicitly in virtual workspaces as they have no
-  [`package.edition`][package-edition] to infer it from
-  [resolver version](resolver.md#resolver-versions).
-- Commands run in the workspace root will run against all workspace
-  members by default, see [`default-members`](#the-default-members-field).
+- 必须显式设置 [`resolver`](resolver.md#resolver-versions)，
+  因为 virtual workspace 没有 [`package.edition`][package-edition] 可用于推断
+  [resolver 版本](resolver.md#resolver-versions)。
+- 在 workspace root 执行命令时，默认会作用于所有 workspace members，
+  见 [`default-members`](#the-default-members-field)。
 
-## The `members` and `exclude` fields 
+## `members` 与 `exclude` 字段
 
-The `members` and `exclude` fields define which packages are members of
-the workspace:
+`members` 与 `exclude` 用于定义哪些 package 属于 workspace：
 
 ```toml
 [workspace]
@@ -98,38 +92,34 @@ members = ["member1", "path/to/member2", "crates/*"]
 exclude = ["crates/foo", "path/to/other"]
 ```
 
-All [`path` dependencies] residing in the workspace directory automatically
-become members. Additional members can be listed with the `members` key, which
-should be an array of strings containing directories with `Cargo.toml` files.
+位于 workspace 目录内的所有 [`path` 依赖]会自动成为成员。
+也可通过 `members` 键显式添加成员，
+它应为字符串数组，元素是包含 `Cargo.toml` 的目录。
 
-The `members` list also supports [globs] to match multiple paths, using
-typical filename glob patterns like `*` and `?`.
+`members` 也支持 [globs] 匹配多路径，
+使用常见文件名模式如 `*` 和 `?`。
 
-The `exclude` key can be used to prevent paths from being included in a
-workspace. This can be useful if some path dependencies aren't desired to be
-in the workspace at all, or using a glob pattern and you want to remove a
-directory.
+`exclude` 可阻止某些路径被纳入 workspace。
+当某些 path 依赖不希望成为 workspace 成员，
+或使用了 glob 后想剔除个别目录时很有用。
 
-When inside a subdirectory within the workspace, Cargo will automatically
-search the parent directories for a `Cargo.toml` file with a `[workspace]`
-definition to determine which workspace to use. The [`package.workspace`]
-manifest key can be used in member crates to point at a workspace's root to
-override this automatic search. The manual setting can be useful if the member
-is not inside a subdirectory of the workspace root.
+在 workspace 子目录中时，Cargo 会自动向上搜索父目录，
+寻找带 `[workspace]` 定义的 `Cargo.toml` 以确定所属 workspace。
+成员 crate 可通过 manifest 的 [`package.workspace`] 字段
+指定 workspace root，以覆盖自动搜索。
+当成员不在 workspace root 的子目录下时，手动指定尤为有用。
 
-### Package selection
+### Package 选择
 
-In a workspace, package-related Cargo commands like [`cargo build`] can use
-the `-p` / `--package` or `--workspace` command-line flags to determine which
-packages to operate on. If neither of those flags are specified, Cargo will
-use the package in the current working directory. However, if the current directory is
-a workspace root, the [`default-members`](#the-default-members-field) will be used.
+在 workspace 中，像 [`cargo build`] 这样的 package 相关命令
+可通过 `-p` / `--package` 或 `--workspace` 选择操作目标。
+如果都未指定，Cargo 会使用当前工作目录中的 package。
+但如果当前目录是 workspace root，则会使用 [`default-members`](#the-default-members-field)。
 
-## The `default-members` field
+## `default-members` 字段
 
-The `default-members` field specifies paths of [members](#the-members-and-exclude-fields) to
-operate on when in the workspace root and the package selection flags are not
-used:
+`default-members` 用于指定当位于 workspace root 且未使用 package 选择参数时，
+默认操作的 [members](#the-members-and-exclude-fields) 路径：
 
 ```toml
 [workspace]
@@ -137,20 +127,19 @@ members = ["path/to/member1", "path/to/member2", "path/to/member3/*"]
 default-members = ["path/to/member2", "path/to/member3/foo"]
 ```
 
-> Note: when a [root package](#root-package) is present,
-> you can only operate on it using `--package` and `--workspace` flags.
+> 注意：当存在 [root package](#root-package) 时，
+> 只能通过 `--package` 和 `--workspace` 参数来操作它。
 
-When unspecified, the [root package](#root-package) will be used.
-In the case of a [virtual workspace](#virtual-workspace), all members will be used
-(as if `--workspace` were specified on the command-line).
+若未指定该字段，则默认使用 [root package](#root-package)。
+若是 [virtual workspace](#virtual-workspace)，默认使用全部成员
+（等价于命令行指定 `--workspace`）。
 
-## The `package` table
+## `package` 表
 
-The `workspace.package` table is where you define keys that can be
-inherited by members of a workspace. These keys can be inherited by
-defining them in the member package with `{key}.workspace = true`.
+`workspace.package` 表用于定义可由 workspace 成员继承的键。
+成员 package 可通过在自身中设置 `{key}.workspace = true` 来继承。
 
-Keys that are supported:
+支持继承的键：
 
 |                |                 |
 |----------------|-----------------|
@@ -163,10 +152,10 @@ Keys that are supported:
 | `readme`       | `repository`    |
 | `rust-version` | `version`       |
 
-- `license-file` and `readme` are relative to the workspace root
-- `include` and `exclude` are relative to your package root
+- `license-file` 和 `readme` 路径相对于 workspace root
+- `include` 和 `exclude` 路径相对于 package root
 
-Example:
+示例：
 ```toml
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
@@ -189,20 +178,19 @@ description.workspace = true
 documentation.workspace = true
 ```
 
-> **MSRV:** Requires 1.64+
+> **MSRV:** 需要 1.64+
 
-## The `dependencies` table
+## `dependencies` 表
 
-The `workspace.dependencies` table is where you define dependencies to be
-inherited by members of a workspace.
+`workspace.dependencies` 表用于定义可由 workspace 成员继承的依赖。
 
-Specifying a workspace dependency is similar to [package dependencies][specifying-dependencies] except:
-- Dependencies from this table cannot be declared as `optional`
-- [`features`][features] declared in this table are additive with the `features` from `[dependencies]`
+声明 workspace 依赖与[普通 package 依赖][specifying-dependencies]类似，但有两点不同：
+- 该表中的依赖不能声明为 `optional`
+- 该表声明的 [`features`][features] 会与 `[dependencies]` 中的 `features` 叠加
 
-You can then [inherit the workspace dependency as a package dependency][inheriting-a-dependency-from-a-workspace]
+随后你可以[把 workspace 依赖继承为 package 依赖][inheriting-a-dependency-from-a-workspace]。
 
-Example:
+示例：
 ```toml
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
@@ -230,15 +218,15 @@ cc.workspace = true
 rand.workspace = true
 ```
 
-> **MSRV:** Requires 1.64+
+> **MSRV:** 需要 1.64+
 
-## The `lints` table
+## `lints` 表
 
-The `workspace.lints` table is where you define lint configuration to be inherited by members of a workspace.
+`workspace.lints` 表用于定义可由 workspace 成员继承的 lint 配置。
 
-Specifying a workspace lint configuration is similar to [package lints](manifest.md#the-lints-section).
+workspace lint 配置方式与[package lints](manifest.md#the-lints-section)类似。
 
-Example:
+示例：
 
 ```toml
 # [PROJECT_DIR]/Cargo.toml
@@ -259,13 +247,12 @@ version = "0.1.0"
 workspace = true
 ```
 
-> **MSRV:** Respected as of 1.74
+> **MSRV:** 自 1.74 起生效
 
-## The `metadata` table
+## `metadata` 表
 
-The `workspace.metadata` table is ignored by Cargo and will not be warned
-about. This section can be used for tools that would like to store workspace
-configuration in `Cargo.toml`. For example:
+`workspace.metadata` 表会被 Cargo 忽略，也不会触发警告。
+该段可供外部工具在 `Cargo.toml` 中存储 workspace 配置，例如：
 
 ```toml
 [workspace]
@@ -277,12 +264,11 @@ tool = ["npm", "run", "build"]
 # ...
 ```
 
-There is a similar set of tables at the package level at
-[`package.metadata`][package-metadata]. While cargo does not specify a
-format for the content of either of these tables, it is suggested that
-external tools may wish to use them in a consistent fashion, such as referring
-to the data in `workspace.metadata` if data is missing from `package.metadata`,
-if that makes sense for the tool in question.
+在 package 级别也有对应表：[`package.metadata`][package-metadata]。
+虽然 Cargo 不规定这两者内容格式，
+但建议外部工具按一致方式使用它们：
+例如当 `package.metadata` 缺少数据时，
+可回退读取 `workspace.metadata`（若这符合该工具语义）。
 
 [package]: manifest.md#the-package-section
 [`Cargo.lock`]: ../guide/cargo-toml-vs-cargo-lock.md

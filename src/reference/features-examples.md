@@ -1,24 +1,20 @@
-# Features Examples
+﻿# Features 示例
 
-The following illustrates some real-world examples of features in action.
+下面展示一些在真实项目中使用 feature 的示例。
 
-## Minimizing build times and file sizes
+## 最小化构建时间和文件体积
 
-Some packages use features so that if the features are not enabled, it reduces
-the size of the crate and reduces compile time. Some examples are:
+有些包会通过 feature 让“未启用某些功能”时减少 crate 体积并缩短编译时间。
+示例包括：
 
-* [`syn`] is a popular crate for parsing Rust code. Since it is so popular, it
-  is helpful to reduce compile times since it affects so many projects. It has
-  a [clearly documented list][syn-features] of features which can be used to
-  minimize the amount of code it contains.
-* [`regex`] has a [several features][regex-features] that are [well
-  documented][regex-docs]. Cutting out Unicode support can reduce the
-  resulting file size as it can remove some large tables.
-* [`winapi`] has [a large number][winapi-features] of features that
-  limit which Windows API bindings it supports.
-* [`web-sys`] is another example similar to `winapi` that provides a [huge
-  surface area][web-sys-features] of API bindings that are limited by using
-  features.
+* [`syn`] 是非常流行的 Rust 代码解析 crate。
+  由于它被大量项目使用，缩短它的编译时间会带来广泛收益。
+  它提供了[清晰文档化的 feature 列表][syn-features]，可用于最小化包含代码量。
+* [`regex`] 有[多个 feature][regex-features]，并且[文档完备][regex-docs]。
+  关闭 Unicode 支持可减少生成文件体积，因为可以移除一些大型表。
+* [`winapi`] 有[大量 feature][winapi-features]，用于限制支持哪些 Windows API 绑定。
+* [`web-sys`] 与 `winapi` 类似，也提供[非常大的 API 绑定面][web-sys-features]，
+  通过 feature 来裁剪。
 
 [`winapi`]: https://crates.io/crates/winapi
 [winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Cargo.toml#L25-L431
@@ -30,16 +26,14 @@ the size of the crate and reduces compile time. Some examples are:
 [`web-sys`]: https://crates.io/crates/web-sys
 [web-sys-features]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/crates/web-sys/Cargo.toml#L32-L1395
 
-## Extending behavior
+## 扩展行为
 
-The [`serde_json`] package has a [`preserve_order` feature][serde_json-preserve_order]
-which [changes the behavior][serde_json-code] of JSON maps to preserve the
-order that keys are inserted. Notice that it enables an optional dependency
-[`indexmap`] to implement the new behavior.
+[`serde_json`] 提供 [`preserve_order` feature][serde_json-preserve_order]，
+可[改变 JSON map 的行为][serde_json-code]，以保留 key 插入顺序。
+注意它启用了可选依赖 [`indexmap`] 来实现该行为。
 
-When changing behavior like this, be careful to make sure the changes are
-[SemVer compatible]. That is, enabling the feature should not break code that
-usually builds with the feature off.
+像这样改变行为时，要确保变更是 [SemVer 兼容] 的。
+也就是说，开启该 feature 不应破坏通常在“关闭该 feature”下可编译的代码。
 
 [`serde_json`]: https://crates.io/crates/serde_json
 [serde_json-preserve_order]: https://github.com/serde-rs/json/blob/v1.0.60/Cargo.toml#L53-L56
@@ -47,20 +41,17 @@ usually builds with the feature off.
 [serde_json-code]: https://github.com/serde-rs/json/blob/v1.0.60/src/map.rs#L23-L26
 [`indexmap`]: https://crates.io/crates/indexmap
 
-## `no_std` support
+## `no_std` 支持
 
-Some packages want to support both [`no_std`] and `std` environments. This is
-useful for supporting embedded and resource-constrained platforms, but still
-allowing extended capabilities for platforms that support the full standard
-library.
+有些包希望同时支持 [`no_std`] 与 `std` 环境。
+这对嵌入式和资源受限平台很有用，同时仍允许在支持完整标准库的平台上提供扩展能力。
 
-The [`wasm-bindgen`] package defines a [`std` feature][wasm-bindgen-std] that
-is [enabled by default][wasm-bindgen-default]. At the top of the library, it
-[unconditionally enables the `no_std` attribute][wasm-bindgen-no_std]. This
-ensures that `std` and the [`std` prelude] are not automatically in scope.
-Then, in various places in the code ([example1][wasm-bindgen-cfg1],
-[example2][wasm-bindgen-cfg2]), it uses `#[cfg(feature = "std")]` attributes
-to conditionally enable extra functionality that requires `std`.
+[`wasm-bindgen`] 定义了一个 [`std` feature][wasm-bindgen-std]，
+并且[默认启用][wasm-bindgen-default]。
+在库顶部，它[无条件启用 `no_std` 属性][wasm-bindgen-no_std]。
+这可确保 `std` 与 [`std` prelude] 不会自动进入作用域。
+随后在代码多个位置（[example1][wasm-bindgen-cfg1]、[example2][wasm-bindgen-cfg2]）
+使用 `#[cfg(feature = "std")]` 条件启用依赖 `std` 的额外能力。
 
 [`no_std`]: ../../reference/names/preludes.html#the-no_std-attribute
 [`wasm-bindgen`]: https://crates.io/crates/wasm-bindgen
@@ -71,34 +62,30 @@ to conditionally enable extra functionality that requires `std`.
 [wasm-bindgen-cfg1]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L270-L273
 [wasm-bindgen-cfg2]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L67-L75
 
-## Re-exporting dependency features
+## 重新导出依赖 feature
 
-It can be convenient to re-export the features from a dependency. This allows
-the user depending on the crate to control those features without needing to
-specify those dependencies directly. For example, [`regex`] [re-exports the
-features][regex-re-export] from the [`regex_syntax`][regex_syntax-features]
-package. Users of `regex` don't need to know about the `regex_syntax` package,
-but they can still access the features it contains.
+有时重新导出依赖的 feature 会更方便。
+这样依赖你 crate 的用户就能控制这些 feature，而无需直接声明那些依赖。
+例如，[`regex`] 会[重新导出 feature][regex-re-export]，
+这些 feature 来自 [`regex_syntax`][regex_syntax-features]。
+`regex` 的用户无需了解 `regex_syntax`，但仍可访问其 feature。
 
 [regex-re-export]: https://github.com/rust-lang/regex/blob/1.4.2/Cargo.toml#L65-L89
 [regex_syntax-features]: https://github.com/rust-lang/regex/blob/1.4.2/regex-syntax/Cargo.toml#L17-L32
 
-## Vendoring of C libraries
+## C 库 Vendoring
 
-Some packages provide bindings to common C libraries (sometimes referred to as
-["sys" crates][sys]). Sometimes these packages give you the choice to use the
-C library installed on the system, or to build it from source. For example,
-the [`openssl`] package has a [`vendored` feature][openssl-vendored] which
-enables the corresponding `vendored` feature of [`openssl-sys`]. The
-`openssl-sys` build script has some [conditional logic][openssl-sys-cfg] which
-causes it to build from a local copy of the OpenSSL source code instead of
-using the version from the system.
+有些包会为常见 C 库提供绑定（常称为 ["sys" crate][sys]）。
+这类包有时允许你选择使用系统已安装 C 库，或从源码构建。
+例如，[`openssl`] 有 [`vendored` feature][openssl-vendored]，
+它会启用 [`openssl-sys`] 对应的 `vendored` feature。
+`openssl-sys` 的构建脚本包含一些[条件逻辑][openssl-sys-cfg]，
+使其改为从本地 OpenSSL 源码构建，而不是用系统版本。
 
-The [`curl-sys`] package is another example where the [`static-curl`
-feature][curl-sys-static] causes it to build libcurl from source. Notice that
-it also has a [`force-system-lib-on-osx`][curl-sys-macos] feature which forces
-it [to use the system libcurl][curl-sys-macos-code], overriding the
-static-curl setting.
+[`curl-sys`] 也是类似示例，其 [`static-curl` feature][curl-sys-static]
+会让它从源码构建 libcurl。
+同时它还有 [`force-system-lib-on-osx`][curl-sys-macos] feature，
+可[强制使用系统 libcurl][curl-sys-macos-code]，覆盖 static-curl 设置。
 
 [`openssl`]: https://crates.io/crates/openssl
 [`openssl-sys`]: https://crates.io/crates/openssl-sys
@@ -111,14 +98,14 @@ static-curl setting.
 [curl-sys-macos]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/Cargo.toml#L52
 [curl-sys-macos-code]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/build.rs#L15-L20
 
-## Feature precedence
+## Feature 优先级
 
-Some packages may have mutually-exclusive features. One option to handle this
-is to prefer one feature over another. The [`log`] package is an example. It
-has [several features][log-features] for choosing the maximum logging level at
-compile-time described [here][log-docs]. It uses [`cfg-if`] to [choose a
-precedence][log-cfg-if]. If multiple features are enabled, the higher "max"
-levels will be preferred over the lower levels.
+某些包的 feature 彼此互斥。
+一种处理方式是指定 feature 的优先级。
+[`log`] 就是一个例子。
+它有[多个 feature][log-features]用于在编译期选择最大日志级别（文档见[这里][log-docs]）。
+它通过 [`cfg-if`] 来[实现优先级选择][log-cfg-if]。
+如果启用了多个 feature，会优先选择更高的 "max" 级别。
 
 [`log`]: https://crates.io/crates/log
 [log-features]: https://github.com/rust-lang/log/blob/0.4.11/Cargo.toml#L29-L42
@@ -126,41 +113,37 @@ levels will be preferred over the lower levels.
 [log-cfg-if]: https://github.com/rust-lang/log/blob/0.4.11/src/lib.rs#L1422-L1448
 [`cfg-if`]: https://crates.io/crates/cfg-if
 
-## Proc-macro companion package
+## Proc-macro 配套包
 
-Some packages have a proc-macro that is intimately tied with it. However, not
-all users will need to use the proc-macro. By making the proc-macro an
-optional-dependency, this allows you to conveniently choose whether or not it
-is included. This is helpful, because sometimes the proc-macro version must
-stay in sync with the parent package, and you don't want to force the users to
-have to specify both dependencies and keep them in sync.
+有些包的 proc-macro 与本体高度绑定。
+但并非所有用户都需要 proc-macro。
+将 proc-macro 设为可选依赖，可让用户按需选择是否包含。
+这很有帮助，因为 proc-macro 版本有时必须与主包同步，
+你不希望强迫用户同时声明两个依赖并手动保持同步。
 
-An example is [`serde`] which has a [`derive`][serde-derive] feature which
-enables the [`serde_derive`] proc-macro. The `serde_derive` crate is very
-tightly tied to `serde`, so it uses an [equals version
-requirement][serde-equals] to ensure they stay in sync.
+例如 [`serde`] 提供 [`derive`][serde-derive] feature，
+用于启用 [`serde_derive`] proc-macro。
+`serde_derive` 与 `serde` 紧密耦合，因此采用了[等号版本要求][serde-equals] 来确保同步。
 
 [`serde`]: https://crates.io/crates/serde
 [`serde_derive`]: https://crates.io/crates/serde_derive
 [serde-derive]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Cargo.toml#L34-L35
 [serde-equals]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Cargo.toml#L17
 
-## Nightly-only features
+## 仅 nightly 的 feature
 
-Some packages want to experiment with APIs or language features that are only
-available on the Rust [nightly channel]. However, they may not want to require
-their users to also use the nightly channel. An example is [`wasm-bindgen`]
-which has a [`nightly` feature][wasm-bindgen-nightly] which enables an
-[extended API][wasm-bindgen-unsize] that uses the [`Unsize`] marker trait that
-is only available on the nightly channel at the time of this writing.
+有些包希望实验只在 Rust [nightly channel] 提供的 API 或语言特性。
+但它们可能不想要求所有用户也使用 nightly。
+例如 [`wasm-bindgen`] 提供 [`nightly` feature][wasm-bindgen-nightly]，
+用于启用[扩展 API][wasm-bindgen-unsize]，
+其依赖 [`Unsize`] 标记 trait（撰写本文时仅 nightly 可用）。
 
-Note that at the root of the crate it uses [`cfg_attr` to enable the nightly
-feature][wasm-bindgen-cfg_attr]. Keep in mind that the [`feature` attribute]
-is unrelated to Cargo features, and is used to opt-in to experimental language
-features.
+注意该 crate 根部通过 [`cfg_attr` 启用 nightly feature][wasm-bindgen-cfg_attr]。
+同时要记住，[`feature` attribute] 与 Cargo feature 无关，
+它用于启用实验性语言特性。
 
-The [`simd_support` feature][rand-simd_support] of the [`rand`] package is another example,
-which relies on a dependency that only builds on the nightly channel.
+[`rand`] 的 [`simd_support` feature][rand-simd_support] 也是类似示例，
+其依赖只可在 nightly 上构建。
 
 [`wasm-bindgen`]: https://crates.io/crates/wasm-bindgen
 [nightly channel]: ../../book/appendix-07-nightly-rust.html
@@ -172,15 +155,14 @@ which relies on a dependency that only builds on the nightly channel.
 [`rand`]: https://crates.io/crates/rand
 [rand-simd_support]: https://github.com/rust-random/rand/blob/0.7.3/Cargo.toml#L40
 
-## Experimental features
+## 实验性 feature
 
-Some packages have new functionality that they may want to experiment with,
-without having to commit to the stability of those APIs. The features are
-usually documented that they are experimental, and thus may change or break in
-the future, even during a minor release. An example is the [`async-std`]
-package, which has an [`unstable` feature][async-std-unstable], which [gates
-new APIs][async-std-gate] that people can opt-in to using, but may not be
-completely ready to be relied upon.
+有些包希望在不承诺 API 稳定性的前提下尝试新功能。
+这类 feature 通常会注明“实验性”，未来可能变化甚至失效，
+即使在次版本发布中也可能如此。
+例如 [`async-std`] 的 [`unstable` feature][async-std-unstable]，
+用于[门控新 API][async-std-gate]。
+用户可主动选择启用，但这些 API 可能尚未成熟到可以稳定依赖。
 
 [`async-std`]: https://crates.io/crates/async-std
 [async-std-unstable]: https://github.com/async-rs/async-std/blob/v1.8.0/Cargo.toml#L38-L42

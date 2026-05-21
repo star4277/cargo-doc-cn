@@ -1,32 +1,27 @@
-# Features
+﻿# Features
 
-Cargo "features" provide a mechanism to express [conditional compilation] and
-[optional dependencies](#optional-dependencies). A package defines a set of
-named features in the `[features]` table of `Cargo.toml`, and each feature can
-either be enabled or disabled. Features for the package being built can be
-enabled on the command-line with flags such as `--features`. Features for
-dependencies can be enabled in the dependency declaration in `Cargo.toml`.
+Cargo 的“feature”提供了一种表达[条件编译]与
+[可选依赖](#optional-dependencies)的机制。一个 package 在 `Cargo.toml`
+的 `[features]` 表中定义一组具名 feature，每个 feature 可以启用或禁用。
+对当前正在构建的 package，可通过命令行参数（如 `--features`）启用其 feature。
+对依赖的 feature，则可以在 `Cargo.toml` 的依赖声明中启用。
 
-> **Note**: New crates or versions published on crates.io are now limited to
-> a maximum of 300 features. Exceptions are granted on a case-by-case basis.
-> See this [blog post] for details. Participation in solution discussions is
-> encouraged via the crates.io Zulip stream.
+> **注意**：发布到 crates.io 的新 crate 或新版本，目前最多只能包含 300 个 feature。
+> 超额需要按个案申请例外。详情见这篇[博客]，也欢迎在 crates.io 的 Zulip stream
+> 参与方案讨论。
 
 [blog post]: https://blog.rust-lang.org/2023/10/26/broken-badges-and-23k-keywords.html
 
-See also the [Features Examples] chapter for some examples of how features can
-be used.
+另见 [Features Examples] 章节，其中给出了一些 feature 的使用示例。
 
 [conditional compilation]: ../../reference/conditional-compilation.md
 [Features Examples]: features-examples.md
 
-## The `[features]` section
+## `[features]` 段
 
-Features are defined in the `[features]` table in `Cargo.toml`. Each feature
-specifies an array of other features or optional dependencies that it enables.
-The following examples illustrate how features could be used for a 2D image
-processing library where support for different image formats can be optionally
-included:
+feature 在 `Cargo.toml` 的 `[features]` 表中定义。每个 feature
+指定一个数组，数组项可以是其他 feature，或会被启用的可选依赖。
+下面示例展示了在 2D 图像处理库中，如何可选支持不同图像格式：
 
 ```toml
 [features]
@@ -34,9 +29,8 @@ included:
 webp = []
 ```
 
-With this feature defined, [`cfg` expressions] can be used to conditionally
-include code to support the requested feature at compile time. For example,
-inside `lib.rs` of the package could include this:
+定义后，就可以通过 [`cfg` 表达式] 在编译期有条件地包含支持该 feature 的代码。
+例如 package 的 `lib.rs` 可以包含：
 
 ```rust
 // This conditionally includes a module which implements WEBP support.
@@ -44,12 +38,11 @@ inside `lib.rs` of the package could include this:
 pub mod webp;
 ```
 
-Cargo sets features in the package using the `rustc` [`--cfg` flag], and code
-can test for their presence with the [`cfg` attribute] or the [`cfg` macro].
+Cargo 会通过 rustc 的 [`--cfg` flag] 为 package 设置 feature，代码可使用
+[`cfg` attribute] 或 [`cfg` macro] 检测这些 feature 是否存在。
 
-Features can list other features to enable. For example, the ICO image format
-can contain BMP and PNG images, so when it is enabled, it should make sure
-those other features are enabled, too:
+feature 也可以列出需要同时启用的其他 feature。例如 ICO 图像格式可以内嵌
+BMP 和 PNG，因此启用 ICO 时也应启用这两个 feature：
 
 ```toml
 [features]
@@ -59,13 +52,12 @@ ico = ["bmp", "png"]
 webp = []
 ```
 
-Feature names may include characters from the [Unicode XID standard] (which
-includes most letters), and additionally allows starting with `_` or digits
-`0` through `9`, and after the first character may also contain `-`, `+`, or
-`.`.
+feature 名称可使用 [Unicode XID standard] 中的字符（包含绝大多数字母），
+并额外允许以下规则：首字符可为 `_` 或数字 `0` 到 `9`，首字符之后还可包含
+`-`、`+`、`.`。
 
-> **Note**: [crates.io] imposes additional constraints on feature name syntax
-> that they must only be [ASCII alphanumeric] characters or `_`, `-`, or `+`.
+> **注意**：[crates.io] 对 feature 名还有额外限制：
+> 只能使用 [ASCII alphanumeric] 字符或 `_`、`-`、`+`。
 
 [crates.io]: https://crates.io/
 [Unicode XID standard]: https://unicode.org/reports/tr31/
@@ -75,10 +67,10 @@ includes most letters), and additionally allows starting with `_` or digits
 [`cfg` attribute]: ../../reference/conditional-compilation.md#the-cfg-attribute
 [`cfg` macro]: ../../std/macro.cfg.html
 
-## The `default` feature
+## `default` feature
 
-By default, all features are disabled unless explicitly enabled. This can be
-changed by specifying the `default` feature:
+默认情况下，所有 feature 都是关闭的，除非显式启用。
+可以通过指定 `default` feature 改变这一点：
 
 ```toml
 [features]
@@ -89,67 +81,55 @@ ico = ["bmp", "png"]
 webp = []
 ```
 
-When the package is built, the `default` feature is enabled which in turn
-enables the listed features. This behavior can be changed by:
+构建 package 时会启用 `default`，进而启用其中列出的 feature。
+此行为可通过以下方式调整：
 
-* The `--no-default-features` [command-line
-  flag](#command-line-feature-options) disables the default features of the
-  package.
-* The `default-features = false` option can be specified in a [dependency
-  declaration](#dependency-features).
+* `--no-default-features` [命令行参数](#command-line-feature-options)
+  会禁用该 package 的默认 feature。
+* 在[依赖声明](#dependency-features)中指定 `default-features = false`。
 
-> **Note**: Be careful about choosing the default feature set. The default
-> features are a convenience that make it easier to use a package without
-> forcing the user to carefully select which features to enable for common
-> use, but there are some drawbacks. Dependencies automatically enable default
-> features unless `default-features = false` is specified. This can make it
-> difficult to ensure that the default features are not enabled, especially
-> for a dependency that appears multiple times in the dependency graph. Every
-> package must ensure that `default-features = false` is specified to avoid
-> enabling them.
+> **注意**：选择默认 feature 集时要谨慎。默认 feature 的优势是易用，
+> 用户无需逐个挑选常见场景所需 feature。但它也有代价：依赖会默认启用
+> 默认 feature（除非声明了 `default-features = false`）。这会让“确保默认
+> feature 未被启用”变得困难，尤其在依赖图中同一个依赖多次出现时。
+> 若要避免启用默认 feature，依赖链上的每个 package 都必须显式指定
+> `default-features = false`。
 >
-> Another issue is that it can be a [SemVer incompatible
-> change](#semver-compatibility) to remove a feature from the default set, so
-> you should be confident that you will keep those features.
+> 另一个问题是：从默认集合中移除一个 feature 可能构成
+> [SemVer 不兼容变更](#semver-compatibility)，所以只有在你确认会长期保留
+> 这些 feature 时才应将其放入默认集合。
 
 ## Optional dependencies
 
-Dependencies can be marked "optional", which means they will not be compiled
-by default. For example, let's say that our 2D image processing library uses
-an external package to handle GIF images. This can be expressed like this:
+依赖可以标记为“optional”，即默认不会被编译。
+例如一个 2D 图像处理库依赖外部 package 处理 GIF，可写成：
 
 ```toml
 [dependencies]
 gif = { version = "0.11.1", optional = true }
 ```
 
-By default, this optional dependency implicitly defines a feature that looks
-like this:
+默认情况下，这个可选依赖会隐式定义一个同名 feature，等价于：
 
 ```toml
 [features]
 gif = ["dep:gif"]
 ```
 
-This means that this dependency will only be included if the `gif`
-feature is enabled.
-The same `cfg(feature = "gif")` syntax can be used in the code, and the
-dependency can be enabled just like any feature such as `--features gif` (see
-[Command-line feature options](#command-line-feature-options) below).
+这表示只有启用 `gif` feature 时，`gif` 依赖才会被包含。
+代码中可同样使用 `cfg(feature = "gif")`，并可像普通 feature 一样通过
+`--features gif` 启用（见下文[命令行 feature 选项](#command-line-feature-options)）。
 
-In some cases, you may not want to expose a feature that has the same name
-as the optional dependency.
-For example, perhaps the optional dependency is an internal detail, or you
-want to group multiple optional dependencies together, or you just want to use
-a better name.
-If you specify the optional dependency with the `dep:` prefix anywhere
-in the `[features]` table, that disables the implicit feature.
+有些场景下你不希望暴露与可选依赖同名的 feature。
+例如该可选依赖只是内部实现细节，或你想把多个可选依赖打包成一个 feature，
+又或者你希望用更好的名称。
+当你在 `[features]` 表中任何位置使用 `dep:` 前缀引用该可选依赖时，
+对应的隐式 feature 就会被禁用。
 
-> **Note**: The `dep:` syntax is only available starting with Rust 1.60.
-> Previous versions can only use the implicit feature name.
+> **注意**：`dep:` 语法从 Rust 1.60 开始可用。
+> 更早版本只能使用隐式 feature 名称。
 
-For example, let's say in order to support the AVIF image format, our library
-needs two other dependencies to be enabled:
+例如，为支持 AVIF 格式，库需要同时启用两个依赖：
 
 ```toml
 [dependencies]
@@ -160,21 +140,19 @@ rgb = { version = "0.8.25", optional = true }
 avif = ["dep:ravif", "dep:rgb"]
 ```
 
-In this example, the `avif` feature will enable the two listed dependencies.
-This also avoids creating the implicit `ravif` and `rgb` features, since we
-don't want users to enable those individually as they are internal details to
-our crate.
+在这个例子里，`avif` feature 会启用上面两个依赖。
+同时由于我们显式使用了 `dep:`，就不会再创建隐式 `ravif` / `rgb` feature。
+这通常符合预期，因为这两个依赖只是 crate 的内部细节，不希望用户单独启用。
 
-> **Note**: Another way to optionally include a dependency is to use
-> [platform-specific dependencies]. Instead of using features, these are
-> conditional based on the target platform.
+> **注意**：另一种“可选引入依赖”的方法是使用
+> [platform-specific dependencies]。与 feature 不同，
+> 它们按目标平台条件生效。
 
 [platform-specific dependencies]: specifying-dependencies.md#platform-specific-dependencies
 
 ## Dependency features
 
-Features of dependencies can be enabled within the dependency declaration. The
-`features` key indicates which features to enable:
+可以在依赖声明中启用依赖自己的 feature。`features` 键用于指定要启用的 feature：
 
 ```toml
 [dependencies]
@@ -182,21 +160,21 @@ Features of dependencies can be enabled within the dependency declaration. The
 serde = { version = "1.0.118", features = ["derive"] }
 ```
 
-The [`default` features](#the-default-feature) can be disabled using
-`default-features = false`:
+也可以通过 `default-features = false` 禁用依赖的
+[`default` features](#the-default-feature)：
 
 ```toml
 [dependencies]
 flate2 = { version = "1.0.3", default-features = false, features = ["zlib-rs"] }
 ```
 
-> **Note**: This may not ensure the default features are disabled. If another
-> dependency includes `flate2` without specifying `default-features = false`,
-> then the default features will be enabled. See [feature
-> unification](#feature-unification) below for more details.
+> **注意**：这不一定能保证默认 feature 真正被禁用。
+> 如果另一个依赖在引入 `flate2` 时没有写 `default-features = false`，
+> 那默认 feature 仍会被启用。详见下文 [feature
+> unification](#feature-unification)。
 
-Features of dependencies can also be enabled in the `[features]` table. The
-syntax is `"package-name/feature-name"`. For example:
+还可以在 `[features]` 表中启用依赖 feature，语法是
+`"package-name/feature-name"`。例如：
 
 ```toml
 [dependencies]
@@ -207,17 +185,14 @@ jpeg-decoder = { version = "0.1.20", default-features = false }
 parallel = ["jpeg-decoder/rayon"]
 ```
 
-The `"package-name/feature-name"` syntax will also enable `package-name`
-if it is an optional dependency. Often this is not what you want.
-You can add a `?` as in `"package-name?/feature-name"` which will only enable
-the given feature if something else enables the optional dependency.
+`"package-name/feature-name"` 语法还会在 `package-name` 是可选依赖时
+顺带启用它本身，这往往不是你想要的。
+你可以写成 `"package-name?/feature-name"`，这样只有“当别处已启用该可选依赖”时，
+才启用对应 feature。
 
-> **Note**: The `?` syntax is only available starting with Rust 1.60.
+> **注意**：`?` 语法从 Rust 1.60 开始可用。
 
-For example, let's say we have added some serialization support to our
-library, and it requires enabling a corresponding feature in some optional
-dependencies.
-That can be done like this:
+例如，库增加了序列化支持，需要联动启用某些可选依赖的对应 feature：
 
 ```toml
 [dependencies]
@@ -228,59 +203,50 @@ rgb = { version = "0.8.25", optional = true }
 serde = ["dep:serde", "rgb?/serde"]
 ```
 
-In this example, enabling the `serde` feature will enable the serde
-dependency.
-It will also enable the `serde` feature for the `rgb` dependency, but only if
-something else has enabled the `rgb` dependency.
+在该例中，启用 `serde` feature 会启用 `serde` 依赖；
+同时还会启用 `rgb` 依赖的 `serde` feature，但前提是有其他地方已经启用了 `rgb`。
 
-## Command-line feature options
+## 命令行 feature 选项
 
-The following command-line flags can be used to control which features are
-enabled:
+以下命令行参数可用于控制启用哪些 feature：
 
-* `--features` _FEATURES_: Enables the listed features. Multiple features may
-  be separated with commas or spaces. If using spaces, be sure to use quotes
-  around all the features if running Cargo from a shell (such as `--features
-  "foo bar"`). If building multiple packages in a [workspace], the
-  `package-name/feature-name` syntax can be used to specify features for
-  specific workspace members.
-* `--all-features`: Activates all features of all packages selected on the command line.
-* `--no-default-features`: Does not activate the [`default`
-  feature](#the-default-feature) of the selected packages.
-  
-**NOTE**: check the individual subcommand documentation for details. Not all flags are available for all subcommands.
+* `--features` _FEATURES_：启用列出的 feature。多个 feature
+  可用逗号或空格分隔。如果使用空格且从 shell 调用 Cargo，
+  记得加引号（如 `--features "foo bar"`）。在 [workspace] 中一次构建多个
+  package 时，可用 `package-name/feature-name` 为特定 workspace 成员启用 feature。
+* `--all-features`：为命令行选中的所有 package 启用全部 feature。
+* `--no-default-features`：不启用已选 package 的 [`default`
+  feature](#the-default-feature)。
+
+**注意**：请查看具体子命令文档。并非所有子命令都支持全部参数。
 
 [workspace]: workspaces.md
 
 ## Feature unification
 
-Features are unique to the package that defines them. Enabling a feature on a
-package does not enable a feature of the same name on other packages.
+feature 只属于定义它的那个 package。
+在某 package 上启用某个 feature，并不会让其他 package 的同名 feature 自动启用。
 
-When a dependency is used by multiple packages, Cargo will use the union of
-all features enabled on that dependency when building it. This helps ensure
-that only a single copy of the dependency is used. See the [features section]
-of the resolver documentation for more details.
+当一个依赖被多个 package 使用时，Cargo 在构建该依赖时会采用“已启用 feature 的并集”。
+这有助于保证只使用该依赖的一份构建结果。详见 resolver 文档中的
+[features section]。
 
-For example, let's look at the [`winapi`] package which uses a [large
-number][winapi-features] of features. If your package depends on a package
-`foo` which enables the "fileapi" and "handleapi" features of `winapi`, and
-another dependency `bar` which enables the "std" and "winnt" features of
-`winapi`, then `winapi` will be built with all four of those features enabled.
+例如 [`winapi`] 这个 package 使用了[大量][winapi-features] feature。
+如果你的 package 依赖 `foo`（启用了 `winapi` 的 `fileapi` / `handleapi`），
+又依赖 `bar`（启用了 `winapi` 的 `std` / `winnt`），
+那么最终 `winapi` 会以这四个 feature 全部启用的状态构建。
 
 ![winapi features example](../images/winapi-features.svg)
 
 [`winapi`]: https://crates.io/crates/winapi
 [winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Cargo.toml#L25-L431
 
-A consequence of this is that features should be *additive*. That is, enabling
-a feature should not disable functionality, and it should usually be safe to
-enable any combination of features. A feature should not introduce a
-[SemVer-incompatible change](#semver-compatibility).
+这带来的结果是：feature 应该是*可叠加（additive）*的。
+也就是说，启用某个 feature 不应关闭功能；通常任意组合都应安全。
+feature 不应引入 [SemVer 不兼容变更](#semver-compatibility)。
 
-For example, if you want to optionally support [`no_std`] environments, **do
-not** use a `no_std` feature. Instead, use a `std` feature that *enables*
-`std`. For example:
+例如，如果你想“可选支持 [`no_std`] 环境”，**不要**使用 `no_std` feature。
+应改为定义一个会*启用* `std` 的 `std` feature。示例：
 
 ```rust
 #![no_std]
@@ -297,57 +263,47 @@ pub fn function_that_requires_std() {
 [`no_std`]: ../../reference/names/preludes.html#the-no_std-attribute
 [features section]: resolver.md#features
 
-### Mutually exclusive features
+### 互斥 feature
 
-There are rare cases where features may be mutually incompatible with one
-another. This should be avoided if at all possible, because it requires
-coordinating all uses of the package in the dependency graph to cooperate to
-avoid enabling them together. If it is not possible, consider adding a compile
-error to detect this scenario. For example:
+少数情况下，feature 之间可能互不兼容。
+应尽量避免这种设计，因为它要求依赖图中该 package 的所有使用方共同协调，
+防止把互斥 feature 一起启用。
+如果确实无法避免，可考虑添加编译错误检测。示例：
 
 ```rust,ignore
 #[cfg(all(feature = "foo", feature = "bar"))]
 compile_error!("feature \"foo\" and feature \"bar\" cannot be enabled at the same time");
 ```
 
-Instead of using mutually exclusive features, consider some other options:
+相比互斥 feature，可考虑以下方案：
 
-* Split the functionality into separate packages.
-* When there is a conflict, [choose one feature over
-  another][feature-precedence]. The [`cfg-if`] package can help with writing
-  more complex `cfg` expressions.
-* Architect the code to allow the features to be enabled concurrently, and use
-  runtime options to control which is used. For example, use a config file,
-  command-line argument, or environment variable to choose which behavior to
-  enable.
+* 把功能拆分到不同 package。
+* 出现冲突时，[选择某个 feature 优先][feature-precedence]。
+  [`cfg-if`] crate 可帮助书写更复杂的 `cfg` 表达式。
+* 在架构层面允许 feature 并行启用，再通过运行时选项控制使用哪种行为。
+  例如配置文件、命令行参数或环境变量。
 
 [`cfg-if`]: https://crates.io/crates/cfg-if
 [feature-precedence]: features-examples.md#feature-precedence
 
-### Inspecting resolved features
+### 检查已解析的 feature
 
-In complex dependency graphs, it can sometimes be difficult to understand how
-different features get enabled on various packages. The [`cargo tree`] command
-offers several options to help inspect and visualize which features are
-enabled. Some options to try:
+在复杂依赖图中，理解“各 package 的 feature 是如何被启用的”可能比较困难。
+[`cargo tree`] 命令提供了多个选项，帮助检查与可视化 feature：
 
-* `cargo tree -e features`: This will show features in the dependency graph.
-  Each feature will appear showing which package enabled it.
-* `cargo tree -f "{p} {f}"`: This is a more compact view that shows a
-  comma-separated list of features enabled on each package.
-* `cargo tree -e features -i foo`: This will invert the tree, showing how
-  features flow into the given package "foo". This can be useful because
-  viewing the entire graph can be quite large and overwhelming. Use this when
-  you are trying to figure out which features are enabled on a specific
-  package and why. See the example at the bottom of the [`cargo tree`] page on
-  how to read this.
+* `cargo tree -e features`：显示依赖图中的 feature，
+  每个 feature 会显示由哪个 package 启用。
+* `cargo tree -f "{p} {f}"`：更紧凑的视图，展示每个 package
+  启用 feature 的逗号分隔列表。
+* `cargo tree -e features -i foo`：反转树，展示 feature 如何流入 `foo`。
+  这在全图过大难以阅读时很有帮助，适用于定位“某个 package 的 feature
+  为什么会被启用”。如何阅读可参考 [`cargo tree`] 页面底部示例。
 
 [`cargo tree`]: ../commands/cargo-tree.md
 
 ## Feature resolver version 2
 
-A different feature resolver can be specified with the `resolver` field in
-`Cargo.toml`, like this:
+可通过 `Cargo.toml` 中的 `resolver` 字段指定不同的 feature 解析器：
 
 ```toml
 [package]
@@ -356,58 +312,46 @@ version = "1.0.0"
 resolver = "2"
 ```
 
-See the [resolver versions] section for more detail on specifying resolver
-versions.
+更多说明见 [resolver versions]。
 
-The version `"2"` resolver avoids unifying features in a few situations where
-that unification can be unwanted. The exact situations are described in the
-[resolver chapter][resolver-v2], but in short, it avoids unifying in these
-situations:
+`"2"` 版解析器会避免在某些场景下进行 feature 合并（这些场景下合并并不理想）。
+完整规则见 [resolver chapter][resolver-v2]。简要来说，它会避免在以下情况合并：
 
-* Features enabled on [platform-specific dependencies] for [target architectures][target] not
-  currently being built are ignored.
-* [Build-dependencies] and proc-macros do not share features with normal
-  dependencies.
-* [Dev-dependencies] do not activate features unless building a [Cargo target][target] that
-  needs them (like tests or examples).
+* 对当前未构建目标架构启用的[平台特定依赖] feature 会被忽略。
+* [Build-dependencies] 与 proc-macro 不再和普通依赖共享 feature。
+* [Dev-dependencies] 只有在构建确实需要它们的 [Cargo target][target]
+  （如测试或示例）时才会激活 feature。
 
-Avoiding the unification is necessary for some situations. For example, if a
-build-dependency enables a `std` feature, and the same dependency is used as a
-normal dependency for a `no_std` environment, enabling `std` would break the
-build.
+避免合并在某些场景是必须的。例如某个 build-dependency 启用了 `std`，
+而同一依赖在普通依赖路径中用于 `no_std`，那 `std` 被合并进来会导致构建失败。
 
-However, one drawback is that this can increase build times because the
-dependency is built multiple times (each with different features). When using
-the version `"2"` resolver, it is recommended to check for dependencies that
-are built multiple times to reduce overall build time. If it is not *required*
-to build those duplicated packages with separate features, consider adding
-features to the `features` list in the [dependency
-declaration](#dependency-features) so that the duplicates end up with the same
-features (and thus Cargo will build it only once). You can detect these
-duplicate dependencies with the [`cargo tree --duplicates`][`cargo tree`]
-command. It will show which packages are built multiple times; look for any
-entries listed with the same version. See [Inspecting resolved
-features](#inspecting-resolved-features) for more on fetching information on
-the resolved features. For build dependencies, this is not necessary if you
-are cross-compiling with the `--target` flag because build dependencies are
-always built separately from normal dependencies in that scenario.
+但缺点是构建时间可能增加，因为同一依赖会按不同 feature 被构建多次。
+使用 `"2"` 版解析器时，建议检查是否存在“同一依赖被重复构建”的情况，
+以降低整体构建时间。
+如果并不*需要*将这些重复 package 用不同 feature 分开构建，
+可在[依赖声明](#dependency-features)的 `features` 列表里补齐相同 feature，
+让重复项最终特征一致（这样 Cargo 就只构建一次）。
+可通过 [`cargo tree --duplicates`][`cargo tree`] 发现重复依赖：
+它会显示哪些 package 被构建多次；重点查看同版本重复条目。
+关于如何查看已解析 feature 的更多信息，见
+[Inspecting resolved features](#inspecting-resolved-features)。
+对于 build-dependency，如果你在交叉编译时使用 `--target`，
+则不需要做这一步，因为该场景下 build-dependency 本就始终与普通依赖分开构建。
 
 [target]: ../appendix/glossary.md#target
 
-### Resolver version 2 command-line flags
+### Resolver version 2 的命令行参数行为
 
-The `resolver = "2"` setting also changes the behavior of the `--features` and
-`--no-default-features` [command-line options](#command-line-feature-options).
+`resolver = "2"` 还会改变 `--features` 和 `--no-default-features`
+[命令行选项](#command-line-feature-options)的行为。
 
-With version `"1"`, you can only enable features for the package in the
-current working directory. For example, in a workspace with packages `foo` and
-`bar`, and you are in the directory for package `foo`, and ran the command
-`cargo build -p bar --features bar-feat`, this would fail because the
-`--features` flag only allowed enabling features on `foo`.
+在版本 `"1"` 中，只能为“当前工作目录对应 package”启用 feature。
+例如 workspace 有 `foo` 和 `bar` 两个 package，当前位于 `foo` 目录，执行
+`cargo build -p bar --features bar-feat` 会失败，因为 `--features`
+当时只能作用于 `foo`。
 
-With `resolver = "2"`, the features flags allow enabling features for any of
-the packages selected on the command-line with `-p` and `--workspace` flags.
-For example:
+使用 `resolver = "2"` 后，feature 参数可为命令行通过 `-p` 与 `--workspace`
+选中的任意 package 启用 feature。例如：
 
 ```sh
 # This command is allowed with resolver = "2", regardless of which directory
@@ -418,9 +362,8 @@ cargo build -p foo -p bar --features foo-feat,bar-feat
 cargo build -p foo -p bar --features foo/foo-feat,bar/bar-feat
 ```
 
-Additionally, with `resolver = "1"`, the `--no-default-features` flag only
-disables the default feature for the package in the current directory. With
-version "2", it will disable the default features for all workspace members.
+此外，在 `resolver = "1"` 中，`--no-default-features` 只会禁用当前目录 package
+的默认 feature；在版本 `"2"` 中，它会禁用所有 workspace 成员的默认 feature。
 
 [resolver versions]: resolver.md#resolver-versions
 [build-dependencies]: specifying-dependencies.md#build-dependencies
@@ -429,42 +372,39 @@ version "2", it will disable the default features for all workspace members.
 
 ## Build scripts
 
-[Build scripts] can detect which features are enabled on the package by
-inspecting the `CARGO_FEATURE_<name>` environment variable, where `<name>` is
-the feature name converted to uppercase and `-` converted to `_`.
+[Build scripts] 可以通过读取 `CARGO_FEATURE_<name>` 环境变量，
+检测当前 package 启用了哪些 feature。其中 `<name>` 会被转成大写，
+并将 `-` 转为 `_`。
 
 [build scripts]: build-scripts.md
 
 ## Required features
 
-The [`required-features` field] can be used to disable specific [Cargo
-targets] if a feature is not enabled. See the linked documentation for more
-details.
+可使用 [`required-features` field] 在某个 feature 未启用时禁用特定
+[Cargo targets]。详见对应文档。
 
 [`required-features` field]: cargo-targets.md#the-required-features-field
 [Cargo targets]: cargo-targets.md
 
 ## SemVer compatibility
 
-Enabling a feature should not introduce a SemVer-incompatible change. For
-example, the feature shouldn't change an existing API in a way that could
-break existing uses. More details about what changes are compatible can be
-found in the [SemVer Compatibility chapter](semver.md).
+启用 feature 不应引入 SemVer 不兼容变更。
+例如，不应以可能破坏现有用法的方式修改已有 API。
+哪些改动是兼容的，可见 [SemVer Compatibility 章节](semver.md)。
 
-Care should be taken when adding and removing feature definitions and optional
-dependencies, as these can sometimes be backwards-incompatible changes. More
-details can be found in the [Cargo section](semver.md#cargo) of the SemVer
-Compatibility chapter. In short, follow these rules:
+新增或删除 feature 定义与可选依赖时要谨慎，这些操作有时会造成向后不兼容。
+详见 SemVer Compatibility 章节中的 [Cargo 小节](semver.md#cargo)。
+简要规则如下：
 
-* The following is usually safe to do in a minor release:
-  * Add a [new feature][cargo-feature-add] or [optional dependency][cargo-dep-add].
-  * [Change the features used on a dependency][cargo-change-dep-feature].
-* The following should usually **not** be done in a minor release:
-  * [Remove a feature][cargo-feature-remove] or [optional dependency][cargo-remove-opt-dep].
-  * [Moving existing public code behind a feature][item-remove].
-  * [Remove a feature from a feature list][cargo-feature-remove-another].
+* 以下操作在次版本发布中通常是安全的：
+  * 新增[feature][cargo-feature-add]或[可选依赖][cargo-dep-add]。
+  * [修改依赖上启用的 feature][cargo-change-dep-feature]。
+* 以下操作在次版本发布中通常**不应**执行：
+  * 删除[feature][cargo-feature-remove]或[可选依赖][cargo-remove-opt-dep]。
+  * [把现有公开代码移到 feature 后面][item-remove]。
+  * [从 feature 列表中移除某个 feature][cargo-feature-remove-another]。
 
-See the links for caveats and examples.
+具体注意点与示例见各链接。
 
 [cargo-change-dep-feature]: semver.md#cargo-change-dep-feature
 [cargo-dep-add]: semver.md#cargo-dep-add
@@ -474,30 +414,24 @@ See the links for caveats and examples.
 [cargo-remove-opt-dep]: semver.md#cargo-remove-opt-dep
 [cargo-feature-remove-another]: semver.md#cargo-feature-remove-another
 
-## Feature documentation and discovery
+## Feature 文档与发现
 
-You are encouraged to document which features are available in your package.
-This can be done by adding [doc comments] at the top of `lib.rs`. As an
-example, see the [regex crate source], which when rendered can be viewed on
-[docs.rs][regex-docs-rs]. If you have other documentation, such as a user
-guide, consider adding the documentation there (for example, see [serde.rs]).
-If you have a binary project, consider documenting the features in the README
-or other documentation for the project (for example, see [sccache]).
+建议你在 package 中清晰记录可用 feature。
+可在 `lib.rs` 顶部增加[文档注释][doc comments]实现。
+例如可参考 [regex crate source]（渲染后可在 [docs.rs][regex-docs-rs] 查看）。
+如果你还有用户指南等文档，也建议在那里记录（例如 [serde.rs]）。
+若是二进制项目，可在 README 或其他项目文档记录 feature（例如 [sccache]）。
 
-Clearly documenting the features can set expectations about features that are
-considered "unstable" or otherwise shouldn't be used. For example, if there is
-an optional dependency, but you don't want users to explicitly list that
-optional dependency as a feature, exclude it from the documented list.
+清晰记录 feature 也有助于说明哪些 feature 是“实验性/不稳定”或不建议直接使用。
+例如某可选依赖存在，但你不希望用户显式把它当 feature 使用，
+就应把它排除在文档列出的 feature 清单之外。
 
-Documentation published on [docs.rs] can use metadata in `Cargo.toml` to
-control which features are enabled when the documentation is built. See
-[docs.rs metadata documentation] for more details.
+发布到 [docs.rs] 的文档可以使用 `Cargo.toml` 中的元数据控制
+“构建文档时启用哪些 feature”。详见 [docs.rs metadata documentation]。
 
-> **Note**: Rustdoc has experimental support for annotating the documentation
-> to indicate which features are required to use certain APIs. See the
-> `doc_cfg` documentation for more details. An example is the [`syn`
-> documentation], where you can see colored boxes which note which features
-> are required to use it.
+> **注意**：Rustdoc 对“在文档中标注某 API 需要哪些 feature”有实验性支持。
+> 详见 `doc_cfg` 文档。示例可看 [`syn` documentation]，
+> 其中会以彩色标记框提示所需 feature。
 
 [docs.rs metadata documentation]: https://docs.rs/about/metadata
 [docs.rs]: https://docs.rs/
@@ -510,19 +444,22 @@ control which features are enabled when the documentation is built. See
 
 ### Discovering features
 
-When features are documented in the library API, this can make it easier for
-your users to discover which features are available and what they do. If the
-feature documentation for a package isn't readily available, you can look at
-the `Cargo.toml` file, but sometimes it can be hard to track it down. The
-crate page on [crates.io] has a link to the source repository if available.
-Tools like [`cargo vendor`] or [cargo-clone-crate] can be used to download the
-source and inspect it.
+当 feature 在库 API 文档里被清晰标注时，用户更容易发现有哪些 feature 以及各自用途。
+如果某 package 的 feature 文档不易找到，你可以直接查看 `Cargo.toml`，
+但有时源码位置并不直观。[crates.io] 上的 crate 页面通常会给出源码仓库链接。
+也可以使用 [`cargo vendor`] 或 [cargo-clone-crate] 下载源码并检查。
 
 [`cargo vendor`]: ../commands/cargo-vendor.md
 [cargo-clone-crate]: https://crates.io/crates/cargo-clone-crate
 
 ## Feature combinations
 
-Because features are a form of conditional compilation, they require an exponential number of configurations and test cases to be 100% covered. By default, tests, docs, and other tooling such as [Clippy](https://github.com/rust-lang/rust-clippy) will only run with the default set of features.
+由于 feature 本质上是条件编译的一种形式，要 100% 覆盖所有配置与测试用例，
+组合数量会呈指数增长。默认情况下，测试、文档和诸如
+[Clippy](https://github.com/rust-lang/rust-clippy) 之类的工具，
+通常只会在“默认 feature 集”下运行。
 
-We encourage you to consider your strategy and tooling in regards to different feature combinations --- Every project will have different requirements in conjunction with time, resources, and the cost-benefit of covering specific scenarios. Common configurations may be with / without default features, specific combinations of features, or all combinations of features.
+建议你根据项目实际情况制定 feature 组合策略与工具链方案。
+不同项目在时间、资源、以及覆盖特定场景的成本收益上差异很大。
+常见做法包括：测试“启用/禁用默认 feature”，测试若干特定 feature 组合，
+或测试全部组合。

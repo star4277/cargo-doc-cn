@@ -1,15 +1,14 @@
-# Index Format
+﻿# 索引格式
 
-The following defines the format of the index. New features are occasionally
-added, which are only understood starting with the version of Cargo that
-introduced them. Older versions of Cargo may not be able to use packages that
-make use of new features. However, the format for older packages should not
-change, so older versions of Cargo should be able to use them.
+下面定义 index 的格式。
+Cargo 会不定期增加新特性，这些特性只有在“引入它们的 Cargo 版本及之后”才会被理解。
+旧版 Cargo 可能无法使用依赖这些新特性的包。
+不过，旧包的格式本身不应变化，因此旧版 Cargo 仍应能使用它们。
 
-## Index Configuration
-The root of the index contains a file named `config.json` which contains JSON
-information used by Cargo for accessing the registry. This is an example of
-what the [crates.io] config file looks like:
+## 索引配置
+index 根目录包含一个名为 `config.json` 的文件，
+其中是 Cargo 访问 registry 所需的 JSON 信息。
+下面是 [crates.io] 的配置文件示例：
 
 ```javascript
 {
@@ -18,104 +17,96 @@ what the [crates.io] config file looks like:
 }
 ```
 
-The keys are:
-- `dl`: This is the URL for downloading crates listed in the index. The value
-  may have the following markers which will be replaced with their
-  corresponding value:
+字段说明：
+- `dl`：用于下载 index 中列出的 crate 的 URL。
+  该值可包含以下占位符，运行时会替换为对应值：
 
-  - `{crate}`: The name of crate.
-  - `{version}`: The crate version.
-  - `{prefix}`: A directory prefix computed from the crate name. For example,
-    a crate named `cargo` has a prefix of `ca/rg`. See below for details.
-  - `{lowerprefix}`: Lowercase variant of `{prefix}`.
-  - `{sha256-checksum}`: The crate's sha256 checksum.
+  - `{crate}`：crate 名称。
+  - `{version}`：crate 版本。
+  - `{prefix}`：由 crate 名计算出的目录前缀。
+    例如 `cargo` 的前缀是 `ca/rg`。详见下文。
+  - `{lowerprefix}`：`{prefix}` 的小写形式。
+  - `{sha256-checksum}`：crate 的 sha256 校验和。
 
-  If none of the markers are present, then the value
-  `/{crate}/{version}/download` is appended to the end.
-- `api`: This is the base URL for the web API. This key is optional, but if it
-  is not specified, commands such as [`cargo publish`] will not work. The web
-  API is described below. This URL should not have a trailing slash.
-- `auth-required`: indicates whether this is a private registry that requires
-  all operations to be authenticated including API requests, crate downloads
-  and sparse index updates.
+  如果未包含任何占位符，会在末尾自动追加
+  `/{crate}/{version}/download`。
+- `api`：Web API 的基础 URL。
+  该键可选；若缺失，像 [`cargo publish`] 这类命令将不可用。
+  Web API 见下文。该 URL 不应以斜杠结尾。
+- `auth-required`：是否为私有 registry，且要求所有操作都认证，
+  包括 API 请求、crate 下载、sparse index 更新。
 
 
-## Download Endpoint
-The download endpoint should send the `.crate` file for the requested package.
-Cargo supports https, http, and file URLs, HTTP redirects, HTTP1 and HTTP2.
-The exact specifics of TLS support depend on the platform that Cargo is
-running on, the version of Cargo, and how it was compiled.
+## 下载端点
+下载端点应返回请求 package 的 `.crate` 文件。
+Cargo 支持 https、http、file URL，支持 HTTP 重定向、HTTP1、HTTP2。
+TLS 支持细节取决于 Cargo 运行平台、Cargo 版本以及编译方式。
 
-If `auth-required: true` is set in `config.json`, the `Authorization` header
-will be included with http(s) download requests.
+若 `config.json` 中设置 `auth-required: true`，
+则 http(s) 下载请求会附带 `Authorization` 头。
 
-## Index files
-The rest of the index repository contains one file for each package, where the
-filename is the name of the package in lowercase. Each version of the package
-has a separate line in the file. The files are organized in a tier of
-directories:
+## 索引文件
+index 仓库其余部分由“每个 package 一个文件”组成，
+文件名是 package 名的小写形式。
+每个 package 版本在该文件中占一行。
+文件目录结构分层如下：
 
-- Packages with 1 character names are placed in a directory named `1`.
-- Packages with 2 character names are placed in a directory named `2`.
-- Packages with 3 character names are placed in the directory
-  `3/{first-character}` where `{first-character}` is the first character of
-  the package name.
-- All other packages are stored in directories named
-  `{first-two}/{second-two}` where the top directory is the first two
-  characters of the package name, and the next subdirectory is the third and
-  fourth characters of the package name. For example, `cargo` would be stored
-  in a file named `ca/rg/cargo`.
+- 名称长度为 1 的 package 放在 `1` 目录。
+- 名称长度为 2 的 package 放在 `2` 目录。
+- 名称长度为 3 的 package 放在 `3/{first-character}` 目录，
+  其中 `{first-character}` 是 package 名的第一个字符。
+- 其他 package 放在 `{first-two}/{second-two}` 目录：
+  顶层目录是前两个字符，下一层子目录是第 3、4 个字符。
+  例如 `cargo` 存在 `ca/rg/cargo`。
 
-> Note: Although the index filenames are in lowercase, the fields that contain
-> package names in `Cargo.toml` and the index JSON data are case-sensitive and
-> may contain upper and lower case characters.
+> 注意：虽然 index 文件名是小写，
+> 但 `Cargo.toml` 和 index JSON 数据中包含 package 名的字段大小写敏感，
+> 可以含大小写字符。
 
-The directory name above is calculated based on the package name converted to
-lowercase; it is represented by the marker `{lowerprefix}`.  When the original
-package name is used without case conversion, the resulting directory name is
-represented by the marker `{prefix}`.  For example, the package `MyCrate` would
-have a `{prefix}` of `My/Cr` and a `{lowerprefix}` of `my/cr`.  In general,
-using `{prefix}` is recommended over `{lowerprefix}`, but there are pros and
-cons to each choice.  Using `{prefix}` on case-insensitive filesystems results
-in (harmless-but-inelegant) directory aliasing.  For example, `crate` and
-`CrateTwo` have `{prefix}` values of `cr/at` and `Cr/at`; these are distinct on
-Unix machines but alias to the same directory on Windows.  Using directories
-with normalized case avoids aliasing, but on case-sensitive filesystems it's
-harder to support older versions of Cargo that lack `{prefix}`/`{lowerprefix}`.
-For example, nginx rewrite rules can easily construct `{prefix}` but can't
-perform case-conversion to construct `{lowerprefix}`.
+上面的目录名基于“转换为小写后的 package 名”计算，
+对应占位符 `{lowerprefix}`。
+若使用“原始 package 名（不做大小写转换）”计算目录，
+对应占位符 `{prefix}`。
+例如 `MyCrate` 的 `{prefix}` 为 `My/Cr`，
+`{lowerprefix}` 为 `my/cr`。
+一般推荐优先使用 `{prefix}`，但两者各有利弊。
+在大小写不敏感文件系统上使用 `{prefix}` 会出现（无害但不优雅的）目录别名。
+例如 `crate` 与 `CrateTwo` 的 `{prefix}` 分别是 `cr/at` 与 `Cr/at`；
+在 Unix 上它们不同，在 Windows 上会映射到同一目录。
+使用统一大小写目录可避免别名问题；
+但在大小写敏感文件系统上，想兼容“不支持 `{prefix}`/`{lowerprefix}` 的旧 Cargo”会更难。
+例如 nginx rewrite 规则能轻松构造 `{prefix}`，
+却难以做大小写转换来构造 `{lowerprefix}`。
 
-## Name restrictions
+## 名称限制
 
-Registries should consider enforcing limitations on package names added to
-their index. Cargo itself allows names with any [alphanumeric], `-`, or `_`
-characters. [crates.io] imposes its own limitations, including the following:
+registry 在向 index 添加 package 名时，应考虑施加限制。
+Cargo 本身允许任意 [alphanumeric]、`-`、`_` 字符。
+[crates.io] 有自己的限制，包括：
 
-- Only allows ASCII characters.
-- Only alphanumeric, `-`, and `_` characters.
-- First character must be alphabetic.
-- Case-insensitive collision detection.
-- Prevent differences of `-` vs `_`.
-- Under a specific length (max 64).
-- Rejects reserved names, such as Windows special filenames like "nul".
+- 仅允许 ASCII 字符。
+- 仅允许字母数字、`-`、`_`。
+- 首字符必须是字母。
+- 大小写不敏感冲突检测。
+- 禁止仅 `-` 与 `_` 差异。
+- 长度上限（最多 64）。
+- 拒绝保留名称，例如 Windows 特殊文件名（如 "nul"）。
 
-Registries should consider incorporating similar restrictions, and consider
-the security implications, such as [IDN homograph
-attacks](https://en.wikipedia.org/wiki/IDN_homograph_attack) and other
-concerns in [UTR36](https://www.unicode.org/reports/tr36/) and
-[UTS39](https://www.unicode.org/reports/tr39/).
+registry 应考虑采用类似限制，并评估安全影响，
+例如 [IDN 同形异义攻击](https://en.wikipedia.org/wiki/IDN_homograph_attack)
+及 [UTR36](https://www.unicode.org/reports/tr36/)、
+[UTS39](https://www.unicode.org/reports/tr39/) 中的其他问题。
 
-## Version uniqueness
+## 版本唯一性
 
-Indexes *must* ensure that each version only appears once for each package.
-This includes ignoring SemVer build metadata.
-For example, the index must *not* contain two entries with a version `1.0.7` and `1.0.7+extra`.
+index **必须**保证每个 package 的每个版本只出现一次。
+这也包括忽略 SemVer build metadata。
+例如 index **不得**同时出现 `1.0.7` 与 `1.0.7+extra` 两个条目。
 
-## JSON schema
+## JSON Schema
 
-Each line in a package file contains a JSON object that describes a published
-version of the package. The following is a pretty-printed example with comments
-explaining the format of the entry.
+package 文件中每一行都是一个 JSON 对象，描述该 package 的一个已发布版本。
+下面是带注释的美化示例：
 
 ```javascript
 {
@@ -235,102 +226,106 @@ explaining the format of the entry.
 }
 ```
 
-The JSON objects should not be modified after they are added except for the
-`yanked` field whose value may change at any time.
+这些 JSON 对象一旦添加后，不应修改，
+唯一允许随时变化的是 `yanked` 字段。
 
-> **Note**: The index JSON format has subtle differences from the JSON format of the [Publish API] and [`cargo metadata`].
-> If you are using one of those as a source to generate index entries, you are encouraged to carefully inspect the documentation differences between them.
+> **注意**：index JSON 格式与 [Publish API] 及 [`cargo metadata`] 的 JSON 格式存在细微差异。
+> 若你基于它们来生成 index 条目，建议仔细核对文档差异。
 >
-> For the [Publish API], the differences are:
+> 对于 [Publish API]，差异包括：
 >
 > * `deps`
->     * `name` --- When the dependency is [renamed] in `Cargo.toml`, the publish API puts the original package name in the `name` field and the aliased name in the `explicit_name_in_toml` field.
->       The index places the aliased name in the `name` field, and the original package name in the `package` field.
->     * `req` --- The Publish API field is called `version_req`.
-> * `cksum` --- The publish API does not specify the checksum, it must be computed by the registry before adding to the index.
-> * `features` --- Some features may be placed in the `features2` field.
->   Note: This is only a legacy requirement for [crates.io]; other registries should not need to bother with modifying the features map.
->   The `v` field indicates the presence of the `features2` field.
-> * The publish API includes several other fields, such as `description` and `readme`, which don't appear in the index.
->   These are intended to make it easier for a registry to obtain the metadata about the crate to display on a website without needing to extract and parse the `.crate` file.
->   This additional information is typically added to a database on the registry server.
-> * Although `rust_version` is included here, [crates.io] will ignore this field
->   and instead read it from the `Cargo.toml` contained in the `.crate` file.
+>     * `name` --- 当依赖在 `Cargo.toml` 中被[重命名][renamed]时，
+>       publish API 把原始包名放在 `name` 字段，别名放在 `explicit_name_in_toml` 字段。
+>       index 则把别名放在 `name`，原始包名放在 `package`。
+>     * `req` --- Publish API 中该字段名是 `version_req`。
+> * `cksum` --- publish API 不提供校验和；registry 在写入 index 前需自行计算。
+> * `features` --- 部分 feature 可能放到 `features2` 字段。
+>   注意：这仅是 [crates.io] 的遗留兼容要求；其他 registry 通常无需调整 features map。
+>   `v` 字段用于指示是否存在 `features2`。
+> * publish API 还包含一些 index 不含字段，如 `description`、`readme`。
+>   这些字段用于帮助 registry 在无需解包解析 `.crate` 的情况下获取展示元数据。
+>   这些附加信息通常会写入 registry 服务端数据库。
+> * 虽然此处有 `rust_version`，但 [crates.io] 会忽略该字段，
+>   转而读取 `.crate` 内 `Cargo.toml` 的值。
 >
-> For [`cargo metadata`], the differences are:
+> 对于 [`cargo metadata`]，差异包括：
 >
-> * `vers` --- The `cargo metadata` field is called `version`.
+> * `vers` --- `cargo metadata` 中字段名为 `version`。
 > * `deps`
->   * `name` --- When the dependency is [renamed] in `Cargo.toml`, `cargo metadata` puts the original package name in the `name` field and the aliased name in the `rename` field.
->     The index places the aliased name in the `name` field, and the original package name in the `package` field.
->   * `default_features` --- The `cargo metadata` field is called `uses_default_features`.
->   * `registry` --- `cargo metadata` uses a value of `null` to indicate that the dependency comes from [crates.io].
->     The index uses a value of `null` to indicate that the dependency comes from the same registry as the index.
->     When creating an index entry, a registry other than [crates.io] should translate a value of `null` to be `https://github.com/rust-lang/crates.io-index` and translate a URL that matches the current index to be `null`.
->   * `cargo metadata` includes some extra fields, such as `source` and `path`.
-> * The index includes additional fields such as `yanked`, `cksum`, and `v`.
+>   * `name` --- 当依赖在 `Cargo.toml` 中被[重命名][renamed]时，
+>     `cargo metadata` 把原始包名放在 `name`，别名放在 `rename`。
+>     index 则把别名放在 `name`，原始包名放在 `package`。
+>   * `default_features` --- `cargo metadata` 中字段名为 `uses_default_features`。
+>   * `registry` --- `cargo metadata` 用 `null` 表示该依赖来自 [crates.io]。
+>     index 用 `null` 表示该依赖来自“当前 index 对应的同一 registry”。
+>     当生成非 [crates.io] registry 的 index 条目时，
+>     应把 `null` 转成 `https://github.com/rust-lang/crates.io-index`，
+>     并把与当前 index 匹配的 URL 转回 `null`。
+>   * `cargo metadata` 还包含一些额外字段，如 `source`、`path`。
+> * index 包含额外字段，如 `yanked`、`cksum`、`v`。
 
 [renamed]: specifying-dependencies.md#renaming-dependencies-in-cargotoml
 [Publish API]: registry-web-api.md#publish
 [`cargo metadata`]: ../commands/cargo-metadata.md
 
-## Index Protocols
-Cargo supports two remote registry protocols: `git` and `sparse`. The `git` protocol
-stores index files in a git repository and the `sparse` protocol fetches individual
-files over HTTP.
+## 索引协议
+Cargo 支持两种远程 registry 协议：`git` 和 `sparse`。
+`git` 协议将 index 文件保存在 git 仓库中，
+`sparse` 协议则通过 HTTP 拉取单个文件。
 
-### Git Protocol
-The git protocol has no protocol prefix in the index url. For example the git index URL
-for [crates.io] is `https://github.com/rust-lang/crates.io-index`.
+### Git 协议
+git 协议的 index URL 不带协议前缀。
+例如 [crates.io] 的 git index URL 是
+`https://github.com/rust-lang/crates.io-index`。
 
-Cargo caches the git repository on disk so that it can efficiently incrementally fetch
-updates.
+Cargo 会在本地缓存该 git 仓库，以便高效增量拉取更新。
 
-### Sparse Protocol
-The sparse protocol uses the `sparse+` protocol prefix in the registry URL. For example,
-the sparse index URL for [crates.io] is `sparse+https://index.crates.io/`.
+### Sparse 协议
+sparse 协议在 registry URL 中使用 `sparse+` 前缀。
+例如 [crates.io] 的 sparse index URL 是
+`sparse+https://index.crates.io/`。
 
-The sparse protocol downloads each index file using an individual HTTP request. Since
-this results in a large number of small HTTP requests, performance is significantly
-improved with a server that supports pipelining and HTTP/2.
+sparse 协议通过独立 HTTP 请求下载每个 index 文件。
+由于会产生大量小请求，若服务端支持流水线和 HTTP/2，性能会显著提升。
 
-#### Sparse authentication
-Cargo will attempt to fetch the `config.json` file before
-fetching any other files. If the server responds with an HTTP 401, then Cargo will assume
-that the registry requires authentication and re-attempt the request for `config.json`
-with the authentication token included.
+#### Sparse 认证
+Cargo 会先拉取 `config.json`，再拉取其他文件。
+如果服务器返回 HTTP 401，Cargo 会认为该 registry 需要认证，
+并携带认证 token 重新请求 `config.json`。
 
-On authentication failure (or a missing authentication token) the server may include a
-`www-authenticate` header with a `Cargo login_url="<URL>"` challenge to indicate where the user
-can go to get a token.
+认证失败（或缺少认证 token）时，
+服务端可在 `www-authenticate` 头里返回
+`Cargo login_url="<URL>"` challenge，告知用户去哪里获取 token。
 
-Registries that require authentication must set `auth-required: true` in `config.json`.
+需要认证的 registry 必须在 `config.json` 设置 `auth-required: true`。
 
-#### Caching
-Cargo caches the crate metadata files, and captures the `ETag` or `Last-Modified`
-HTTP header from the server for each entry. When refreshing crate metadata, Cargo
-sends the `If-None-Match` or `If-Modified-Since` header to allow the server to respond
-with HTTP 304 "Not Modified" if the local cache is valid, saving time and bandwidth.
-If both `ETag` and `Last-Modified` headers are present, Cargo uses the `ETag` only.
+#### 缓存
+Cargo 会缓存 crate 元数据文件，
+并保存服务端返回的 `ETag` 或 `Last-Modified` 头。
+刷新元数据时，Cargo 会发送 `If-None-Match` 或 `If-Modified-Since`，
+让服务端在本地缓存有效时返回 HTTP 304 “Not Modified”，以节省时间与带宽。
+若两者同时存在，Cargo 只使用 `ETag`。
 
-#### Cache Invalidation
-If a registry is using some kind of CDN or proxy which caches access to the index files,
-then it is recommended that registries implement some form of cache invalidation when
-the files are updated. If these caches are not updated, then users may not be able to
-access new crates until the cache is cleared.
+#### 缓存失效
+如果 registry 使用 CDN 或代理缓存 index 文件，
+建议在文件更新时实现某种缓存失效机制。
+否则用户可能在缓存清理前无法访问新 crate。
 
-#### Nonexistent Crates
-For crates that do not exist, the registry should respond with a 404 "Not Found", 410 "Gone"
-or 451 "Unavailable For Legal Reasons" code.
+#### 不存在的 Crate
+对不存在的 crate，registry 应返回
+404 “Not Found”、410 “Gone” 或 451 “Unavailable For Legal Reasons”。
 
-#### Sparse Limitations
-Since the URL of the registry is stored in the lockfile, it's not recommended to offer
-a registry with both protocols. Discussion about a transition plan is ongoing in issue
-[#10964]. The [crates.io] registry is an exception, since Cargo internally substitutes
-the equivalent git URL when the sparse protocol is used.
+#### Sparse 限制
+由于 lockfile 会存储 registry URL，
+不建议同一 registry 同时提供两种协议。
+关于迁移方案仍在 [#10964] 讨论中。
+[crates.io] 是例外，因为当使用 sparse 协议时，
+Cargo 内部会替换为等价 git URL。
 
-If a registry does offer both protocols, it's currently recommended to choose one protocol
-as the canonical protocol and use [source replacement] for the other protocol.
+如果某 registry 仍同时提供两种协议，
+当前建议选定其中一种作为规范协议（canonical protocol），
+另一种通过 [source replacement] 处理。
 
 
 [`cargo publish`]: ../commands/cargo-publish.md
